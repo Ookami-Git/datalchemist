@@ -5,9 +5,10 @@ import (
 	"datalchemist/models"
 	"embed"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
+
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -19,38 +20,38 @@ var sqlFolder embed.FS
 
 // Init database (create if not exist)
 func Init() error {
-	// Check if database file exist
-	if _, err := os.Stat(dbName); os.IsNotExist(err) {
-		// If not exist --> Crate database
-		db, err := sql.Open("sqlite3", dbName)
-		if err != nil {
-			return err
-		}
-		if err := CreateTable(db); err != nil {
-			return err
-		}
-		if err := InitialData(db); err != nil {
-			return err
-		}
+	db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+	if err != nil {
+		panic("failed to connect database")
 	}
+	db.AutoMigrate(&parameters{}, &users{}, &groups{}, &sources{}, &views{}, &items{}, &roles{}, &acl_users{}, &acl_groups{}, &source_require{}, &item_sources{}, &view_items{})
+	parameters := []*parameters{
+		{Name: "name", Value: "datalchemist"},
+		{Name: "lang", Value: "en"},
+		{Name: "menu", Value: ""},
+		{Name: "theme", Value: "light"},
+		{Name: "bg_color_light", Value: "rgb(142, 114, 173)"},
+		{Name: "bg_color2_light", Value: "rgb(94, 130, 192)"},
+		{Name: "bg_color_dark", Value: "rgb(60, 11, 111)"},
+		{Name: "bg_color2_dark", Value: "rgb(15, 45, 97)"},
+		{Name: "ldap", Value: "false"},
+		{Name: "ldap_config", Value: "{}"},
+	}
+	users := []*users{
+		{Name: "admin", Type: "local", Parameters: `{"password": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}`},
+	}
+	groups := []*groups{
+		{Name: "admin", Description: "Administrator"},
+	}
+	db.Create(parameters)
+	db.Create(users)
+	db.Create(groups)
 	return nil
 }
 
 // Open database
 func Open() (*sql.DB, error) {
 	return sql.Open("sqlite3", dbName)
-}
-
-// Create database tables
-func CreateTable(db *sql.DB) error {
-	query, err := sqlFolder.ReadFile("sql/0_tables.sql")
-	if err != nil {
-		return err
-	}
-
-	// Execute SQL file
-	_, err = db.Exec(string(query))
-	return err
 }
 
 // Insert data
@@ -63,16 +64,6 @@ func InitialData(db *sql.DB) error {
 	// Execute SQL file
 	_, err = db.Exec(string(query))
 	return err
-}
-
-func createDatabase() error {
-	// Create database file
-	file, err := os.Create(dbName)
-	checkErr(err)
-	defer file.Close()
-
-	fmt.Println("Database file created successfully")
-	return nil
 }
 
 func SourceGet(id string) (models.Source, error) {
