@@ -1,0 +1,6 @@
+{
+    "src":"file",
+    "path":"{{ item }}",
+    "type":"json",
+    "loop": "{{ data.test2.files }}"
+}

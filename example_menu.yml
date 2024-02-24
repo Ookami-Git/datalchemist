@@ -1,0 +1,16 @@
+- name: Accueil
+  link: /view/accueil
+- name: Separator
+  divider: true
+- name: menu
+  subitems:
+    - name: item
+      link: /view/item1
+    - name: item2
+      link: /view/item2
+    - name: item3
+      link: /view/item3&value=test
+- name: othersite
+  link: http://www.other.com
+  newtab: true
+  external: true
