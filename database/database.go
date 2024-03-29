@@ -3,8 +3,7 @@ package database
 import (
 	"database/sql"
 	"datalchemist/models"
-	"embed"
-	"encoding/json"
+	"fmt"
 	"log"
 
 	"gorm.io/driver/sqlite"
@@ -15,17 +14,14 @@ import (
 
 const dbName = "database.sqlite"
 
-//go:embed sql/*.sql
-var sqlFolder embed.FS
-
 // Init database (create if not exist)
 func Init() error {
 	db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&parameters{}, &users{}, &groups{}, &sources{}, &views{}, &items{}, &roles{}, &acl_users{}, &acl_groups{}, &source_require{}, &item_sources{}, &view_items{})
-	parameters := []*parameters{
+	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl_users{}, &models.Acl_groups{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{})
+	parameters := []*models.Parameters{
 		{Name: "name", Value: "datalchemist"},
 		{Name: "lang", Value: "en"},
 		{Name: "menu", Value: ""},
@@ -37,10 +33,10 @@ func Init() error {
 		{Name: "ldap", Value: "false"},
 		{Name: "ldap_config", Value: "{}"},
 	}
-	users := []*users{
+	users := []*models.Users{
 		{Name: "admin", Type: "local", Parameters: `{"password": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}`},
 	}
-	groups := []*groups{
+	groups := []*models.Groups{
 		{Name: "admin", Description: "Administrator"},
 	}
 	db.Create(parameters)
@@ -54,68 +50,45 @@ func Open() (*sql.DB, error) {
 	return sql.Open("sqlite3", dbName)
 }
 
-// Insert data
-func InitialData(db *sql.DB) error {
-	query, err := sqlFolder.ReadFile("sql/1_data.sql")
-	if err != nil {
-		return err
-	}
-
-	// Execute SQL file
-	_, err = db.Exec(string(query))
-	return err
+func OpenGorm() (*gorm.DB, error) {
+	return gorm.Open(sqlite.Open(dbName), &gorm.Config{})
 }
 
-func SourceGet(id string) (models.Source, error) {
-	var Source models.Source
+func SourceGet(id string) (models.Sources, error) {
+	var Source models.Sources
 
-	db, err := Open()
-	checkErr(err)
+	db, err := OpenGorm()
+	if err != nil {
+		return Source, err
+	}
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM sources WHERE id=$1 OR name=$1;"
-
-	// query
-	err = db.QueryRow(query, id).Scan(&Source.ID, &Source.Name, &Source.Parameters, &Source.JSON)
-	checkErr(err)
-
-	db.Close()
+	err = db.Where("id = ? OR name = ?", id, id).First(&Source).Error
 
 	return Source, err
 }
 
-func ViewGet(id string) (models.View, error) {
-	var View models.View
+func ViewGet(id string) (models.Views, error) {
+	var View models.Views
 
-	db, err := Open()
-	checkErr(err)
+	db, err := OpenGorm()
+	if err != nil {
+		return View, err
+	}
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM views WHERE id=$1 OR name=$1;"
-
-	// query
-	err = db.QueryRow(query, id).Scan(&View.ID, &View.Name, &View.Parameters)
-	checkErr(err)
-
-	db.Close()
+	err = db.Where("id = ? OR name = ?", id, id).First(&View).Error
 
 	return View, err
 }
 
-func ItemGet(id string) (models.Item, error) {
-	var Item models.Item
+func ItemGet(id string) (models.Items, error) {
+	var Item models.Items
 
-	db, err := Open()
-	checkErr(err)
+	db, err := OpenGorm()
+	if err != nil {
+		return Item, err
+	}
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM items WHERE id=$1 OR name=$1;"
-
-	// query
-	err = db.QueryRow(query, id).Scan(&Item.ID, &Item.Name, &Item.Parameters, &Item.Template)
-	checkErr(err)
-
-	db.Close()
+	err = db.Where("id = ? OR name = ?", id, id).First(&Item).Error
 
 	return Item, err
 }
@@ -123,364 +96,224 @@ func ItemGet(id string) (models.Item, error) {
 func SourceDelete(id string) (int, error) {
 	var idRes int
 
-	db, err := Open()
-	checkErr(err)
+	db, err := OpenGorm()
+	if err != nil {
+		return idRes, err
+	}
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "DELETE FROM sources WHERE id = $1 RETURNING id;"
+	res := db.Where("id = ?", id).Delete(&models.Sources{})
+	idRes = int(res.RowsAffected)
 
-	// query
-	err = db.QueryRow(query, id).Scan(&idRes)
-	checkErr(err)
-
-	db.Close()
-
-	return idRes, err
+	return idRes, res.Error
 }
 
 func ItemDelete(id string) (int, error) {
 	var idRes int
 
-	db, err := Open()
-	checkErr(err)
+	db, err := OpenGorm()
+	if err != nil {
+		return idRes, err
+	}
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "DELETE FROM items WHERE id = $1 RETURNING id;"
+	res := db.Where("id = ?", id).Delete(&models.Items{})
+	idRes = int(res.RowsAffected)
 
-	// query
-	err = db.QueryRow(query, id).Scan(&idRes)
-	checkErr(err)
-
-	db.Close()
-
-	return idRes, err
+	return idRes, res.Error
 }
 
 func ViewDelete(id string) (int, error) {
 	var idRes int
 
-	db, err := Open()
-	checkErr(err)
-
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "DELETE FROM views WHERE id = $1 RETURNING id;"
-
-	// query
-	err = db.QueryRow(query, id).Scan(&idRes)
-	checkErr(err)
-
-	db.Close()
-
-	return idRes, err
-}
-
-func ItemSources(id string) []models.Sources {
-	var Sources []models.Sources
-	var Source models.Sources
-
-	db, err := Open()
-	checkErr(err)
-
-	query := `
-    SELECT sources.id, sources.name
-    FROM item_sources
-    JOIN sources ON item_sources.source = sources.id
-    WHERE item_sources.item = (
-        SELECT id FROM items WHERE id = $1 OR name = $1);`
-
-	rows, err := db.Query(query, id)
-	checkErr(err)
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&Source.ID, &Source.Name)
-		checkErr(err)
-
-		Sources = append(Sources, Source)
+	db, err := OpenGorm()
+	if err != nil {
+		return idRes, err
 	}
 
-	db.Close()
+	res := db.Where("id = ?", id).Delete(&models.Views{})
+	idRes = int(res.RowsAffected)
 
-	return Sources
+	return idRes, res.Error
+}
+
+func ItemSources(id string) ([]models.Sources, error) {
+	var Sources []models.Sources
+
+	db, err := OpenGorm()
+	if err != nil {
+		return Sources, err
+	}
+
+	query := db.Table("item_sources").Select("sources.id, sources.name").Joins("JOIN sources ON item_sources.source = sources.id").Where("item_sources.item = (SELECT id FROM items WHERE id = ? OR name = ?)", id, id)
+
+	err = query.Scan(&Sources).Error
+
+	return Sources, err
 }
 
 func ViewItems(id string) []string {
 	var Items []string
 
-	db, err := Open()
+	db, err := OpenGorm()
 	checkErr(err)
 
-	query := `
-    SELECT item
-    FROM view_items
-    JOIN views ON view_items.view = views.id
-    WHERE view_items.view = (
-        SELECT id FROM views WHERE id = $1 OR name = $1);`
+	query := db.Table("view_items").Select("item").Joins("JOIN views ON view_items.view = views.id").Where("view_items.view = (SELECT id FROM views WHERE id = ? OR name = ?)", id, id)
 
-	rows, err := db.Query(query, id)
+	err = query.Pluck("item", &Items).Error
 	checkErr(err)
-	defer rows.Close()
-
-	for rows.Next() {
-		var itemid string
-		err := rows.Scan(&itemid)
-		checkErr(err)
-
-		Items = append(Items, itemid)
-	}
-
-	db.Close()
 
 	return Items
 }
 
-func SourceRequire(id string) []models.Sources {
+func SourceRequire(id string) ([]models.Sources, error) {
 	var Sources []models.Sources
-	var Source models.Sources
 
-	db, err := Open()
-	checkErr(err)
-
-	query := `
-    SELECT require, sources.name
-    FROM source_require
-    JOIN sources ON require = sources.id
-    WHERE source_require.source = (
-        SELECT id FROM sources WHERE id = $1 OR name = $1);`
-
-	rows, err := db.Query(query, id)
-	checkErr(err)
-	defer rows.Close()
-
-	for rows.Next() {
-		err := rows.Scan(&Source.ID, &Source.Name)
-		checkErr(err)
-
-		Sources = append(Sources, Source)
+	db, err := OpenGorm()
+	if err != nil {
+		return Sources, err
 	}
 
-	db.Close()
+	query := db.Table("source_require").
+		Select("sources.id, sources.name").
+		Joins("JOIN sources ON require = sources.id").
+		Where("source_require.source = (SELECT id FROM sources WHERE id = ? OR name = ?)", id, id)
 
-	return Sources
+	err = query.Scan(&Sources).Error
+
+	return Sources, err
 }
 
-func ViewList() []models.View {
-	var Views []models.View
-	var View models.View
+func ViewList() ([]models.Views, error) {
+	var Views []models.Views
 
-	db, err := Open()
-	checkErr(err)
-
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT id, name FROM views ORDER BY id;"
-
-	// query
-	rows, err := db.Query(query)
-	checkErr(err)
-
-	for rows.Next() {
-		err := rows.Scan(&View.ID, &View.Name)
-		checkErr(err)
-
-		Views = append(Views, View)
+	db, err := OpenGorm()
+	if err != nil {
+		return Views, err
 	}
 
-	db.Close()
+	query := db.Table("views").Select("id, name").Order("id")
 
-	return Views
+	err = query.Scan(&Views).Error
+
+	return Views, err
 }
 
-func ItemList() []models.Item {
-	var Items []models.Item
-	var Item models.Item
+func ItemList() ([]models.Items, error) {
+	var Items []models.Items
 
-	db, err := Open()
-	checkErr(err)
-
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT id, name FROM items ORDER BY id;"
-
-	// query
-	rows, err := db.Query(query)
-	checkErr(err)
-
-	for rows.Next() {
-		err := rows.Scan(&Item.ID, &Item.Name)
-		checkErr(err)
-
-		Items = append(Items, Item)
+	db, err := OpenGorm()
+	if err != nil {
+		return Items, err
 	}
 
-	db.Close()
+	query := db.Table("items").Select("id, name").Order("id")
 
-	return Items
+	err = query.Scan(&Items).Error
+
+	return Items, err
 }
 
-func SourceList() []models.Sources {
+func SourceList() ([]models.Sources, error) {
 	var Sources []models.Sources
-	var Source models.Sources
 
-	db, err := Open()
-	checkErr(err)
-
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT id, name FROM sources ORDER BY id;"
-
-	// query
-	rows, err := db.Query(query)
-	checkErr(err)
-
-	for rows.Next() {
-		err := rows.Scan(&Source.ID, &Source.Name)
-		checkErr(err)
-
-		Sources = append(Sources, Source)
+	db, err := OpenGorm()
+	if err != nil {
+		return Sources, err
 	}
 
-	db.Close()
+	query := db.Table("sources").Select("id, name").Order("id")
 
-	return Sources
+	err = query.Scan(&Sources).Error
+
+	return Sources, err
 }
 
-func ViewUpdate(View models.View) (int, error) {
-	db, err := Open()
+func ViewUpdate(View models.Views) (uint, error) {
+	db, err := OpenGorm()
 	checkErr(err)
 
 	if View.ID != 0 {
-		query := "INSERT OR REPLACE INTO views (id, name, parameters) VALUES ($1, $2, $3) RETURNING id"
-		err = db.QueryRow(query, View.ID, View.Name, View.Parameters).Scan(&View.ID)
+		db.Save(&View)
 	} else {
-		query := "INSERT INTO views (name, parameters) VALUES ($1, $2) RETURNING id"
-		err = db.QueryRow(query, View.Name, "[]").Scan(&View.ID)
+		db.Create(&View)
 	}
 
-	checkErr(err)
-
-	db.Close()
-
-	return View.ID, err
+	return View.ID, db.Error
 }
 
-func ItemUpdate(Item models.Item) (int, error) {
-	db, err := Open()
+func ItemUpdate(Item models.Items) (uint, error) {
+	db, err := OpenGorm()
 	checkErr(err)
 
 	if Item.ID != 0 {
-		query := "INSERT OR REPLACE INTO Items (id, name, parameters, template) VALUES ($1, $2, $3, $4) RETURNING id"
-		err = db.QueryRow(query, Item.ID, Item.Name, Item.Parameters, Item.Template).Scan(&Item.ID)
+		db.Save(&Item)
 	} else {
-		query := "INSERT INTO Items (name) VALUES ($1) RETURNING id"
-		err = db.QueryRow(query, Item.Name).Scan(&Item.ID)
+		db.Create(&Item)
 	}
-
-	checkErr(err)
-
-	db.Close()
 
 	return Item.ID, err
 }
 
-func SourceUpdate(Source models.Source) (int, error) {
-	db, err := Open()
+func SourceUpdate(Source models.Sources) (uint, error) {
+	db, err := OpenGorm()
 	checkErr(err)
 
 	if Source.ID != 0 {
-		query := "INSERT OR REPLACE INTO sources (id, name, parameters, json) VALUES ($1, $2, $3, $4) RETURNING id"
-		err = db.QueryRow(query, Source.ID, Source.Name, Source.Parameters, Source.JSON).Scan(&Source.ID)
+		db.Save(&Source)
 	} else {
-		query := "INSERT INTO sources (name) VALUES ($1) RETURNING id"
-		err = db.QueryRow(query, Source.Name).Scan(&Source.ID)
+		db.Create(&Source)
 	}
-
-	checkErr(err)
-
-	db.Close()
 
 	return Source.ID, err
 }
-
 func ParametersGet() map[string]interface{} {
-	db, err := Open()
+	db, err := OpenGorm()
 	checkErr(err)
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM parameters;"
-
-	// Exécuter la requête SELECT
-	rows, err := db.Query(query)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
+	var parameters []models.Parameters
+	db.Find(&parameters)
 
 	// Initialiser la carte pour stocker les résultats
 	Parameters := make(map[string]interface{})
 
-	// Parcourir les lignes résultantes
-	for rows.Next() {
-		var Pname, Pvalue string
-
-		// Scanner les valeurs de la ligne dans les variables
-		err := rows.Scan(&Pname, &Pvalue)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		// Stocker les valeurs dans la carte
-		Parameters[Pname] = Pvalue
+	for _, p := range parameters {
+		Parameters[p.Name] = p.Value
 	}
+
 	return Parameters
 }
 
-func UserGet(username string) (models.User, error) {
-	var User models.User
+func UserGet(username string) (models.Users, error) {
+	var User models.Users
 
-	db, err := Open()
+	db, err := OpenGorm()
 	checkErr(err)
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM users WHERE name=$1;"
+	db.Where("name = ?", username).First(&User)
 
-	// query
-	err = db.QueryRow(query, username).Scan(&User.ID, &User.Name, &User.Type, &User.Parameters)
-	if err != nil {
-		log.Print("ERROR database -- Search user by username :", err)
-		return User, err
+	if User.ID == 0 {
+		err = fmt.Errorf("user %s not found", username)
 	}
-
-	json.Unmarshal([]byte(User.Parameters.(string)), &User.Parameters)
-
-	db.Close()
 
 	return User, err
 }
 
-func UsersGet() (map[int]models.User, error) {
-	usersMap := make(map[int]models.User)
+// func UserPost(uid uint, User models.Users) {
+// 	db, err := OpenGorm()
+// 	checkErr(err)
 
-	db, err := Open()
+// 	db.Save(&User{ID: 1, Name: "jinzhu", Age: 100})
+// }
+
+func UsersGet() (map[uint]models.Users, error) {
+	usersMap := make(map[uint]models.Users)
+
+	db, err := OpenGorm()
 	checkErr(err)
-	defer db.Close()
 
-	query := `SELECT 
-				u.id, 
-				u.name, 
-				u.type, 
-				EXISTS(SELECT 1 FROM roles WHERE gid = 1 AND user = u.id) AS admin
-			FROM 
-				users u
-			ORDER BY 
-				u.id;`
+	users := []models.Users{}
+	db.Find(&users)
 
-	rows, err := db.Query(query)
-	checkErr(err)
-	defer rows.Close()
-
-	for rows.Next() {
-		var user models.User
-		err := rows.Scan(&user.ID, &user.Name, &user.Type, &user.IsAdmin)
-		checkErr(err)
-
+	for _, user := range users {
 		// Utiliser l'ID de l'utilisateur comme clé dans la map
 		usersMap[user.ID] = user
 	}
@@ -488,66 +321,52 @@ func UsersGet() (map[int]models.User, error) {
 	return usersMap, err
 }
 
-func UserByIdGet(uid uint) (models.User, error) {
-	var User models.User
+func UserByIdGet(uid uint) (models.Users, error) {
+	var User models.Users
 
-	db, err := Open()
+	db, err := OpenGorm()
 	checkErr(err)
 
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT * FROM users WHERE id=$1;"
+	db.Where("id = ?", uid).First(&User)
 
-	// query
-	err = db.QueryRow(query, uid).Scan(&User.ID, &User.Name, &User.Type, &User.Parameters)
-	if err != nil {
-		log.Print("ERROR database -- Search user by id :", err)
-		return User, err
+	if User.ID == 0 {
+		err = fmt.Errorf("user id %d not found", uid)
 	}
-
-	json.Unmarshal([]byte(User.Parameters.(string)), &User.Parameters)
-
-	db.Close()
 
 	return User, err
 }
 
 func UserIdIsAdmin(uid uint) (bool, error) {
-	var IsAdmin bool
-
-	db, err := Open()
-	checkErr(err)
-
-	// Utilisation d'une requête préparée pour éviter les attaques par injection SQL
-	query := "SELECT EXISTS(SELECT 1 FROM roles WHERE user=$1 AND gid=1) AS 'Resultat';"
-
-	// query
-	err = db.QueryRow(query, uid).Scan(&IsAdmin)
+	db, err := OpenGorm()
 	if err != nil {
 		return false, err
 	}
 
-	db.Close()
+	// Recherche d'un role dont l'utilisateur est membre et dont le groupe est l'administrateur (gid=1)
+	var role models.Roles
+	db.Where("user = ? AND gid = ?", uid, 1).Find(&role)
 
-	return IsAdmin, nil
+	// Si le role est vide alors l'utilisateur n'est pas administrateur
+	if role.ID == 0 {
+		return false, nil
+	}
+
+	// Si le role n'est pas vide alors l'utilisateur est administrateur
+	return true, nil
 }
 
-func GroupsGet() (map[int]models.Group, error) {
-	groupsMap := make(map[int]models.Group)
+func GroupsGet() (map[uint]models.Groups, error) {
+	groupsMap := make(map[uint]models.Groups)
 
-	db, err := Open()
-	checkErr(err)
-	defer db.Close()
+	db, err := OpenGorm()
+	if err != nil {
+		return groupsMap, err
+	}
 
-	query := `SELECT id, name, description FROM groups ORDER BY id;`
-	rows, err := db.Query(query)
-	checkErr(err)
-	defer rows.Close()
+	groups := []models.Groups{}
+	db.Find(&groups)
 
-	for rows.Next() {
-		var group models.Group
-		err := rows.Scan(&group.ID, &group.Name, &group.Description)
-		checkErr(err)
-
+	for _, group := range groups {
 		// Utiliser l'ID du groupe comme clé dans la map
 		groupsMap[group.ID] = group
 	}
@@ -559,19 +378,24 @@ func RolesByUsers() (map[int][]int, error) {
 	// Utilisation d'une map au lieu d'une slice
 	rolesMap := make(map[int][]int)
 
-	db, err := Open()
-	checkErr(err)
-	defer db.Close()
+	db, err := OpenGorm()
+	if err != nil {
+		return rolesMap, err
+	}
 
-	query := "SELECT user, gid FROM roles"
-	rows, err := db.Query(query)
-	checkErr(err)
+	rows, err := db.Raw("SELECT user, gid FROM roles").Rows()
+	if err != nil {
+		return rolesMap, err
+	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var userID, groupID int
-		err := rows.Scan(&userID, &groupID)
-		checkErr(err)
+		var userID int
+		var groupID int
+		err = rows.Scan(&userID, &groupID)
+		if err != nil {
+			return rolesMap, err
+		}
 
 		// Ajouter le groupID à la liste des groupes de l'utilisateur correspondant
 		rolesMap[userID] = append(rolesMap[userID], groupID)
@@ -580,7 +404,35 @@ func RolesByUsers() (map[int][]int, error) {
 	return rolesMap, err
 }
 
-func AclView(uid uint, vid int) (bool, error) {
+func RolesByGroups() (map[int][]int, error) {
+	rolesMap := make(map[int][]int)
+
+	db, err := OpenGorm()
+	if err != nil {
+		return rolesMap, err
+	}
+
+	rows, err := db.Raw("SELECT user, gid FROM roles").Rows()
+	if err != nil {
+		return rolesMap, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var userID int
+		var groupID int
+		err = rows.Scan(&userID, &groupID)
+		if err != nil {
+			return rolesMap, err
+		}
+
+		rolesMap[groupID] = append(rolesMap[groupID], userID)
+	}
+
+	return rolesMap, err
+}
+
+func AclView(uid uint, vid uint) (bool, error) {
 	var Access bool
 
 	db, err := Open()

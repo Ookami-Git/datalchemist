@@ -54,7 +54,7 @@ func ViewDelete(c *gin.Context) {
 }
 
 func SourceUpdate(c *gin.Context) {
-	var Source models.Source
+	var Source models.Sources
 	c.BindJSON(&Source)
 	id, err := database.SourceUpdate(Source)
 	checkErr(err, c)
@@ -62,7 +62,7 @@ func SourceUpdate(c *gin.Context) {
 }
 
 func ItemUpdate(c *gin.Context) {
-	var Item models.Item
+	var Item models.Items
 	c.BindJSON(&Item)
 	id, err := database.ItemUpdate(Item)
 	checkErr(err, c)
@@ -70,7 +70,7 @@ func ItemUpdate(c *gin.Context) {
 }
 
 func ViewUpdate(c *gin.Context) {
-	var View models.View
+	var View models.Views
 	c.BindJSON(&View)
 	id, err := database.ViewUpdate(View)
 	checkErr(err, c)
@@ -107,15 +107,14 @@ func ParametersGet(c *gin.Context) {
 		if err == nil {
 			Parameters["auth"] = true
 			// Vérifiez si user.Parameters est une map[string]interface{}
-			if userParams, ok := user.Parameters.(map[string]interface{}); ok {
-				// Vérifiez la présence des clés "theme" et "lang" avant de les affecter à Parameters
-				if theme, ok := userParams["theme"]; ok {
-					Parameters["theme"] = theme
-				}
+			userParams, _ := utils.DecodeParameters(user.Parameters)
+			// Vérifiez la présence des clés "theme" et "lang" avant de les affecter à Parameters
+			if theme, ok := userParams["theme"]; ok {
+				Parameters["theme"] = theme
+			}
 
-				if lang, ok := userParams["lang"]; ok {
-					Parameters["lang"] = lang
-				}
+			if lang, ok := userParams["lang"]; ok {
+				Parameters["lang"] = lang
 			}
 		}
 	} else {
@@ -157,29 +156,34 @@ func ViewData(c *gin.Context) {
 }
 
 func SourceList(c *gin.Context) {
-	views := database.SourceList()
+	views, err := database.SourceList()
+	checkErr(err, c)
 	c.JSON(200, views)
 }
 
 func ItemList(c *gin.Context) {
-	views := database.ItemList()
+	views, err := database.ItemList()
+	checkErr(err, c)
 	c.JSON(200, views)
 }
 
 func ViewList(c *gin.Context) {
-	views := database.ViewList()
+	views, err := database.ViewList()
+	checkErr(err, c)
 	c.JSON(200, views)
 }
 
 func SourceSourcesList(c *gin.Context) {
 	id := c.Param("id")
-	views := database.SourceRequire(id)
+	views, err := database.SourceRequire(id)
+	checkErr(err, c)
 	c.JSON(200, views)
 }
 
 func ItemSourcesList(c *gin.Context) {
 	id := c.Param("id")
-	views := database.ItemSources(id)
+	views, err := database.ItemSources(id)
+	checkErr(err, c)
 	c.JSON(200, views)
 }
 
@@ -195,6 +199,44 @@ func UserGet(c *gin.Context) {
 	checkErr(err, c)
 	c.JSON(200, User)
 }
+
+// func UserPost(c *gin.Context) {
+// 	var User models.Users
+// 	c.BindJSON(&User)
+// 	if User.Parameters != "" {
+// 		parametersString, ok := User.Parameters
+// 		if ok {
+// 			parameters := utils.JsonToObject(parametersString).(map[string]interface{})
+// 			if _, ok := parameters["password"]; ok {
+// 				c.JSON(400, gin.H{"error": "parameter password not allowed"})
+// 				return
+// 			}
+// 			User.Parameters = parameters
+// 		}
+// 	}
+
+// 	id := c.Param("id")
+// 	if id != "" {
+// 		// User space
+// 		user_id, err := token.ExtractTokenID(c)
+// 		checkErr(err, c)
+// 		UserInfo, err := database.UserGet(strconv.Itoa(int(user_id)))
+// 		checkErr(err, c)
+
+// 	} else {
+// 		// Admin space
+// 		if id == "0" {
+// 			// Create new user
+// 		} else {
+// 			// Update user
+// 			UserInfo, err := database.UserGet(id)
+// 			checkErr(err, c)
+// 		}
+// 	}
+
+// 	checkErr(err, c)
+// 	c.JSON(200, Users)
+// }
 
 func UsersGet(c *gin.Context) {
 	Users, err := database.UsersGet()
@@ -215,7 +257,7 @@ func RolesByUsers(c *gin.Context) {
 }
 
 func RolesByGroups(c *gin.Context) {
-	Users, err := database.RolesByUsers()
+	Users, err := database.RolesByGroups()
 	checkErr(err, c)
 	c.JSON(200, Users)
 }

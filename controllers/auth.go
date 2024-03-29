@@ -3,10 +3,11 @@ package controllers
 import (
 	"datalchemist/database"
 	"datalchemist/models"
+	"datalchemist/utils"
 	"datalchemist/utils/token"
+	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -47,7 +48,10 @@ func LoginCheck(username string, password string) (string, error) {
 		return "", err
 	}
 
-	parameters := User.Parameters.(map[string]interface{})
+	parameters, err := utils.DecodeParameters(User.Parameters)
+	if err != nil {
+		return "", err
+	}
 
 	if User.Type == "local" {
 		StoredPassword := parameters["password"].(string)
@@ -79,14 +83,15 @@ func CurrentUser(c *gin.Context) {
 
 	u, err := GetUserByID(user_id)
 	isAdmin, err := database.UserIdIsAdmin(user_id)
-	u.IsAdmin = isAdmin
+
+	data := map[string]interface{}{"user": u, "admin": isAdmin}
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": u})
+	c.JSON(http.StatusOK, gin.H{"message": "success", "data": data})
 }
 
 func AdminUser(c *gin.Context) bool {
@@ -106,7 +111,7 @@ func AdminUser(c *gin.Context) bool {
 	return isAdmin
 }
 
-func GetUserByID(uid uint) (models.User, error) {
+func GetUserByID(uid uint) (models.Users, error) {
 
 	u, err := database.UserByIdGet(uid)
 
@@ -115,16 +120,17 @@ func GetUserByID(uid uint) (models.User, error) {
 	}
 
 	if u.Type == "local" {
-		parameters := u.Parameters.(map[string]interface{})
+		parameters, _ := utils.DecodeParameters(u.Parameters)
 		parameters["password"] = nil
-		u.Parameters = parameters
+		jsonData, _ := json.Marshal(parameters)
+		u.Parameters = string(jsonData)
 	}
 
 	return u, nil
 }
 
 func AclView(c *gin.Context) bool {
-	var viewid int
+	var viewid uint
 
 	user_id, err := token.ExtractTokenID(c)
 	if err != nil {
@@ -134,10 +140,8 @@ func AclView(c *gin.Context) bool {
 
 	view := c.Param("id")
 
-	if viewid, err = strconv.Atoi(view); err != nil {
-		View, _ := database.ViewGet(view)
-		viewid = View.ID
-	}
+	View, _ := database.ViewGet(view)
+	viewid = View.ID
 
 	Access, err := database.AclView(user_id, viewid)
 	if err != nil {

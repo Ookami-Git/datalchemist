@@ -26,12 +26,13 @@ import (
 )
 
 func SourceToData(id string, data *map[string]interface{}) interface{} {
-	requirement := database.SourceRequire(id)
+	requirement, err := database.SourceRequire(id)
+	checkErr(err)
 
 	for _, source := range requirement {
 		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
 			(*data)["sn"].(map[string]interface{})[source.Name] = SourceToData(source.Name, data)
-			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(source.ID)] = (*data)["sn"].(map[string]interface{})[source.Name]
+			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = (*data)["sn"].(map[string]interface{})[source.Name]
 		}
 	}
 
@@ -40,7 +41,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 
 	var daSource map[string]interface{}
 
-	err = json.Unmarshal([]byte(result.JSON.(string)), &daSource)
+	err = json.Unmarshal([]byte(result.JSON), &daSource)
 	checkErr(err)
 
 	if loopValue, ok := daSource["loop"]; ok && loopValue != "" {
@@ -80,12 +81,13 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 
 func ItemToData(id string, data *map[string]interface{}) {
 
-	ItemSources := database.ItemSources(id)
+	ItemSources, err := database.ItemSources(id)
+	checkErr(err)
 
 	for _, source := range ItemSources {
 		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
 			(*data)["sn"].(map[string]interface{})[source.Name] = SourceToData(source.Name, data)
-			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(source.ID)] = (*data)["sn"].(map[string]interface{})[source.Name]
+			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = (*data)["sn"].(map[string]interface{})[source.Name]
 		}
 	}
 }
@@ -186,7 +188,7 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 		view, err := database.ViewGet(id)
 		checkErr(err)
 		var ViewParameters []interface{}
-		err = json.Unmarshal([]byte(view.Parameters.(string)), &ViewParameters)
+		err = json.Unmarshal([]byte(view.Parameters), &ViewParameters)
 		checkErr(err)
 		data["view"] = ViewParameters
 		//Make data for items linked to this view
@@ -198,7 +200,7 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 		for _, itemid := range database.ViewItems(id) {
 			Item, err := database.ItemGet(itemid)
 			checkErr(err)
-			(data)["items"].(map[string]interface{})["i"+itemid] = Render(Item.Template.(string), &daData)
+			(data)["items"].(map[string]interface{})["i"+itemid] = Render(Item.Template, &daData)
 		}
 	}
 
@@ -247,9 +249,6 @@ func UrlContent(url string) string {
 		fmt.Println("Erreur lors de la lecture du contenu de la réponse :", err)
 		return ""
 	}
-
-	// Afficher le contenu récupéré
-	fmt.Println("Contenu de l'URL :", string(content))
 
 	return string(content)
 }
@@ -363,4 +362,10 @@ func MakeData(c *gin.Context) map[string]interface{} {
 		"sid": make(map[string]interface{}),
 		"get": c.Request.URL.Query(),
 	}
+}
+
+func DecodeParameters(parameters string) (map[string]interface{}, error) {
+	var params map[string]interface{}
+	err := json.Unmarshal([]byte(parameters), &params)
+	return params, err
 }

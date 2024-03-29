@@ -60,6 +60,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/api/parameters/admin", handlers.AdminParametersGet)
 
 		protected.GET("/api/user/:id", handlers.UserGet)
+		//protected.POST("/api/user/:id", handlers.UserPost)
 		protected.GET("/api/users", handlers.UsersGet)
 
 		//protected.POST("/api/group/:id", handlers.GroupUpdate)
