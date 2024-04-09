@@ -10,10 +10,12 @@ type Parameters struct {
 }
 
 type Users struct {
-	ID         uint   `gorm:"primary_key" json:"id"`
-	Name       string `gorm:"unique;not null" json:"name"`
-	Type       string `gorm:"not null" json:"type"`
-	Parameters string `json:"parameters"`
+	ID       uint   `gorm:"primary_key" json:"id"`
+	Name     string `gorm:"unique;not null" json:"name"`
+	Type     string `gorm:"not null" json:"type"`
+	Lang     string `gorm:"default:default" json:"lang"`
+	Theme    string `gorm:"default:default" json:"theme"`
+	Password string `json:"password"`
 }
 
 type Groups struct {
@@ -31,16 +33,7 @@ type Roles struct {
 	User_ Users  `gorm:"foreignKey:User"`
 }
 
-type Acl_users struct {
-	ID   uint `gorm:"primary_key" json:"id"`
-	View uint `gorm:"index" json:"view"`
-	User uint `gorm:"index" json:"user"`
-
-	View_ Views `gorm:"foreignKey:View"`
-	User_ Users `gorm:"foreignKey:User"`
-}
-
-type Acl_groups struct {
+type Acl struct {
 	ID   uint `gorm:"primary_key" json:"id"`
 	View uint `gorm:"index" json:"view"`
 	Gid  uint `gorm:"index" json:"gid"`
@@ -85,6 +78,7 @@ type Views struct {
 	ID         uint   `gorm:"primary_key" json:"id"`
 	Name       string `gorm:"unique;not null" json:"name"`
 	Parameters string `json:"parameters"`
+	Protected  bool   `gorm:"default:false" json:"protected"`
 }
 
 type View_items struct {

@@ -24,7 +24,7 @@ func JwtAuthMiddleware() gin.HandlerFunc {
 func AdminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !controllers.AdminUser(c) {
-			c.String(http.StatusForbidden, "Forbidden")
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 			c.Abort()
 			return
 		}
@@ -36,9 +36,10 @@ func AclViewMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if controllers.AdminUser(c) {
 			c.Next()
+			return
 		}
 		if !controllers.AclView(c) {
-			c.String(http.StatusForbidden, "Forbidden")
+			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 			c.Abort()
 			return
 		}

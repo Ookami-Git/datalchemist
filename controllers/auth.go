@@ -3,9 +3,7 @@ package controllers
 import (
 	"datalchemist/database"
 	"datalchemist/models"
-	"datalchemist/utils"
 	"datalchemist/utils/token"
-	"encoding/json"
 	"log"
 	"net/http"
 
@@ -48,15 +46,9 @@ func LoginCheck(username string, password string) (string, error) {
 		return "", err
 	}
 
-	parameters, err := utils.DecodeParameters(User.Parameters)
-	if err != nil {
-		return "", err
-	}
-
 	if User.Type == "local" {
-		StoredPassword := parameters["password"].(string)
 
-		err = VerifyPassword(password, StoredPassword)
+		err = VerifyPassword(password, User.Password)
 
 		if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 			return "", err
@@ -73,25 +65,21 @@ func LoginCheck(username string, password string) (string, error) {
 }
 
 func CurrentUser(c *gin.Context) {
-
 	user_id, err := token.ExtractTokenID(c)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	u, err := GetUserByID(user_id)
-	isAdmin, err := database.UserIdIsAdmin(user_id)
-
-	data := map[string]interface{}{"user": u, "admin": isAdmin}
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "success", "data": data})
+	u.Password = ""
+
+	c.JSON(http.StatusOK, u)
 }
 
 func AdminUser(c *gin.Context) bool {
@@ -111,6 +99,12 @@ func AdminUser(c *gin.Context) bool {
 	return isAdmin
 }
 
+func IsAdmin(c *gin.Context) {
+	IsAdmin := AdminUser(c)
+
+	c.JSON(http.StatusOK, gin.H{"admin": IsAdmin})
+}
+
 func GetUserByID(uid uint) (models.Users, error) {
 
 	u, err := database.UserByIdGet(uid)
@@ -119,37 +113,33 @@ func GetUserByID(uid uint) (models.Users, error) {
 		return u, err
 	}
 
-	if u.Type == "local" {
-		parameters, _ := utils.DecodeParameters(u.Parameters)
-		parameters["password"] = nil
-		jsonData, _ := json.Marshal(parameters)
-		u.Parameters = string(jsonData)
-	}
+	u.Password = ""
 
 	return u, nil
 }
 
 func AclView(c *gin.Context) bool {
-	var viewid uint
-
 	user_id, err := token.ExtractTokenID(c)
 	if err != nil {
 		log.Println(err)
 		return false
 	}
 
-	view := c.Param("id")
+	vid := c.Param("id")
 
-	View, _ := database.ViewGet(view)
-	viewid = View.ID
+	View, _ := database.ViewGet(vid)
 
-	Access, err := database.AclView(user_id, viewid)
-	if err != nil {
-		log.Println(err)
-		return false
+	if View.Protected {
+		Access, err := database.AclView(user_id, View.ID)
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+
+		return Access
+	} else {
+		return true
 	}
-
-	return Access
 }
 
 func AuthStatus(c *gin.Context) {

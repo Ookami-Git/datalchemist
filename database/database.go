@@ -20,28 +20,57 @@ func Init() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl_users{}, &models.Acl_groups{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{})
+	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{})
+	// Ajouter les données si elles n'existent pas déjà
 	parameters := []*models.Parameters{
 		{Name: "name", Value: "datalchemist"},
 		{Name: "lang", Value: "en"},
 		{Name: "menu", Value: ""},
 		{Name: "theme", Value: "light"},
-		{Name: "bg_color_light", Value: "rgb(142, 114, 173)"},
-		{Name: "bg_color2_light", Value: "rgb(94, 130, 192)"},
-		{Name: "bg_color_dark", Value: "rgb(60, 11, 111)"},
-		{Name: "bg_color2_dark", Value: "rgb(15, 45, 97)"},
+		{Name: "bg_color_light", Value: "#8e72ad"},
+		{Name: "bg_color2_light", Value: "#5e82c0"},
+		{Name: "bg_color_dark", Value: "#6a11cb"},
+		{Name: "bg_color2_dark", Value: "#2575fc"},
 		{Name: "ldap", Value: "false"},
 		{Name: "ldap_config", Value: "{}"},
 	}
+	for _, p := range parameters {
+		var count int64
+		db.Model(models.Parameters{}).Where("name = ?", p.Name).Count(&count)
+		if count == 0 {
+			db.Create(p)
+		}
+	}
 	users := []*models.Users{
-		{Name: "admin", Type: "local", Parameters: `{"password": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"}`},
+		{ID: 1, Name: "admin", Type: "local", Password: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"},
+	}
+	for _, u := range users {
+		var count int64
+		db.Model(models.Users{}).Where("name = ?", u.Name).Count(&count)
+		if count == 0 {
+			db.Create(u)
+		}
 	}
 	groups := []*models.Groups{
-		{Name: "admin", Description: "Administrator"},
+		{ID: 1, Name: "admin", Description: "Administrator"},
 	}
-	db.Create(parameters)
-	db.Create(users)
-	db.Create(groups)
+	for _, g := range groups {
+		var count int64
+		db.Model(models.Groups{}).Where("name = ?", g.Name).Count(&count)
+		if count == 0 {
+			db.Create(g)
+		}
+	}
+	roles := []*models.Roles{
+		{Gid: 1, User: 1},
+	}
+	for _, r := range roles {
+		var count int64
+		db.Model(models.Roles{}).Where("gid = ? AND user = ?", r.Gid, r.User).Count(&count)
+		if count == 0 {
+			db.Create(r)
+		}
+	}
 	return nil
 }
 
@@ -75,7 +104,7 @@ func ViewGet(id string) (models.Views, error) {
 		return View, err
 	}
 
-	err = db.Where("id = ? OR name = ?", id, id).First(&View).Error
+	err = db.Where("id = ? OR name = ?", id, id).Find(&View).Error
 
 	return View, err
 }
@@ -150,20 +179,6 @@ func ItemSources(id string) ([]models.Sources, error) {
 	return Sources, err
 }
 
-func ViewItems(id string) []string {
-	var Items []string
-
-	db, err := OpenGorm()
-	checkErr(err)
-
-	query := db.Table("view_items").Select("item").Joins("JOIN views ON view_items.view = views.id").Where("view_items.view = (SELECT id FROM views WHERE id = ? OR name = ?)", id, id)
-
-	err = query.Pluck("item", &Items).Error
-	checkErr(err)
-
-	return Items
-}
-
 func SourceRequire(id string) ([]models.Sources, error) {
 	var Sources []models.Sources
 
@@ -172,10 +187,10 @@ func SourceRequire(id string) ([]models.Sources, error) {
 		return Sources, err
 	}
 
-	query := db.Table("source_require").
+	query := db.Table("source_requires").
 		Select("sources.id, sources.name").
 		Joins("JOIN sources ON require = sources.id").
-		Where("source_require.source = (SELECT id FROM sources WHERE id = ? OR name = ?)", id, id)
+		Where("source_requires.source = (SELECT id FROM sources WHERE id = ? OR name = ?)", id, id)
 
 	err = query.Scan(&Sources).Error
 
@@ -297,12 +312,50 @@ func UserGet(username string) (models.Users, error) {
 	return User, err
 }
 
-// func UserPost(uid uint, User models.Users) {
-// 	db, err := OpenGorm()
-// 	checkErr(err)
+func UserAdd(User models.Users) uint {
+	db, err := OpenGorm()
+	checkErr(err)
 
-// 	db.Save(&User{ID: 1, Name: "jinzhu", Age: 100})
-// }
+	db.Create(&User)
+
+	log.Printf("User added with id %d\n", User.ID)
+
+	return User.ID
+}
+
+func UserUpdate(User models.Users) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Save(&User)
+}
+
+func UserDelete(id int) (int, error) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	//Clear roles
+	db.Where("user = ?", id).Delete(&models.Roles{})
+	//Delete user
+	res := db.Where("id = ?", id).Delete(&models.Users{})
+	idRes := int(res.RowsAffected)
+
+	return idRes, res.Error
+}
+
+func RolesDelete(role models.Roles) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Where("gid = ? AND user = ?", role.Gid, role.User).Delete(&models.Roles{})
+}
+
+func RolesAdd(role models.Roles) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Create(&role)
+}
 
 func UsersGet() (map[uint]models.Users, error) {
 	usersMap := make(map[uint]models.Users)
@@ -314,6 +367,8 @@ func UsersGet() (map[uint]models.Users, error) {
 	db.Find(&users)
 
 	for _, user := range users {
+		// Supprimer le mot de passe
+		user.Password = ""
 		// Utiliser l'ID de l'utilisateur comme clé dans la map
 		usersMap[user.ID] = user
 	}
@@ -440,16 +495,11 @@ func AclView(uid uint, vid uint) (bool, error) {
 
 	query := "SELECT EXISTS (" +
 		"SELECT 1 " +
-		"FROM acl_groups " +
-		"JOIN groups ON acl_groups.gid = groups.id " +
+		"FROM acl " +
+		"JOIN groups ON acl.gid = groups.id " +
 		"JOIN roles ON groups.id = roles.gid " +
 		"WHERE roles.user = $1 " +
-		"  AND acl_groups.view = $2 " +
-		"UNION " +
-		"SELECT 1 " +
-		"FROM acl_users " +
-		"WHERE user = $1 " +
-		"  AND view = $2" +
+		"AND acl_groups.view = $2 " +
 		") AS has_permission;"
 
 	err = db.QueryRow(query, uid, vid).Scan(&Access)

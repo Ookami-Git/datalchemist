@@ -93,8 +93,8 @@ func ItemToData(id string, data *map[string]interface{}) {
 }
 
 func ViewToData(id string, data *map[string]interface{}) {
-	ViewItems := database.ViewItems(id)
-
+	ViewItems, err := ViewItems(id)
+	checkErr(err)
 	for _, item := range ViewItems {
 		ItemToData(item, data)
 	}
@@ -197,11 +197,14 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 
 		//For each item get render
 		data["items"] = make(map[string]interface{})
-		for _, itemid := range database.ViewItems(id) {
+		viewitems, err := ViewItems(id)
+		checkErr(err)
+		for _, itemid := range viewitems {
 			Item, err := database.ItemGet(itemid)
 			checkErr(err)
 			(data)["items"].(map[string]interface{})["i"+itemid] = Render(Item.Template, &daData)
 		}
+
 	}
 
 	// Charger le template
@@ -364,8 +367,27 @@ func MakeData(c *gin.Context) map[string]interface{} {
 	}
 }
 
-func DecodeParameters(parameters string) (map[string]interface{}, error) {
-	var params map[string]interface{}
-	err := json.Unmarshal([]byte(parameters), &params)
-	return params, err
+func ViewItems(viewID string) ([]string, error) {
+	ids := make(map[string]bool)
+	view, err := database.ViewGet(viewID)
+	checkErr(err)
+
+	var params [][]map[string]interface{}
+	err = json.Unmarshal([]byte(view.Parameters), &params)
+	checkErr(err)
+
+	result := make([]string, 0, len(params))
+	for _, vp := range params {
+		for _, vpv := range vp {
+			itemID, ok := vpv["itemid"].(float64)
+			if ok {
+				if !ids[strconv.Itoa(int(itemID))] {
+					result = append(result, strconv.Itoa(int(itemID)))
+					ids[strconv.Itoa(int(itemID))] = true
+				}
+			}
+		}
+	}
+
+	return result, err
 }

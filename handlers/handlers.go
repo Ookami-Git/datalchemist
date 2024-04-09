@@ -7,8 +7,10 @@ import (
 	"datalchemist/utils"
 	"datalchemist/utils/token"
 	"log"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func SourceGet(c *gin.Context) {
@@ -29,7 +31,11 @@ func ViewGet(c *gin.Context) {
 	id := c.Param("id")
 	View, err := database.ViewGet(id)
 	checkErr(err, c)
-	c.JSON(200, View)
+	if View.ID == 0 {
+		c.JSON(404, gin.H{"error": "View not found"})
+	} else {
+		c.JSON(200, View)
+	}
 }
 
 func SourceDelete(c *gin.Context) {
@@ -106,15 +112,13 @@ func ParametersGet(c *gin.Context) {
 		user, err := database.UserByIdGet(user_id)
 		if err == nil {
 			Parameters["auth"] = true
-			// Vérifiez si user.Parameters est une map[string]interface{}
-			userParams, _ := utils.DecodeParameters(user.Parameters)
-			// Vérifiez la présence des clés "theme" et "lang" avant de les affecter à Parameters
-			if theme, ok := userParams["theme"]; ok {
-				Parameters["theme"] = theme
+
+			if user.Theme != "default" {
+				Parameters["theme"] = user.Theme
 			}
 
-			if lang, ok := userParams["lang"]; ok {
-				Parameters["lang"] = lang
+			if user.Lang != "default" {
+				Parameters["lang"] = user.Lang
 			}
 		}
 	} else {
@@ -187,60 +191,69 @@ func ItemSourcesList(c *gin.Context) {
 	c.JSON(200, views)
 }
 
-func ViewItemsList(c *gin.Context) {
+func ViewItems(c *gin.Context) {
 	id := c.Param("id")
-	views := database.ViewItems(id)
-	c.JSON(200, views)
+	items, err := utils.ViewItems(id)
+	checkErr(err, c)
+	result := make(map[string]string)
+	for _, itemId := range items {
+		item, err := database.ItemGet(itemId)
+		checkErr(err, c)
+		result["i"+itemId] = item.Template
+	}
+	c.JSON(200, result)
 }
 
 func UserGet(c *gin.Context) {
 	id := c.Param("id")
 	User, err := database.UserGet(id)
 	checkErr(err, c)
+	User.Password = ""
 	c.JSON(200, User)
 }
 
-// func UserPost(c *gin.Context) {
-// 	var User models.Users
-// 	c.BindJSON(&User)
-// 	if User.Parameters != "" {
-// 		parametersString, ok := User.Parameters
-// 		if ok {
-// 			parameters := utils.JsonToObject(parametersString).(map[string]interface{})
-// 			if _, ok := parameters["password"]; ok {
-// 				c.JSON(400, gin.H{"error": "parameter password not allowed"})
-// 				return
-// 			}
-// 			User.Parameters = parameters
-// 		}
-// 	}
+func UserAdd(c *gin.Context) {
+	var User models.Users
+	c.BindJSON(&User)
 
-// 	id := c.Param("id")
-// 	if id != "" {
-// 		// User space
-// 		user_id, err := token.ExtractTokenID(c)
-// 		checkErr(err, c)
-// 		UserInfo, err := database.UserGet(strconv.Itoa(int(user_id)))
-// 		checkErr(err, c)
+	if User.Type == "local" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(User.Password), 14)
+		checkErr(err, c)
+		User.Password = string(hashedPassword)
+	}
 
-// 	} else {
-// 		// Admin space
-// 		if id == "0" {
-// 			// Create new user
-// 		} else {
-// 			// Update user
-// 			UserInfo, err := database.UserGet(id)
-// 			checkErr(err, c)
-// 		}
-// 	}
+	id := database.UserAdd(User)
+	c.JSON(200, gin.H{"id": id})
+}
 
-// 	checkErr(err, c)
-// 	c.JSON(200, Users)
-// }
+func UserUpdate(c *gin.Context) {
+	var User models.Users
+	c.BindJSON(&User)
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		User.ID, err = token.ExtractTokenID(c)
+		checkErr(err, c)
+	} else {
+		User.ID = uint(id)
+	}
+	database.UserUpdate(User)
+}
+
+func UserDelete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid id"})
+		return
+	}
+	id, err = database.UserDelete(int(id))
+	checkErr(err, c)
+	c.JSON(200, id)
+}
 
 func UsersGet(c *gin.Context) {
 	Users, err := database.UsersGet()
 	checkErr(err, c)
+
 	c.JSON(200, Users)
 }
 
@@ -262,10 +275,27 @@ func RolesByGroups(c *gin.Context) {
 	c.JSON(200, Users)
 }
 
+func RolesAdd(c *gin.Context) {
+	Role := models.Roles{}
+	c.BindJSON(&Role)
+	database.RolesAdd(Role)
+}
+
+func RolesDelete(c *gin.Context) {
+	Uid, _ := strconv.Atoi(c.Param("uid"))
+	Gid, _ := strconv.Atoi(c.Param("gid"))
+	log.Printf("Deleting role with uid=%d and gid=%d\n", Uid, Gid)
+	Role := models.Roles{
+		Gid:  uint(Gid),
+		User: uint(Uid),
+	}
+	database.RolesDelete(Role)
+}
+
 func checkErr(err error, c *gin.Context) {
 	if err != nil {
 		log.Print("ERROR handlers :", err)
-		c.JSON(500, err)
+		c.AbortWithStatusJSON(500, gin.H{"error": err})
 		return
 	}
 }
