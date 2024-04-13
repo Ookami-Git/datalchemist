@@ -64,11 +64,13 @@ func SetupRoutes(r *gin.Engine) {
 
 		protected.GET("/api/user/:id", handlers.UserGet)
 		protected.POST("/api/user", handlers.UserAdd)
-		protected.PUT("/api/user/:id", handlers.UserAdd)
+		protected.PUT("/api/user/:id", handlers.UserUpdate)
 		protected.DELETE("/api/user/:id", handlers.UserDelete)
 		protected.GET("/api/users", handlers.UsersGet)
 
-		//protected.POST("/api/group/:id", handlers.GroupUpdate)
+		protected.POST("/api/group", handlers.GroupAdd)
+		protected.PUT("/api/group/:id", handlers.GroupUpdate)
+		protected.DELETE("/api/group/:id", handlers.GroupDelete)
 		protected.GET("/api/groups", handlers.GroupsGet)
 
 		protected.GET("/api/roles/users", handlers.RolesByUsers)

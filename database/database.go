@@ -429,6 +429,37 @@ func GroupsGet() (map[uint]models.Groups, error) {
 	return groupsMap, err
 }
 
+func GroupAdd(Group models.Groups) uint {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Create(&Group)
+
+	log.Printf("Group added with id %d\n", Group.ID)
+
+	return Group.ID
+}
+
+func GroupUpdate(Group models.Groups) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Save(&Group)
+}
+
+func GroupDelete(id int) (int, error) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	//Clear roles
+	db.Where("gid = ?", id).Delete(&models.Roles{})
+	//Delete user
+	res := db.Where("id = ?", id).Delete(&models.Groups{})
+	idRes := int(res.RowsAffected)
+
+	return idRes, res.Error
+}
+
 func RolesByUsers() (map[int][]int, error) {
 	// Utilisation d'une map au lieu d'une slice
 	rolesMap := make(map[int][]int)

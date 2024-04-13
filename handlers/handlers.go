@@ -235,8 +235,19 @@ func UserUpdate(c *gin.Context) {
 		checkErr(err, c)
 	} else {
 		User.ID = uint(id)
+		if User.ID == uint(id) {
+			if User.Password != "" {
+				hashedPassword, err := bcrypt.GenerateFromPassword([]byte(User.Password), 14)
+				checkErr(err, c)
+				User.Password = string(hashedPassword)
+			}
+			database.UserUpdate(User)
+			c.JSON(200, gin.H{"status": "OK"})
+		} else {
+			c.JSON(400, gin.H{"error": "invalid id"})
+		}
+
 	}
-	database.UserUpdate(User)
 }
 
 func UserDelete(c *gin.Context) {
@@ -261,6 +272,39 @@ func GroupsGet(c *gin.Context) {
 	Groups, err := database.GroupsGet()
 	checkErr(err, c)
 	c.JSON(200, Groups)
+}
+
+func GroupAdd(c *gin.Context) {
+	var Group models.Groups
+	c.BindJSON(&Group)
+
+	id := database.GroupAdd(Group)
+	c.JSON(200, gin.H{"id": id})
+}
+
+func GroupUpdate(c *gin.Context) {
+	var Group models.Groups
+	c.BindJSON(&Group)
+
+	id, err := strconv.Atoi(c.Param("id"))
+	checkErr(err, c)
+	if uint(id) == Group.ID {
+		database.GroupUpdate(Group)
+		c.JSON(200, gin.H{"status": "OK"})
+	} else {
+		c.JSON(400, gin.H{"error": "invalid id"})
+	}
+}
+
+func GroupDelete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid id"})
+		return
+	}
+	id, err = database.GroupDelete(int(id))
+	checkErr(err, c)
+	c.JSON(200, id)
 }
 
 func RolesByUsers(c *gin.Context) {
