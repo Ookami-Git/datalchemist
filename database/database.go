@@ -327,7 +327,7 @@ func UserUpdate(User models.Users) {
 	db, err := OpenGorm()
 	checkErr(err)
 
-	db.Save(&User)
+	db.Updates(&User)
 }
 
 func UserDelete(id int) (int, error) {
