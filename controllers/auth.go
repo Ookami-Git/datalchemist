@@ -99,7 +99,7 @@ func ldapAuth(username string, password string) (bool, error) {
 	if ldapSsl {
 		protocol = "ldaps"
 	}
-	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s?verify=false", protocol, ldapHost, ldapPort), ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: ldapSkipVerify}))
+	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s", protocol, ldapHost, ldapPort), ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: ldapSkipVerify}))
 	if err != nil {
 		log.Println(err)
 		return false, err
