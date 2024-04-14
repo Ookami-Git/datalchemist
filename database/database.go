@@ -167,6 +167,7 @@ func ViewDelete(id string) (int, error) {
 		return idRes, err
 	}
 
+	db.Where("view = ?", id).Delete(&models.Acl{})
 	res := db.Where("id = ?", id).Delete(&models.Views{})
 	idRes = int(res.RowsAffected)
 
@@ -214,7 +215,7 @@ func ViewList() ([]models.Views, error) {
 		return Views, err
 	}
 
-	query := db.Table("views").Select("id, name").Order("id")
+	query := db.Table("views").Select("*").Order("id")
 
 	err = query.Scan(&Views).Error
 
@@ -251,7 +252,7 @@ func SourceList() ([]models.Sources, error) {
 	return Sources, err
 }
 
-func ViewUpdate(View models.Views) (uint, error) {
+func ViewAdd(View models.Views) (uint, error) {
 	db, err := OpenGorm()
 	checkErr(err)
 
@@ -468,6 +469,8 @@ func GroupDelete(id int) (int, error) {
 
 	//Clear roles
 	db.Where("gid = ?", id).Delete(&models.Roles{})
+	//Clear Acl
+	db.Where("gid = ?", id).Delete(&models.Acl{})
 	//Delete user
 	res := db.Where("id = ?", id).Delete(&models.Groups{})
 	idRes := int(res.RowsAffected)
@@ -557,6 +560,55 @@ func AclView(uid uint, vid uint) (bool, error) {
 	db.Close()
 
 	return Access, nil
+}
+
+func AclList() (map[string]map[string]map[string][]uint, error) {
+	aclMap := make(map[string]map[string]map[string][]uint)
+
+	db, err := Open()
+	checkErr(err)
+
+	rows, err := db.Query("SELECT view, gid FROM acls")
+	if err != nil {
+		return aclMap, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var viewID string
+		var gid uint
+
+		err = rows.Scan(&viewID, &gid)
+		if err != nil {
+			return aclMap, err
+		}
+
+		if aclMap["views"] == nil {
+			aclMap["views"] = make(map[string]map[string][]uint)
+		}
+
+		if aclMap["views"][viewID] == nil {
+			aclMap["views"][viewID] = make(map[string][]uint)
+		}
+
+		aclMap["views"][viewID]["allow_gid"] = append(aclMap["views"][viewID]["allow_gid"], gid)
+	}
+
+	return aclMap, err
+}
+
+func AclDelete(acl models.Acl) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Where("gid = ? AND view = ?", acl.Gid, acl.View).Delete(&models.Acl{})
+}
+
+func AclAdd(acl models.Acl) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Create(&acl)
 }
 
 func checkErr(err error) {

@@ -75,10 +75,10 @@ func ItemUpdate(c *gin.Context) {
 	c.JSON(200, id)
 }
 
-func ViewUpdate(c *gin.Context) {
+func ViewAdd(c *gin.Context) {
 	var View models.Views
 	c.BindJSON(&View)
-	id, err := database.ViewUpdate(View)
+	id, err := database.ViewAdd(View)
 	checkErr(err, c)
 	c.JSON(200, id)
 }
@@ -261,7 +261,6 @@ func UserUpdate(c *gin.Context) {
 		} else {
 			c.JSON(400, gin.H{"error": "invalid id"})
 		}
-
 	}
 }
 
@@ -349,6 +348,29 @@ func RolesDelete(c *gin.Context) {
 		User: uint(Uid),
 	}
 	database.RolesDelete(Role)
+}
+
+func AclList(c *gin.Context) {
+	Acl, err := database.AclList()
+	checkErr(err, c)
+	c.JSON(200, Acl)
+}
+
+func AclAdd(c *gin.Context) {
+	Acl := models.Acl{}
+	c.BindJSON(&Acl)
+	database.AclAdd(Acl)
+}
+
+func AclDelete(c *gin.Context) {
+	Vid, _ := strconv.Atoi(c.Param("vid"))
+	Gid, _ := strconv.Atoi(c.Param("gid"))
+	log.Printf("Deleting role with vid=%d and gid=%d\n", Vid, Gid)
+	Acl := models.Acl{
+		Gid:  uint(Gid),
+		View: uint(Vid),
+	}
+	database.AclDelete(Acl)
 }
 
 func checkErr(err error, c *gin.Context) {

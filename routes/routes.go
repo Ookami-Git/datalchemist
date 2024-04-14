@@ -54,10 +54,15 @@ func SetupRoutes(r *gin.Engine) {
 		protected.DELETE("/api/item/:id", handlers.ItemDelete)
 		protected.POST("/api/item", handlers.ItemUpdate)
 		protected.GET("/api/items", handlers.ItemList)
+		protected.GET("/api/item/sources/:id", handlers.ItemSourcesList)
 
 		protected.DELETE("/api/view/:id", handlers.ViewDelete)
-		protected.POST("/api/view", handlers.ViewUpdate)
+		protected.POST("/api/view", handlers.ViewAdd)
 		protected.GET("/api/views", handlers.ViewList)
+
+		protected.GET("/api/source/:id", handlers.SourceGet)
+		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
+		protected.GET("/api/sources", handlers.SourceList)
 
 		protected.PUT("/api/parameter/:id", handlers.ParametersUpdate)
 		protected.GET("/api/parameters/admin", handlers.AdminParametersGet)
@@ -78,10 +83,8 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/api/roles", handlers.RolesAdd)
 		protected.DELETE("/api/roles/user/:uid/group/:gid", handlers.RolesDelete)
 
-		protected.GET("/api/source/:id", handlers.SourceGet)
-		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
-		protected.GET("/api/sources", handlers.SourceList)
-
-		protected.GET("/api/item/sources/:id", handlers.ItemSourcesList)
+		protected.GET("/api/acl", handlers.AclList)
+		protected.POST("/api/acl", handlers.AclAdd)
+		protected.DELETE("/api/acl/view/:vid/group/:gid", handlers.AclDelete)
 	}
 }
