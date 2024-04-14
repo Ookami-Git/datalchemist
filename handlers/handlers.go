@@ -88,6 +88,21 @@ func AdminParametersGet(c *gin.Context) {
 	c.JSON(200, Parameters)
 }
 
+func ParametersUpdate(c *gin.Context) {
+	var Parameters models.Parameters
+	c.BindJSON(&Parameters)
+
+	id := c.Param("id")
+	if id == Parameters.Name {
+		database.ParametersUpdate(Parameters)
+		c.JSON(200, gin.H{"status": "OK"})
+	} else {
+		c.JSON(400, gin.H{"error": "invalid id"})
+	}
+
+	c.JSON(200, "OK")
+}
+
 func ParametersGet(c *gin.Context) {
 	Parameters := database.ParametersGet()
 	user_id, err := token.ExtractTokenID(c)

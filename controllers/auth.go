@@ -1,13 +1,17 @@
 package controllers
 
 import (
+	"crypto/tls"
 	"datalchemist/database"
 	"datalchemist/models"
 	"datalchemist/utils/token"
+	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-ldap/ldap/v3"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -47,10 +51,20 @@ func LoginCheck(username string, password string) (string, error) {
 	}
 
 	if User.Type == "local" {
+		log.Printf("password: %s, userpassword: %s\n", password, User.Password)
 
 		err = VerifyPassword(password, User.Password)
 
-		if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
+		if err == bcrypt.ErrMismatchedHashAndPassword {
+			// Mauvais mot de passe
+			return "", err
+		} else if err != nil {
+			// Autre erreur
+			return "", err
+		}
+	} else if User.Type == "ldap" {
+		access, err := ldapAuth(username, password)
+		if (!access) || (err != nil) {
 			return "", err
 		}
 	}
@@ -62,6 +76,74 @@ func LoginCheck(username string, password string) (string, error) {
 	}
 
 	return token, nil
+}
+
+func ldapAuth(username string, password string) (bool, error) {
+	parameters := database.ParametersGet()
+
+	ldapEnable, _ := strconv.ParseBool(parameters["ldap"].(string))
+	ldapHost := parameters["ldap_host"].(string)
+	ldapPort := parameters["ldap_port"].(string)
+	ldapSsl, _ := strconv.ParseBool(parameters["ldap_ssl"].(string))
+	ldapSkipVerify, _ := strconv.ParseBool(parameters["ldap_skip_verify"].(string))
+	ldapBaseDN := parameters["ldap_base_dn"].(string)
+	ldapSearchFilter := parameters["ldap_filter"].(string)
+	ldapUser := parameters["ldap_user"].(string)
+	ldapPassword := parameters["ldap_password"].(string)
+
+	if !ldapEnable {
+		return false, fmt.Errorf("LDAP is not enabled")
+	}
+
+	protocol := "ldap"
+	if ldapSsl {
+		protocol = "ldaps"
+	}
+	l, err := ldap.DialURL(fmt.Sprintf("%s://%s:%s?verify=false", protocol, ldapHost, ldapPort), ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: ldapSkipVerify}))
+	if err != nil {
+		log.Println(err)
+		return false, err
+	}
+	defer l.Close()
+
+	if ldapUser != "" && ldapPassword != "" {
+		err = l.Bind(ldapUser, ldapPassword)
+		if err != nil {
+			log.Println("Failed to bind with service account")
+			return false, err
+		}
+	}
+
+	// Search for the given username
+	searchRequest := ldap.NewSearchRequest(
+		ldapBaseDN,
+		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		fmt.Sprintf("(&(objectClass=organizationalPerson)(%s=%s))", ldapSearchFilter, ldap.EscapeFilter(username)),
+		[]string{"dn"},
+		nil,
+	)
+
+	sr, err := l.Search(searchRequest)
+	if err != nil {
+		log.Println(err)
+		return false, err
+	}
+
+	if len(sr.Entries) != 1 {
+		log.Println("User does not exist or too many entries returned")
+		return false, err
+	}
+
+	userdn := sr.Entries[0].DN
+
+	// Bind as the user to verify their password
+	err = l.Bind(userdn, password)
+	if err != nil {
+		log.Println(err)
+		return false, fmt.Errorf("failed to bind user %s", username)
+	}
+
+	return true, nil
 }
 
 func CurrentUser(c *gin.Context) {

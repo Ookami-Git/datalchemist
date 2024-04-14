@@ -59,7 +59,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/api/view", handlers.ViewUpdate)
 		protected.GET("/api/views", handlers.ViewList)
 
-		//protected.POST("/api/parameters", handlers.ParametersUpdate)
+		protected.PUT("/api/parameter/:id", handlers.ParametersUpdate)
 		protected.GET("/api/parameters/admin", handlers.AdminParametersGet)
 
 		protected.GET("/api/user/:id", handlers.UserGet)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
@@ -32,7 +33,14 @@ func Init() error {
 		{Name: "bg_color_dark", Value: "#6a11cb"},
 		{Name: "bg_color2_dark", Value: "#2575fc"},
 		{Name: "ldap", Value: "false"},
-		{Name: "ldap_config", Value: "{}"},
+		{Name: "ldap_host", Value: ""},
+		{Name: "ldap_port", Value: "389"},
+		{Name: "ldap_ssl", Value: "false"},
+		{Name: "ldap_skip_verify", Value: "false"},
+		{Name: "ldap_base_dn", Value: ""},
+		{Name: "ldap_filter", Value: "uid"},
+		{Name: "ldap_user", Value: ""},
+		{Name: "ldap_password", Value: ""},
 	}
 	for _, p := range parameters {
 		var count int64
@@ -41,8 +49,9 @@ func Init() error {
 			db.Create(p)
 		}
 	}
+	adminpassword, _ := bcrypt.GenerateFromPassword([]byte("admin"), 14)
 	users := []*models.Users{
-		{ID: 1, Name: "admin", Type: "local", Password: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918"},
+		{ID: 1, Name: "admin", Type: "local", Password: string(adminpassword)},
 	}
 	for _, u := range users {
 		var count int64
@@ -295,6 +304,12 @@ func ParametersGet() map[string]interface{} {
 	}
 
 	return Parameters
+}
+
+func ParametersUpdate(Parameters models.Parameters) {
+	db, err := OpenGorm()
+	checkErr(err)
+	db.Save(&Parameters)
 }
 
 func UserGet(username string) (models.Users, error) {
