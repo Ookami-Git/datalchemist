@@ -27,7 +27,9 @@ import (
 
 func SourceToData(id string, data *map[string]interface{}) interface{} {
 	requirement, err := database.SourceRequire(id)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	for _, source := range requirement {
 		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
@@ -37,34 +39,44 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 	}
 
 	result, err := database.SourceGet(id)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	var daSource map[string]interface{}
 
 	err = json.Unmarshal([]byte(result.JSON), &daSource)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	if loopValue, ok := daSource["loop"]; ok && loopValue != "" {
 		// WITH LOOP
 		SearchResult := SearchInMap(*data, daSource["loop"].(string))
 		Path := daSource["path"].(string)
 		switch loop := SearchResult.(type) {
+		// Case array
 		case []interface{}:
 			var daMap = []interface{}{}
 			for _, value := range loop {
 				context := *data
 				context["item"] = value
-
+				if query, ok := daSource["query"]; ok {
+					daSource["query"] = Render(query.(string), &context)
+				}
 				daSource["path"] = Render(Path, &context)
 				daMap = append(daMap, GetSourceContent(daSource))
 			}
 			return daMap
+		// Case map
 		case map[string]interface{}:
 			daMap := make(map[string]interface{})
 			for key, value := range loop {
 				context := *data
 				context["item"] = value
-
+				if query, ok := daSource["query"]; ok {
+					daSource["query"] = Render(query.(string), &context)
+				}
 				daSource["path"] = Render(Path, &context)
 				daMap[key] = GetSourceContent(daSource)
 			}
@@ -73,6 +85,9 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 	} else {
 		// WITHOUT LOOP
 		daSource["path"] = Render(daSource["path"].(string), data)
+		if query, ok := daSource["query"]; ok {
+			daSource["query"] = Render(query.(string), data)
+		}
 		daMap := GetSourceContent(daSource)
 		return daMap
 	}
@@ -82,7 +97,9 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 func ItemToData(id string, data *map[string]interface{}) {
 
 	ItemSources, err := database.ItemSources(id)
-	checkErr(err)
+	if checkErr(err) {
+		return
+	}
 
 	for _, source := range ItemSources {
 		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
@@ -94,7 +111,9 @@ func ItemToData(id string, data *map[string]interface{}) {
 
 func ViewToData(id string, data *map[string]interface{}) {
 	ViewItems, err := ViewItems(id)
-	checkErr(err)
+	if checkErr(err) {
+		return
+	}
 	for _, item := range ViewItems {
 		ItemToData(item, data)
 	}
@@ -133,7 +152,9 @@ func SearchInMap(daMap map[string]interface{}, path string) interface{} {
 	path = strings.TrimSpace(path)
 
 	data, err := json.Marshal(daMap)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	searchedData := gjson.Get(string(data), path)
 
@@ -144,7 +165,9 @@ func SearchInMap(daMap map[string]interface{}, path string) interface{} {
 
 	var result interface{}
 	err = json.Unmarshal([]byte(searchedData.String()), &result)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	return result
 }
@@ -153,7 +176,9 @@ func Render(template string, data *map[string]interface{}) string {
 	context := gonja.Context(*data)
 
 	tpl, err := gonja.FromString(template)
-	checkErr(err)
+	if checkErr(err) {
+		return "Gonja Template Error"
+	}
 
 	outputString, err := tpl.Execute(context)
 	if err != nil {
@@ -186,10 +211,14 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 	if Page != "View" {
 		//Get view parameters
 		view, err := database.ViewGet(id)
-		checkErr(err)
+		if checkErr(err) {
+			return ""
+		}
 		var ViewParameters []interface{}
 		err = json.Unmarshal([]byte(view.Parameters), &ViewParameters)
-		checkErr(err)
+		if checkErr(err) {
+			return ""
+		}
 		data["view"] = ViewParameters
 		//Make data for items linked to this view
 		daData := MakeData(c)
@@ -198,7 +227,9 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 		//For each item get render
 		data["items"] = make(map[string]interface{})
 		viewitems, err := ViewItems(id)
-		checkErr(err)
+		if checkErr(err) {
+			return ""
+		}
 		for _, itemid := range viewitems {
 			Item, err := database.ItemGet(itemid)
 			checkErr(err)
@@ -209,11 +240,15 @@ func ViewRender(id string, Page string, c *gin.Context) string {
 
 	// Charger le template
 	template, err := pongo2.FromFile("utils/embed/templates/home.j2")
-	checkErr(err)
+	if checkErr(err) {
+		return ""
+	}
 
 	// Rendre le template avec les données
 	renderedTemplate, err := template.Execute(data)
-	checkErr(err)
+	if checkErr(err) {
+		return ""
+	}
 
 	return renderedTemplate
 }
@@ -352,11 +387,12 @@ func SQLToObject(connectionString string, query string, dbtype string) []map[str
 	return result
 }
 
-func checkErr(err error) {
+func checkErr(err error) bool {
 	if err != nil {
 		log.Print("ERROR utils :", err)
-		return
+		return true
 	}
+	return false
 }
 
 func MakeData(c *gin.Context) map[string]interface{} {
