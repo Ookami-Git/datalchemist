@@ -19,9 +19,11 @@ import (
 var staticFiles embed.FS
 
 func main() {
+	// PARAMETERS ----------------------------
 	// Lire les valeurs par défaut
 	viper.SetDefault("listen", "0.0.0.0:8080")
 	viper.SetDefault("database", "datalchemist.sqlite")
+	//viper.SetDefault("output", "datalchemist.log")
 
 	// Définir les flags
 	pflag.StringP("listen", "l", viper.GetString("listen"), "Adresse d'écoute")
@@ -38,9 +40,7 @@ func main() {
 	viper.AddConfigPath(".")             // optionally look for config in the working directory
 
 	if err := viper.ReadInConfig(); err != nil {
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
-
-		} else {
+		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {
 			panic(fmt.Errorf("fatal error config file: %w", err))
 		}
 	}
@@ -51,23 +51,25 @@ func main() {
 
 	// Utiliser viper pour obtenir les valeurs
 	listen := viper.GetString("listen")
+	// END PARAMETERS ----------------------------
+
+	// LOGS ----------------------------
+	gin.SetMode(gin.ReleaseMode)
 
 	// Disable Console Color, you don't need console color when writing the logs to file.
 	// gin.DisableConsoleColor()
 
-	gin.SetMode(gin.ReleaseMode)
-
 	// Logging to a file.
-	// f, _ := os.Create("gin.log")
-	// gin.DefaultWriter = io.MultiWriter(f)
+	//f, _ := os.Create("gin.log")
+	//gin.DefaultWriter = io.MultiWriter(f)
+	// END LOGS ----------------------------
 
-	// Init DB
+	// DATABASE ----------------------------
 	if err := database.Init(); err != nil {
 		log.Fatal(err)
 	}
 
-	//distFS, _ := fs.Sub(staticFiles, "web/dist")
-
+	// GO GIN (WEB) ----------------------------
 	// Configuration du routeur Gin
 	r := gin.Default()
 
