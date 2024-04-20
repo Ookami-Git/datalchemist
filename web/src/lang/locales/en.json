@@ -1,0 +1,62 @@
+{
+    "auth": {
+        "user": "Username",
+        "password": "Password",
+        "message": "Please enter your username and password",
+        "button": "Login"
+    },
+    "menu": {
+        "profil": "My account",
+        "logout": "Logout",
+        "admin": "Settings",
+        "edit": "Editor"
+    },
+    "profil": {
+        "header": "My account"
+    },
+    "admin": {
+        "header": "Settings",
+        "global": {
+            "header": "General",
+            "name": "Name",
+            "theme": "Default theme",
+            "lang": "Default language",
+            "bg": "Background",
+            "dark": "Dark",
+            "light": "Light",
+            "ldap": {
+                "header": "Configure LDAP authentication",
+                "enable": "Enable"
+            }
+        },
+        "navbar": {
+            "header": "Navbar",
+            "error": {
+                "yaml":"The YAML code contains syntax errors",
+                "req-name":"The \"name\" key is required",
+                "req-boolean":"The value must be a boolean (true/false)",
+                "req-array":"The value must be a YAML array",
+                "req-string":"The value must be a text",
+                "subitems":"The imbrication of \"subitems\" is not supported",
+                "unknown-key":"The following key is not supported"
+            }
+        },
+        "users": {
+            "header": "Users"
+        },
+        "groups": {
+            "header": "Groups"
+        },
+        "acl": {
+            "header": "Access control"
+        }
+    },
+    "edit": {
+        "sources": "Sources",
+        "items": "Items",
+        "views": "Views",
+        "name": "Name",
+        "actions": "Actions"
+    }
+}
+
