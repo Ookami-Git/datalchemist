@@ -6,14 +6,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
 	_ "github.com/mattn/go-sqlite3"
 )
-
-const dbName = "database.sqlite"
 
 var dbGorm *gorm.DB
 
@@ -87,10 +86,12 @@ func Init() error {
 
 // Open database
 func Open() (*sql.DB, error) {
+	dbName := viper.GetString("database")
 	return sql.Open("sqlite3", dbName)
 }
 
 func OpenGorm() (*gorm.DB, error) {
+	dbName := viper.GetString("database")
 	if dbGorm == nil {
 		var err error
 		dbGorm, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{})

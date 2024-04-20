@@ -5,7 +5,11 @@ import (
 	"datalchemist/database"
 	"datalchemist/routes"
 	"embed"
+	"fmt"
 	"log"
+
+	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
@@ -15,6 +19,39 @@ import (
 var staticFiles embed.FS
 
 func main() {
+	// Lire les valeurs par défaut
+	viper.SetDefault("listen", "0.0.0.0:8080")
+	viper.SetDefault("database", "datalchemist.sqlite")
+
+	// Définir les flags
+	pflag.StringP("listen", "l", viper.GetString("listen"), "Adresse d'écoute")
+	pflag.StringP("database", "d", viper.GetString("database"), "Chemin de la base de données")
+	pflag.Parse()
+
+	// Lier les flags à viper
+	viper.BindPFlag("listen", pflag.Lookup("listen"))
+	viper.BindPFlag("database", pflag.Lookup("database"))
+
+	viper.SetConfigName(".datalchemist") // name of config file (without extension)
+	viper.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
+	viper.AddConfigPath("$HOME/")        // call multiple times to add many search paths
+	viper.AddConfigPath(".")             // optionally look for config in the working directory
+
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+
+		} else {
+			panic(fmt.Errorf("fatal error config file: %w", err))
+		}
+	}
+
+	// Lire les variables d'environnement
+	viper.SetEnvPrefix("da")
+	viper.AutomaticEnv()
+
+	// Utiliser viper pour obtenir les valeurs
+	listen := viper.GetString("listen")
+
 	// Disable Console Color, you don't need console color when writing the logs to file.
 	// gin.DisableConsoleColor()
 
@@ -41,8 +78,8 @@ func main() {
 	routes.SetupRoutes(r)
 
 	// Utiliser une fonction utilitaire
-	log.Println("Server is running...")
+	log.Printf("Server is running on %s", listen)
 
 	// Démarrer le serveur
-	r.Run(":8555")
+	r.Run(listen)
 }

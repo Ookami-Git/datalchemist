@@ -1,14 +1,40 @@
 ## Installation
 ### Build
+#### Requirement for build
+ [npm](https://nodejs.org/en/download)
+ [go](https://go.dev/dl/)
+#### Commands for build
 ```bash
 git clone https://github.com/Ookami-Git/datalchemist.git
 cd datalchemist/web
+npm install
 npm run build
 cd ..
 go build
 ```
 ### Compilated
 Download last version from releases and run it.
+## Options
+- Listen : Configure listen host and port, default value is 0.0.0.0:8080
+- Database : Configure SQLITE database path, default value is datalchsmist.sqlite in the same directory as application
+### Parameters
+You can use app parameters
+```shell
+  -d, --database string
+  -l, --listen   string
+```
+### Configuration file
+You can create configuration file named .datalchemist in yaml syntaxe in the same directory as application or $HOME
+```yaml
+listen:   ":8080"
+database: "datalchsmist.sqlite"
+```
+### Env vars
+You can usr env vars
+```shell
+export DA_LISTEN=":8080"
+export DA_DATABASE="datalchsmist.sqlite"
+```
 ## YAML Navigation Menu
 Create your menu (navbar) with YAML syntax
 ```yaml
