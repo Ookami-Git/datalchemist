@@ -15,9 +15,11 @@ import (
 
 const dbName = "database.sqlite"
 
+var dbGorm *gorm.DB
+
 // Init database (create if not exist)
 func Init() error {
-	db, err := gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+	db, err := OpenGorm()
 	if err != nil {
 		panic("failed to connect database")
 	}
@@ -89,7 +91,14 @@ func Open() (*sql.DB, error) {
 }
 
 func OpenGorm() (*gorm.DB, error) {
-	return gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+	if dbGorm == nil {
+		var err error
+		dbGorm, err = gorm.Open(sqlite.Open(dbName), &gorm.Config{})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return dbGorm, nil
 }
 
 func SourceGet(id string) (models.Sources, error) {
@@ -569,6 +578,7 @@ func AclList() (map[string]map[string]map[string][]uint, error) {
 	checkErr(err)
 
 	rows, err := db.Query("SELECT view, gid FROM acls")
+	defer db.Close()
 	if err != nil {
 		return aclMap, err
 	}
@@ -609,6 +619,34 @@ func AclAdd(acl models.Acl) {
 	checkErr(err)
 
 	db.Create(&acl)
+}
+
+func ItemAddRequire(Require models.Item_sources) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Create(&Require)
+}
+
+func ItemDeleteRequire(Item string, Source string) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Where("item = ? AND source = ?", Item, Source).Delete(&models.Item_sources{})
+}
+
+func SourceAddRequire(Require models.Source_require) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Create(&Require)
+}
+
+func SourceDeleteRequire(Source string, Require string) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Where("source = ? AND require = ?", Source, Require).Delete(&models.Source_require{})
 }
 
 func checkErr(err error) {

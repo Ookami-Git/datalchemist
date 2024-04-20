@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
@@ -30,8 +31,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("token", token, 3600, "/", "localhost", true, true)
-
+	c.SetCookie("token", token, 3600, "/", GetHost(c), false, true)
 	c.JSON(http.StatusOK, gin.H{"token": token})
 
 }
@@ -51,8 +51,6 @@ func LoginCheck(username string, password string) (string, error) {
 	}
 
 	if User.Type == "local" {
-		log.Printf("password: %s, userpassword: %s\n", password, User.Password)
-
 		err = VerifyPassword(password, User.Password)
 
 		if err == bcrypt.ErrMismatchedHashAndPassword {
@@ -241,13 +239,22 @@ func AuthStatus(c *gin.Context) {
 	}
 
 	// Réémettez le cookie avec une nouvelle durée de validité
-	c.SetCookie("token", token, 3600, "/", "localhost", true, true)
+	c.SetCookie("token", token, 3600, "/", GetHost(c), false, true)
 
 	// If we got a user ID without any errors, the user is authenticated.
 	c.JSON(http.StatusOK, gin.H{"authenticated": true})
 }
 
 func Logout(c *gin.Context) {
-	c.SetCookie("token", "", -1, "/", "localhost", false, true)
+	c.SetCookie("token", "", -1, "/", GetHost(c), false, true)
 	c.String(http.StatusOK, "Cookie has been deleted")
+}
+
+func GetHost(c *gin.Context) string {
+	host := c.Request.Host
+	if strings.Contains(host, ":") {
+		host = strings.Split(host, ":")[0]
+	}
+
+	return host
 }

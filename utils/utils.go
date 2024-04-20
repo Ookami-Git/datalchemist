@@ -2,6 +2,7 @@
 package utils
 
 import (
+	"crypto/tls"
 	"database/sql"
 	"datalchemist/database"
 	"encoding/json"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/flosch/pongo2/v6"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -195,64 +195,6 @@ func Render(template string, data *map[string]interface{}) string {
 	return outputString
 }
 
-func ViewRender(id string, Page string, c *gin.Context) string {
-	//templateSet := pongo2.NewSet("", &loader.Loader{Content: templates})
-	Parameters := database.ParametersGet()
-	Lang := YamlToObject(FileContent(fmt.Sprintf("utils/embed/lang/%s.yml", Parameters["lang"])))
-
-	// Données pour le template
-	data := pongo2.Context{
-		"parameter": Parameters,
-		"lang":      Lang,
-		"page":      Page,
-		"id":        id,
-	}
-	// View
-	if Page != "View" {
-		//Get view parameters
-		view, err := database.ViewGet(id)
-		if checkErr(err) {
-			return ""
-		}
-		var ViewParameters []interface{}
-		err = json.Unmarshal([]byte(view.Parameters), &ViewParameters)
-		if checkErr(err) {
-			return ""
-		}
-		data["view"] = ViewParameters
-		//Make data for items linked to this view
-		daData := MakeData(c)
-		ViewToData(id, &daData)
-
-		//For each item get render
-		data["items"] = make(map[string]interface{})
-		viewitems, err := ViewItems(id)
-		if checkErr(err) {
-			return ""
-		}
-		for _, itemid := range viewitems {
-			Item, err := database.ItemGet(itemid)
-			checkErr(err)
-			(data)["items"].(map[string]interface{})["i"+itemid] = Render(Item.Template, &daData)
-		}
-
-	}
-
-	// Charger le template
-	template, err := pongo2.FromFile("utils/embed/templates/home.j2")
-	if checkErr(err) {
-		return ""
-	}
-
-	// Rendre le template avec les données
-	renderedTemplate, err := template.Execute(data)
-	if checkErr(err) {
-		return ""
-	}
-
-	return renderedTemplate
-}
-
 func FileContent(filePath string) string {
 	// Ouvrir le fichier
 	file, err := os.Open(filePath)
@@ -274,7 +216,11 @@ func FileContent(filePath string) string {
 
 func UrlContent(url string) string {
 	// Effectuer une requête HTTP GET
-	response, err := http.Get(url)
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+	response, err := client.Get(url)
 	if err != nil {
 		fmt.Println("Erreur lors de la requête HTTP :", err)
 		return ""
@@ -297,7 +243,9 @@ func JsonToObject(jsonData string) interface{} {
 
 	// Utiliser json.Unmarshal pour transformer le JSON en objet
 	err := json.Unmarshal([]byte(jsonData), &data)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	//fmt.Printf("%+v", data)
 
@@ -310,7 +258,9 @@ func YamlToObject(yamlData string) interface{} {
 
 	// Utiliser yaml.Unmarshal pour transformer le YAML en objet
 	err := yaml.Unmarshal([]byte(yamlData), &data)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	//fmt.Printf("%+v", data)
 
@@ -320,7 +270,9 @@ func YamlToObject(yamlData string) interface{} {
 func XmlToObject(xmlData string) interface{} {
 	decoder := xml2map.NewDecoder(strings.NewReader(xmlData))
 	data, err := decoder.Decode()
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	//fmt.Printf("%+v", data)
 
@@ -333,20 +285,28 @@ func SQLToObject(connectionString string, query string, dbtype string) []map[str
 	//PostgreSQL	connectionString := "user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432"
 	// Ouvrir une connexion à la base de données
 	db, err := sql.Open(dbtype, connectionString)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 	defer db.Close()
 
 	// Vérifier la connexion à la base de données
 	err = db.Ping()
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	// Exécuter une requête SELECT
 	rows, err := db.Query(query)
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
-	checkErr(err)
+	if checkErr(err) {
+		return nil
+	}
 
 	var result []map[string]interface{}
 

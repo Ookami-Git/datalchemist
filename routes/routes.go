@@ -49,20 +49,23 @@ func SetupRoutes(r *gin.Engine) {
 
 		protected.DELETE("/api/source/:id", handlers.SourceDelete)
 		protected.POST("/api/source", handlers.SourceUpdate)
+		protected.GET("/api/source/:id", handlers.SourceGet)
+		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
+		protected.GET("/api/sources", handlers.SourceList)
+		protected.POST("/api/source/require", handlers.SourceAddRequire)
+		protected.DELETE("/api/source/:id/require/:sid", handlers.SourceDeleteRequire)
 
 		protected.GET("/api/item/:id", handlers.ItemGet)
 		protected.DELETE("/api/item/:id", handlers.ItemDelete)
 		protected.POST("/api/item", handlers.ItemUpdate)
 		protected.GET("/api/items", handlers.ItemList)
 		protected.GET("/api/item/sources/:id", handlers.ItemSourcesList)
+		protected.POST("/api/item/require", handlers.ItemAddRequire)
+		protected.DELETE("/api/item/:id/require/:sid", handlers.ItemDeleteRequire)
 
 		protected.DELETE("/api/view/:id", handlers.ViewDelete)
 		protected.POST("/api/view", handlers.ViewAdd)
 		protected.GET("/api/views", handlers.ViewList)
-
-		protected.GET("/api/source/:id", handlers.SourceGet)
-		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
-		protected.GET("/api/sources", handlers.SourceList)
 
 		protected.PUT("/api/parameter/:id", handlers.ParametersUpdate)
 		protected.GET("/api/parameters/admin", handlers.AdminParametersGet)

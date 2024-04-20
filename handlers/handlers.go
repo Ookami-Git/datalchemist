@@ -75,6 +75,30 @@ func ItemUpdate(c *gin.Context) {
 	c.JSON(200, id)
 }
 
+func ItemAddRequire(c *gin.Context) {
+	var Require models.Item_sources
+	c.BindJSON(&Require)
+	database.ItemAddRequire(Require)
+}
+
+func ItemDeleteRequire(c *gin.Context) {
+	id := c.Param("id")
+	sid := c.Param("sid")
+	database.ItemDeleteRequire(id, sid)
+}
+
+func SourceAddRequire(c *gin.Context) {
+	var Require models.Source_require
+	c.BindJSON(&Require)
+	database.SourceAddRequire(Require)
+}
+
+func SourceDeleteRequire(c *gin.Context) {
+	id := c.Param("id")
+	sid := c.Param("sid")
+	database.SourceDeleteRequire(id, sid)
+}
+
 func ViewAdd(c *gin.Context) {
 	var View models.Views
 	c.BindJSON(&View)
