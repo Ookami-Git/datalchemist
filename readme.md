@@ -1,8 +1,10 @@
 ## Installation
 ### Build
 ```bash
-git clone ...
-cd ...
+git clone https://github.com/Ookami-Git/datalchemist.git
+cd datalchemist/web
+npm run build
+cd ..
 go build
 ```
 ### Compilated
