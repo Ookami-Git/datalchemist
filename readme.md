@@ -1,8 +1,10 @@
+# Datalchemist
+![datalchemist](Datalchemist.png)
 ## Installation
 ### Build
 #### Requirement for build
- [npm](https://nodejs.org/en/download)
- [go](https://go.dev/dl/)
+- [npm](https://nodejs.org/en/download)
+- [go](https://go.dev/dl/)
 #### Commands for build
 ```bash
 git clone https://github.com/Ookami-Git/datalchemist.git
@@ -57,21 +59,26 @@ Create your menu (navbar) with YAML syntax
 ```
 /!\ Multiples level submenu does **not work**
 ## Sources
-TODO
+For source Datalchemist use [GONJA](https://pkg.go.dev/github.com/noirbizarre/gonja) for templating. The syntaxe is [jinja](https://jinja.palletsprojects.com/en/) compatible.
+
+When you use loop, you can use ```{{ item }}``` var for each iteration of loop.
 ## Items
 ### Variables
-Use jinja2 syntax for vars : https://jinja.palletsprojects.com/en/3.1.x/templates/
+Use nunjucks syntax for vars : https://mozilla.github.io/nunjucks/templating.html
 Var usage :
 - With sources
->Source name : **srcFoo**
-Source id : **1**
-Var : *foo* = "hello world"
-{{ sid.s**ID**.*foo* }} => {{ sid.s**1**.*foo* }} => "hello world"
+>Source name : **srcFoo**  
+Source id : **1**  
+Var : *foo* = "hello world"  
+{{ sid.s**ID**.*foo* }} => {{ sid.s**1**.*foo* }} => "hello world"  
 {{ sn.**NAME**.*foo* }} => {{ sn.**srcFoo**.*foo* }} => "hello world"
 
 - With GET vars
->http://datalchemisthost:8080/.../test&foo=bar
-{{ get.*GetVarName* }} => {{ get.*foo* }} => "bar"
+>http://datalchemisthost:8080/.../test?foo=foo&foo=bar&bar=foo  
+{{ get.*GetVarName* }} => {{ get.*foo* }} => ["foo","bar"]  
+{{ get.*GetVarName* }} => {{ get.*foo[0]* }} => "foo"  
+{{ get.*GetVarName* }} => {{ get.*foo[1]* }} => "bar"  
+{{ get.*GetVarName* }} => {{ get.*bar[0]* }} => "foo"
 
 ### HTML / CSS
 Use bootstrap 5 with icons for html/css : https://getbootstrap.com/docs/5.3/getting-started/introduction/
