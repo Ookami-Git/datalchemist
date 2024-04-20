@@ -201,6 +201,17 @@ function unlink(id) {
                                   </div>
                                 </div>
                                 <br>
+                                <span>Table</span> (html/css) <a data-bs-toggle="collapse" href="#collapseTable"><i class="bi bi-caret-down-square-fill"></i></a>
+                                <div class="collapse" id="collapseTable">
+                                  <div class="card card-body">
+                                    Pour ajouter une fonction de tri a vos tableau en ajoutant la classe sortable. 
+                                    <code>&lt;table class="table sortable"&gt;&lt;/table&gt;</code>
+                                    Pour plus de détails sur la façon de trier : <a href="https://github.com/tofsjonas/sortable/blob/main/README.md" target="_blank">Documentation</a><br>
+                                    Vous pouvez aussi utiliser la classe filterable pour permettre au champ de recherche de filtrer les données.
+                                    <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code>
+                                  </div>
+                                </div>
+                                <br>
                                 <a href="https://mermaid.js.org/intro/" target="_blank">Mermaid</a> (Graphs) <a data-bs-toggle="collapse" href="#collapseMermaid"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseMermaid">
                                   <div class="card card-body">
@@ -208,10 +219,10 @@ function unlink(id) {
                                   </div>
                                 </div>
                                 <br>
-                                <a href="https://mozilla.github.io/nunjucks/fr/templating.html" target="_blank">Nunjucks</a> (Template jinja2) <a data-bs-toggle="collapse" href="#collapseNunjucks"><i class="bi bi-caret-down-square-fill"></i></a>
+                                <a href="https://mozilla.github.io/nunjucks/fr/templating.html" target="_blank">Nunjucks</a> (Template) <a data-bs-toggle="collapse" href="#collapseNunjucks"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseNunjucks">
                                   <div class="card card-body">
-                                    Utilisez les données de vos sources et construire votre structure sur ces données (boucles, conditions, ...).
+                                    Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...).
                                   </div>
                                 </div>
                                 <br>

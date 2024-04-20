@@ -13,6 +13,7 @@ const dataview = ref(null)
 const items = ref({});
 const loaderror = ref(false)
 const fetcherror = ref(null)
+const searchBox = inject('searchBox');
 
 const apiUrl = inject('apiUrl');
 
@@ -75,6 +76,12 @@ watch(route, async () => {
 watch(items, () => {
   nextTick(() => {
     mermaid.init({theme: parameter.value.theme});
+
+    searchBox.value.show = document.querySelector('.filterable') != null ;
+    console.log(searchBox.value.show)
+    if (searchBox.value.show) {
+      searchBox.value.function()
+    }
   });
 }, { deep: true });
 </script>

@@ -12,6 +12,10 @@ const saveButton = ref({
   "disabled": true,
   "function": null
 })
+const searchBox = ref({
+  "show": false,
+  "function": null
+})
 const myUser = ref({})
 
 const apiUrl = window.location.origin + window.location.pathname + `api`;
@@ -68,6 +72,7 @@ provide('parameters', parameters);
 provide('apiUrl', apiUrl);
 provide('save', saveButton);
 provide('myUser', myUser);
+provide('searchBox', searchBox)
 
 watch(parameters, () => {
   updateBodyStyle()

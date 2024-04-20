@@ -11,6 +11,7 @@ const route = useRoute();
 const parameter = inject('parameters');
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+const searchBox = inject('searchBox');
 
 const menu = ref(null)
 const menuKey = ref(0);
@@ -19,6 +20,23 @@ const menuYaml = ref(null)
 // Créer une ref pour le style de la navbar
 const navbarStyle = ref('');
 const logoStyle = ref('');
+
+// Pour le champ de recherche/filtre
+const filterText = ref('');
+const isFilterablePresent = ref(false);
+
+const filterTables = () => {
+  const tables = document.querySelectorAll('.filterable');
+  tables.forEach(table => {
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const textMatch = Array.from(row.cells).some(cell => cell.textContent.toLowerCase().includes(filterText.value.toLowerCase()));
+      row.style.display = textMatch ? '' : 'none';
+    });
+  });
+};
+
+searchBox.value.function = filterTables
 
 // Mettre à jour le style de la navbar en fonction du thème
 watch(parameter, async () => {
@@ -42,6 +60,7 @@ watch(parameter, async () => {
 }, { deep: true });
 
 watch(route, async () => {
+    searchBox.value.show = false
     save.value.show = false
     save.value.function = null
 }, { immediate: true });
@@ -80,8 +99,8 @@ const logout = async () => {
                 </template>
             </ul>
             <button type="button" class="btn btn-success me-2" v-if="save.show" @click="save.function"><i class="bi bi-floppy-fill"></i> Save</button>
-            <form class="d-flex" role="search" v-if="false">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+            <form class="d-flex" role="search" v-if="searchBox.show">
+                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" v-model="filterText" @input="filterTables">
             </form>
             <div class="nav-item dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
