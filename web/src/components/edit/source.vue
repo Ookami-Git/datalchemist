@@ -220,15 +220,7 @@ watch(route, async () => {
                                 Postgres <a data-bs-toggle="collapse" href="#collapsePostgres"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapsePostgres">
                                   <div class="card card-body">
-                                    <p>
-                                    host - The host to connect to <br>
-                                    port - The port to bind to <br>
-                                    user - The user to sign in as <br>
-                                    password - The user’s password <br>
-                                    dbname - The name of the database to connect to <br>
-                                    sslmode - Whether or not to use SSL <br>
                                     <code>user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432</code>
-                                    </p>
                                   </div>
                                 </div>
                                 <br>
@@ -241,16 +233,27 @@ watch(route, async () => {
                               <span class="input-group-text" id="basic-addon3">Loop</span>
                               <input type="text" class="form-control" id="InputLoop" v-model="Loop">
                             </div>
+                              <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoLoop" aria-expanded="false" aria-controls="collapseInfoLoop">
+                                Détails <i class="bi bi-caret-down-square-fill"></i>
+                              </button>
+                              <div class="collapse" id="collapseInfoLoop">
+                                <div class="card card-body">
+                                  <p>Dans la <code>loop</code>, vous pouvez récupérer les valeurs de chaque ligne avec la chaîne de caractère <code v-text="'{{ item }}'"></code>.</p>
+                                  <p>Par exemple, si vous avez une loop sur une source qui renvoie les champs <code>id</code> et <code>nom</code>, vous pouvez utiliser dans les différents champs <code v-text="'{{ item.id }}'"></code> pour accéder à la valeur de l'<code>id</code> et <code v-text="'{{ item.nom }}'"></code> pour accéder à la valeur du <code>nom</code>.</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <br>
                         <div class="card">
                             <div class="card-header text-center">Sources</div>
                             <div class="card-body">
-                                <div class="input-group mb-3">
+                                <div class="input-group mb-3" v-if="SourceInfo">
                                     <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">Ajouter</button>
                                     <select class="form-select" v-model="selectedItem">
-                                        <option v-for="item in availableItems" :key="item" :value="item">{{ item.name }}</option>
+                                        <template v-for="item in availableItems" :key="item.id">
+                                            <option v-if="item.id !== SourceInfo.id" :value="item">#{{ item.id }} - {{ item.name }}</option>
+                                        </template>
                                     </select>
                                 </div>
                                 <table class="table">
@@ -259,7 +262,7 @@ watch(route, async () => {
                                             <td><a type="button" class="btn btn-primary btn-sm" :href="`${apiUrl}/data/source/${item.id}`" target="_blank"><i class="bi bi-eye-fill"></i> {{ item.name }}</a></td>
                                             <td><code>{{ openBrace }} sid.s{{ item.id }} {{ closeBrace }}</code></td>
                                             <td><code>{{ openBrace }} sn.{{ item.name }} {{ closeBrace }}</code></td>
-                                            <td class="text-end"><button type="button" class="btn btn-danger btn-sm" @click="removeItem(index)">Supprimer</button></td>
+                                            <td class="text-end"><button type="button" class="btn btn-danger btn-sm" @click="removeItem(index)"><i class="bi bi-trash-fill"></i></button></td>
                                         </tr>
                                     </tbody>
                                 </table>

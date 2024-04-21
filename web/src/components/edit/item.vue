@@ -204,11 +204,11 @@ function unlink(id) {
                                 <span>Table</span> (html/css) <a data-bs-toggle="collapse" href="#collapseTable"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseTable">
                                   <div class="card card-body">
-                                    Pour ajouter une fonction de tri a vos tableau en ajoutant la classe sortable. 
-                                    <code>&lt;table class="table sortable"&gt;&lt;/table&gt;</code>
-                                    Pour plus de détails sur la façon de trier : <a href="https://github.com/tofsjonas/sortable/blob/main/README.md" target="_blank">Documentation</a><br>
-                                    Vous pouvez aussi utiliser la classe filterable pour permettre au champ de recherche de filtrer les données.
-                                    <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code>
+                                    <p><span>Pour ajouter une fonction de tri a vos tableau en ajoutant la classe <code>sortable</code>.</span><br>
+                                    <code>&lt;table class="table sortable"&gt;&lt;/table&gt;</code><br>
+                                    <span>Pour plus de détails sur la façon de trier : <a href="https://github.com/tofsjonas/sortable/blob/main/README.md" target="_blank">Documentation</a></span></p>
+                                    <p><span>Vous pouvez aussi utiliser la classe <code>filterable</code> pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody.</span><br>
+                                    <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code></p>
                                   </div>
                                 </div>
                                 <br>
