@@ -204,8 +204,9 @@ watch(route, async () => {
     <div class="row">
         <div class="col-md-8">
             <template v-if="parameter.name">
-                <Codemirror v-model:value="code" :options="cmOptions" border placeholder="Yaml code for narvar ..." min-height="75vh"
-                    @change="change" />
+                <div style="height: 75vh; overflow: none;">
+                    <Codemirror v-model:value="code" :options="cmOptions" border height="100%" @change="change" />
+                </div>
             </template>
         </div>
         <div class="col-md-4">

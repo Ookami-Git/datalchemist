@@ -54,8 +54,9 @@ watch(parameter, () => {
         <div id="FileHelp" class="form-text">Chemin du fichier sur le serveur où est executé datalchemist.</div>
         <label for="Query" class="form-label">Requete SQL</label>
         <template v-if="parameter.name">
-            <Codemirror v-model:value="query" :options="cmOptions" border placeholder="Query SQL / jinja2" height="50vh"
-                @change="change" />
+            <div style="height: 50vh; overflow: none;">
+                <Codemirror v-model:value="query" :options="cmOptions" border height="100%" placeholder="Yaml code for narvar ..." @change="change" />
+            </div>
         </template>
     </div>
 </template>

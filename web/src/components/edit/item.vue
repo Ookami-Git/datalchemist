@@ -187,8 +187,10 @@ function unlink(id) {
                 <div class="row">
                     <div class="col-md-8">
                         <template v-if="parameter.name">
-                            <Codemirror v-model:value="code" :options="cmOptions" border placeholder="Create your item with html(bootstrap) / jinja2" height="75vh"
-                                @change="change" />
+                            <div style="height: 75vh; overflow: none;">
+                                <Codemirror v-model:value="code" :options="cmOptions" border height="100%"
+                                    @change="change" />
+                            </div>
                         </template>
                     </div>
                     <div class="col-md-4">
@@ -198,6 +200,13 @@ function unlink(id) {
                                 <div class="collapse" id="collapseBootstrap">
                                   <div class="card card-body">
                                     Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité.
+                                  </div>
+                                </div>
+                                <br>
+                                <span>Icônes</span> (html/css) <a data-bs-toggle="collapse" href="#collapseIcons"><i class="bi bi-caret-down-square-fill"></i></a>
+                                <div class="collapse" id="collapseIcons">
+                                  <div class="card card-body">
+                                    Vous pouvez utiliser les icones de <a href="https://icons.getbootstrap.com/" target="_blank">bootstrap</a> ou <a href="https://fontawesome.com/search?o=r&m=free" target="_blank">fontawesome</a> en utilisant la syntaxe suivante : <code>&lt;i class="bi bi-[icon-name]"&gt;&lt;/i&gt;</code> ou <code>&lt;i class="fa fa-[icon-name]"&gt;&lt;/i&gt;</code>
                                   </div>
                                 </div>
                                 <br>
