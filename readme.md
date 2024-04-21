@@ -1,5 +1,7 @@
 # Datalchemist
 ![datalchemist](Datalchemist.png)
+## Screenshot
+![datalchemistScreenshot](screenshot.jpg)
 ## Installation
 ### Build
 #### Requirement for build
@@ -37,6 +39,12 @@ You can usr env vars
 export DA_LISTEN=":8080"
 export DA_DATABASE="datalchsmist.sqlite"
 ```
+## Getting Started
+### Startup
+```shell
+./datalchemist &
+```
+Go to http://localhost:8080 with ```admin``` username and ```admin``` password.
 ## YAML Navigation Menu
 Create your menu (navbar) with YAML syntax
 ```yaml
