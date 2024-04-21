@@ -1,6 +1,0 @@
-{
-    "src":"file",
-    "path":"O:\\Developpement\\App\\datalchemist\\database.sqlite",
-    "type":"sqlite",
-    "query":"SELECT * FROM users;"
-}
