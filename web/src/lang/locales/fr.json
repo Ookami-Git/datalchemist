@@ -1,0 +1,61 @@
+{
+    "auth": {
+        "user": "Nom d'utilisateur",
+        "password": "Mot de passe",
+        "message": "Veuillez saisir votre identifiant et mot de passe",
+        "button": "Connexion"
+    },
+    "menu": {
+        "profil": "Mon compte",
+        "logout": "Déconnexion",
+        "admin": "Paramètres",
+        "edit": "Édition"
+    },
+    "profil": {
+        "header": "Mon compte"
+    },
+    "admin": {
+        "header": "Paramètres",
+        "global": {
+            "header": "Général",
+            "name": "Nom",
+            "theme": "Thème par défaut",
+            "lang": "Langue par défaut",
+            "bg": "Arrière plan",
+            "dark": "Sombre",
+            "light": "Clair",
+            "ldap": {
+                "header": "Configurer authentification LDAP",
+                "enable": "Activer"
+            }
+        },
+        "navbar": {
+            "header": "Barre de navigation",
+            "error": {
+                "yaml":"Le code YAML comporte des erreurs de syntaxes",
+                "req-name":"La clé \"name\" est requise",
+                "req-boolean":"La valeur doit être un booléen (true/false)",
+                "req-array":"La valeur doit être un tableau YAML",
+                "req-string":"La valeur doit être de type texte",
+                "subitems":"L'imbrication de \"subitems\" n'est pas supporté",
+                "unknown-key":"La clé suivante n'est pas supporté"
+            }
+        },
+        "users": {
+            "header": "Utilisateurs"
+        },
+        "groups": {
+            "header": "Groupes"
+        },
+        "acl": {
+            "header": "Contrôle d'accès"
+        }
+    },
+    "edit": {
+        "sources": "Sources",
+        "items": "Objets",
+        "views": "Vues",
+        "name": "Nom",
+        "actions": "Actions"
+    }
+}
