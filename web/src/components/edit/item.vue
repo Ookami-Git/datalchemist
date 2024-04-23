@@ -167,11 +167,11 @@ function unlink(id) {
   });
 }
 
-watch (code, () => {
-    if (code.value != ItemInfo.value.template) {
+watch ([code, ItemInfo], () => {
+    if (save.value.show) {
         save.value.status.saveable()
     }
-});
+}, { deep: true });
 
 onMounted(async () => {
     await fetchItem(itemid);
