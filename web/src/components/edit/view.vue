@@ -1,18 +1,13 @@
 <script setup>
-import { ref, inject, watch, provide } from "vue";
+import { ref, inject, watch, onMounted } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+save.value.safe()
 const ViewInfo = ref(null)
-
-const Query = ref('')
-const Path = ref('')
-
-provide('Query', Query);
-provide('Path', Path);
 
 const activeItems = ref([]);
 const availableItems = ref([]);
@@ -43,26 +38,16 @@ const fetchItems = async () => {
 const fetchView = async (id) => {
   axios.get(`${apiUrl}/view/${id}`)
   .then(function (response) {
-    console.log(response)
     ViewInfo.value = response.data
     if (ViewInfo.value.parameters) {
       ViewParameters.value = JSON.parse(ViewInfo.value.parameters)
     }
-
-    console.log(ViewInfo.value)
   })
   .catch(function (error) {
     code.value = error
     console.error(`Erreur lors de la récupération des données pour la source ${id}`, error);
   });
 };
-
-watch(route, async () => {
-    await fetchView(route.params.viewid);
-    await fetchItems()
-    save.value.show = true
-    save.value.function = updateView
-}, { immediate: true });
 
 function RowSizeCalculator(row, valeur) {
   let total = 0;
@@ -84,7 +69,6 @@ function RemoveRow(row) {
 
 function AddRow() {
   ViewParameters.value.push([])
-  console.log(ViewParameters.value.length)
   AddItem(ViewParameters.value.length - 1)
 }
 
@@ -118,13 +102,27 @@ function updateView() {
     name: ViewInfo.value.name,
     parameters: JSON.stringify(ViewParameters.value)
   })
-  .then(function (response) {
-    console.log(response);
+  .then(function () {
+    save.value.status.show()
   })
   .catch(function (error) {
     console.log(error);
+    save.value.status.error()
   });
 }
+
+watch ([ViewParameters, ViewInfo], () => {
+  if (save.value.show) {
+    save.value.status.saveable()
+  }
+}, { deep: true });
+
+onMounted(async () => {
+    await fetchView(route.params.viewid);
+    await fetchItems()
+    save.value.status.show()
+    save.value.function = updateView
+})
 
 </script>
 

@@ -1,6 +1,6 @@
 <script setup>
-import { ref, onMounted, provide, inject, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, onMounted, provide, watch, inject } from 'vue';
+import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import navbar from './components/navbar/navbar.vue'
 
 const route = useRoute();
@@ -10,7 +10,38 @@ const parameters = ref([]);
 const saveButton = ref({
   "show": false,
   "disabled": true,
-  "function": null
+  "function": null,
+  "color": '',
+  "safe": function () {
+    onBeforeRouteUpdate(this.saveGuard);
+    onBeforeRouteLeave(this.saveGuard);
+  },
+  "saveGuard": function () {
+    if (saveButton.value.show && !saveButton.value.disabled) {
+      const answer = window.confirm(
+        'Do you really want to leave wihtout save changes ?'
+      )
+      // cancel the navigation and stay on the same page
+      return answer
+    }
+  },
+  "status": {
+    "saveable": function () {
+      saveButton.value.show = true
+      saveButton.value.color = "success"
+      saveButton.value.disabled = false
+    },
+    "show": function () {
+      saveButton.value.show = true
+      saveButton.value.color = "secondary"
+      saveButton.value.disabled = true
+    },
+    "error": function () {
+      saveButton.value.show = true
+      saveButton.value.color = "danger"
+      saveButton.value.disabled = false
+    },
+  }
 })
 const searchBox = ref({
   "show": false,

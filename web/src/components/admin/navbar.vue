@@ -8,7 +8,7 @@ import "codemirror/mode/yaml/yaml.js";
 // Importing the CodeMirror Material theme
 import "codemirror/theme/material.css";
 // Importing some Vue functions and hooks
-import { ref, inject, watch, reactive } from "vue";
+import { ref, inject, watch, reactive, onMounted } from "vue";
 import { useRoute } from 'vue-router';
 // Importing the YAML library
 import YAML from "yaml"
@@ -148,6 +148,7 @@ function isValidMenu(menu) {
     menutag(false)
     return false
   }
+  return true
 }
 
 // Function to update the class and errors
@@ -193,10 +194,20 @@ watch(parameter, () => {
     }
 }, { deep: true, immediate: true });
 
-watch(route, async () => {
-    save.value.show = true
+onMounted(() => {
     save.value.function = SaveMenu
-}, { immediate: true });
+    save.value.status.show()
+    save.value.safe()
+})
+
+watch(code, () => {
+    if (isValidMenu(code.value)) {
+        save.value.status.saveable()
+    } else {
+        save.value.color = "danger"
+        save.value.disabled = true
+    }
+}, { deep: true });
 
 </script>
 

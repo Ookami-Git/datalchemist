@@ -1,16 +1,15 @@
 <script setup>
-import { inject, watch, reactive, onMounted, ref } from 'vue';
-import { useRoute } from 'vue-router';
+import { inject, watch, onMounted, ref } from 'vue';
 import axios from 'axios';
 
-const route = useRoute();
-const userParameter = inject('parameters')
 const parameter = ref(null)
 const original_parameter = {};
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+save.value.safe()
 
 function SaveParameters () {
+    const save_error = false
     for (const [key, value] of Object.entries(parameter.value)) {
         if (value == original_parameter.value[key]) {
             continue;
@@ -22,12 +21,16 @@ function SaveParameters () {
         .then(function (response) {
             localStorage.setItem('reloadparameters', true);
             original_parameter[key] = value
-            console.log(response);
         })
         .catch(function (error) {
             console.log(error);
+            save_error = true
         });
-
+    }
+    if (save_error) {
+        save.value.status.error()
+    } else {
+        save.value.status.show()
     }
 }
 
@@ -42,13 +45,19 @@ function fetchParameters () {
     });
 }
 
-watch(route, async () => {
-    save.value.show = true
-    save.value.function = SaveParameters
-}, { immediate: true });
+watch (parameter, () => {
+    for (const [key, value] of Object.entries(parameter.value)) {
+        if (value != original_parameter.value[key]) {
+            save.value.status.saveable()
+            break;
+        }
+    }
+}, { deep: true });
 
 onMounted(() => {
     fetchParameters()
+    save.value.function = SaveParameters
+    save.value.status.show()
 })
 </script>
 

@@ -1,13 +1,13 @@
 <script setup>
-import { ref, inject, watch, watchEffect, reactive } from "vue";
+import { inject } from "vue";
 
-const path = inject('Path');
+const source = inject('source');
 
 </script>
 
 <template>
     <div class="mb-3">
       <label for="InputUrl" class="form-label">URL</label>
-      <input type="text" class="form-control" id="InputURL" v-model="path">
+      <input type="text" class="form-control" id="InputURL" v-model="source.path">
     </div>
 </template>

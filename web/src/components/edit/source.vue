@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, watch, provide } from "vue";
+import { ref, inject, watch, provide, onMounted } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import databasevue from './source/database.vue'
@@ -9,11 +9,12 @@ import urlvue from './source/url.vue'
 const route = useRoute();
 const apiUrl = inject('apiUrl');
 const SourceInfo = ref(null)
+const OrigineSourceInfo = ref(null)
 const openBrace = '{{'
 const closeBrace = '}}'
 
-//const parameter = inject('parameters');
 const save = inject('save');
+save.value.safe()
 
 const support = ref([
     { "value": "file", "name": "Fichier"},
@@ -22,21 +23,21 @@ const support = ref([
 ])
 const supportedFlat = ref(["json", "xml", "yml"])
 const supportedDb = ref(["sqlite", "postgres", "mysql"])
-const selectedSupport = ref('')
-const selectedType = ref('')
+const JsonSource = ref({
+                "src": '',
+                "type": '',
+                "path": '',
+                "loop": '',
+                "query": ''
+              })
 
-const Query = ref('')
-const Path = ref('')
-const Loop = ref('')
+const OrigineJsonSource = ref({ ... JsonSource.value })
 
-provide('Query', Query);
-provide('Path', Path);
+provide('source', JsonSource);
 
 const selectedItem = ref('');
 const activeItems = ref([]);
 const availableItems = ref([]);
-
-const JsonSource = ref(null);
 
 const addItem = () => {
   require(selectedItem.value.id)
@@ -80,19 +81,13 @@ function updateSource() {
   axios.post(`${apiUrl}/source`, {
     id: SourceInfo.value.id,
     name: SourceInfo.value.name,
-    json: JSON.stringify({
-      "src": selectedSupport.value,
-      "type": selectedType.value,
-      "path": Path.value,
-      "loop": Loop.value,
-      "query": Query.value
-    })
+    json: JSON.stringify(JsonSource.value)
   })
-  .then(function (response) {
-    console.log(response);
+  .then(function () {
+    save.value.status.show()
   })
-  .catch(function (error) {
-    console.log(error);
+  .catch(function () {
+    save.value.status.error()
   });
 }
 
@@ -100,14 +95,11 @@ const fetchSource = async (id) => {
   axios.get(`${apiUrl}/source/${id}`)
   .then(function (response) {
     console.log(response)
+    OrigineSourceInfo.value = response.data
     SourceInfo.value = response.data
     if (SourceInfo.value.json) {
+      OrigineJsonSource.value = JSON.parse(SourceInfo.value.json)
       JsonSource.value = JSON.parse(SourceInfo.value.json)
-      selectedSupport.value = JsonSource.value.src
-      selectedType.value = JsonSource.value.type
-      Query.value = JsonSource.value.query
-      Path.value = JsonSource.value.path
-      Loop.value = JsonSource.value.loop
     }
   })
   .catch(function (error) {
@@ -131,9 +123,6 @@ function require(id) {
     source_id: SourceInfo.value.id,
     required_source_id: id,
   })
-  .then(function (response) {
-    console.log(response);
-  })
   .catch(function (error) {
     console.log(error);
   });
@@ -144,21 +133,24 @@ function unlink(id) {
     item_id: SourceInfo.value.id,
     source_id: id,
   })
-  .then(function (response) {
-    console.log(response);
-  })
   .catch(function (error) {
     console.log(error);
   });
 }
 
-watch(route, async () => {
+watch ([SourceInfo, JsonSource], () => {
+  if (save.value.show && (OrigineJsonSource.value != JsonSource.value || OrigineSourceInfo.value != SourceInfo.value)) {
+    save.value.status.saveable()
+  }
+}, { deep: true });
+
+onMounted(async () => {
     await fetchSource(route.params.sourceid);
     await fetchSources()
-    await diffArray()
-    save.value.show = true
+    diffArray()
     save.value.function = updateSource
-}, { immediate: true });
+    save.value.status.show()
+})
 
 </script>
 
@@ -169,7 +161,7 @@ watch(route, async () => {
             <div class="card-header">
               <div class="row">
                 <div class="col-md-1">
-                  <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit' , params:{ id: '?'}}" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+                  <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit' }" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
                 </div>
                 <div v-if="SourceInfo" class="col-md-10 text-center">
                   <div class="input-group">
@@ -184,20 +176,20 @@ watch(route, async () => {
                 <div class="row">
                     <div class="col-md-8">
                         <div class="input-group mb-3">
-                            <select class="form-select" v-model="selectedSupport">
+                            <select class="form-select" v-model="JsonSource.src">
                                 <option v-for="item in support" :key="item" :value="item.value">{{ item.name }}</option>
                             </select>
-                            <select class="form-select" v-if="selectedSupport === 'file' || selectedSupport === 'url'" v-model="selectedType">
+                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url'" v-model="JsonSource.type">
                                 <option v-for="item in supportedFlat" :key="item" :value="item">{{ item }}</option>
                             </select>
-                            <select class="form-select" v-if="selectedSupport === 'database'" v-model="selectedType">
+                            <select class="form-select" v-if="JsonSource.src === 'database'" v-model="JsonSource.type">
                                 <option v-for="item in supportedDb" :key="item" :value="item">{{ item }}</option>
                             </select>
                         </div>
                         <hr>
-                            <filevue v-if="selectedSupport === 'file'"></filevue>
-                            <urlvue v-if="selectedSupport === 'url'"></urlvue>
-                            <databasevue v-if="selectedSupport === 'database'"></databasevue>
+                            <filevue v-if="JsonSource.src === 'file'"></filevue>
+                            <urlvue v-if="JsonSource.src === 'url'"></urlvue>
+                            <databasevue v-if="JsonSource.src === 'database'"></databasevue>
                     </div>
                     <div class="col-md-4">
                         <div class="card">
@@ -231,7 +223,7 @@ watch(route, async () => {
                           <div class="card-body">
                             <div class="input-group mb-3">
                               <span class="input-group-text" id="basic-addon3">Loop</span>
-                              <input type="text" class="form-control" id="InputLoop" v-model="Loop">
+                              <input type="text" class="form-control" id="InputLoop" v-model="JsonSource.loop">
                             </div>
                               <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoLoop" aria-expanded="false" aria-controls="collapseInfoLoop">
                                 Détails <i class="bi bi-caret-down-square-fill"></i>

@@ -10,13 +10,15 @@ import 'codemirror/mode/jinja2/jinja2'; // Mode Jinja2
 import "codemirror/addon/display/placeholder.js";
 // theme
 import "codemirror/theme/material.css";
-import { ref, inject, watch, reactive } from "vue";
+import { ref, inject, watch, reactive, onMounted } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
+const itemid = route.params.itemid;
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+save.value.safe()
 const ItemInfo = ref(null)
 const openBrace = '{{'
 const closeBrace = '}}'
@@ -54,8 +56,8 @@ watch(parameter, () => {
     }
 }, { deep: true, immediate: true });
 
-const fetchItem = async (itemId) => {
-  axios.get(`${apiUrl}/item/${itemId}`)
+const fetchItem = async () => {
+  axios.get(`${apiUrl}/item/${itemid}`)
   .then(function (response) {
     code.value = response.data.template;
     ItemInfo.value = response.data
@@ -64,35 +66,6 @@ const fetchItem = async (itemId) => {
     code.value = error
     console.error(`Erreur lors de la récupération des données pour l'item ${itemId}`, error);
   });
-};
-
-watch(route, async () => {
-    code.value = null;
-    await fetchItem(route.params.itemid);
-    await fetchSources()
-    await diffArray()
-    save.value.show = true
-    save.value.function = updateItem
-}, { immediate: true });
-
-
-const selectedItem = ref('');
-const activeItems = ref([]);
-const availableItems = ref([]);
-
-const addItem = () => {
-  require(selectedItem.value.id);
-  activeItems.value.push(selectedItem.value);
-  const index = availableItems.value.indexOf(selectedItem.value);
-  if (index > -1) {
-    availableItems.value.splice(index, 1);
-  }
-  selectedItem.value = availableItems.value[0] || '';
-};
-
-const removeItem = (index) => {
-  availableItems.value.push(activeItems.value[index]);
-  activeItems.value.splice(index, 1);
 };
 
 const fetchSources = async () => {
@@ -117,6 +90,25 @@ const fetchSources = async () => {
   });
 };
 
+const selectedItem = ref('');
+const activeItems = ref([]);
+const availableItems = ref([]);
+
+const addItem = () => {
+  require(selectedItem.value.id);
+  activeItems.value.push(selectedItem.value);
+  const index = availableItems.value.indexOf(selectedItem.value);
+  if (index > -1) {
+    availableItems.value.splice(index, 1);
+  }
+  selectedItem.value = availableItems.value[0] || '';
+};
+
+const removeItem = (index) => {
+  availableItems.value.push(activeItems.value[index]);
+  activeItems.value.splice(index, 1);
+};
+
 function diffArray() {
     if (activeItems.value) {
         let result = availableItems.value.filter(aItem => {
@@ -126,43 +118,68 @@ function diffArray() {
     }
 }
 
+/**
+ * Updates an item on the server by sending a POST request to the '/item' endpoint.
+ *
+ * @return {Promise} A Promise that resolves with the server response or rejects with an error.
+ */
 function updateItem() {
   axios.post(`${apiUrl}/item`, {
     id: ItemInfo.value.id,
     name: ItemInfo.value.name,
     template: code.value
   })
-  .then(function (response) {
-    console.log(response);
+  .then(function () {
+    save.value.status.show()
   })
   .catch(function (error) {
     console.log(error);
+    save.value.status.error()
   });
 }
 
+/**
+ * Sends a POST request to the server to require an source for this item.
+ *
+ * @param {string} id - The ID of the source to require.
+ * @return {Promise} A Promise that resolves with the server response or rejects with an error.
+ */
 function require(id) {
   axios.post(`${apiUrl}/item/require`, {
-    item_id: ItemInfo.value.id,
+    item_id: itemid,
     source_id: id,
   })
-  .then(function (response) {
-    console.log(response);
-  })
   .catch(function (error) {
     console.log(error);
   });
 }
 
+/**
+ * Unlinks an source from this item on the server.
+ *
+ * @param {string} id - The ID of the source to unlink.
+ * @return {Promise} A Promise that resolves with the server response or rejects with an error.
+ */
 function unlink(id) {
-  axios.delete(`${apiUrl}/item/${ItemInfo.value.id}/require/${id}`)
-  .then(function (response) {
-    console.log(response);
-  })
+  axios.delete(`${apiUrl}/item/${itemid}/require/${id}`)
   .catch(function (error) {
     console.log(error);
   });
 }
 
+watch (code, () => {
+    if (code.value != ItemInfo.value.template) {
+        save.value.status.saveable()
+    }
+});
+
+onMounted(async () => {
+    await fetchItem(itemid);
+    await fetchSources()
+    diffArray()
+    save.value.function = updateItem
+    save.value.status.show()
+})
 </script>
 
 <template>
@@ -172,7 +189,7 @@ function unlink(id) {
             <div class="card-header">
               <div class="row">
                 <div class="col-md-1">
-                  <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit' , params:{ id: '?'}}" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+                  <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit' }" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
                 </div>
                 <div v-if="ItemInfo" class="col-md-10 text-center">
                   <div class="input-group">
@@ -239,7 +256,7 @@ function unlink(id) {
                         </div>
                         <br>
                         <div class="card">
-                            <div class="card-header text-center"><a type="button" class="btn btn-primary btn-sm" :href="`${apiUrl}/data/item/${ItemInfo.id}`" target="_blank" title="*Save for update"><i class="bi bi-eye-fill"></i> Sources</a></div>
+                            <div class="card-header text-center"><a type="button" class="btn btn-primary btn-sm" :href="`${apiUrl}/data/item/${itemid}`" target="_blank"><i class="bi bi-eye-fill"></i> Sources</a></div>
                             <div class="card-body">
                                 <div class="input-group mb-3">
                                     <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">Ajouter</button>

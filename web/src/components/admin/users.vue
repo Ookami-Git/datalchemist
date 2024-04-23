@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, inject, watch, reactive } from "vue";
+import { ref, onMounted, inject } from "vue";
 import axios from 'axios';
 
 const apiUrl = inject('apiUrl');
@@ -20,7 +20,6 @@ const NewUser = ref({
     password: null,
     groups: []
 })
-
 
 const fetchUsers = async () => {
     axios.get(`${apiUrl}/users`)
@@ -47,7 +46,7 @@ const fetchGroups = async () => {
 const fetchUsersRoles = async () => {
     axios.get(`${apiUrl}/roles/users`)
     .then(function (response) {
-        console.log(response.data)
+        //console.log(response.data)
         Roles.value = response.data
     })
     .catch(function (error) {
@@ -88,7 +87,6 @@ function OnChangeNewUsername() {
 }
 
 function AddUser() {
-    console.log(NewUser.value)
     axios.post(`${apiUrl}/user`, NewUser.value)
     .then(function (response) {
         for (let i = 0; i < NewUser.value.groups.length; i++) {
@@ -133,7 +131,7 @@ function RoleAdd(uid, gid) {
         "group": gid
     })
     .then(function (response) {
-        console.log(response);
+        //console.log(response);
     })
     .catch(function (error) {
         console.log(error);
@@ -143,7 +141,7 @@ function RoleAdd(uid, gid) {
 function RoleRemove(uid, gid) {
     axios.delete(`${apiUrl}/roles/user/${uid}/group/${gid}`)
     .then(function (response) {
-        console.log(response);
+        //console.log(response);
     })
     .catch(function (error) {
         console.log(error);
@@ -196,12 +194,12 @@ onMounted(() => {
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            <tr v-for="user in Users" :key="user.id">
+            <tr v-if="Users" v-for="user in Users" :key="user.id">
                 <th scope="row">{{ user.id }}</th>
                 <td>{{ user.name }}</td>
                 <td>{{ user.type }}</td>
                 <td>
-                    <template v-for="role in Roles[user.id]">
+                    <template v-if="Roles && Roles[user.id] && Groups" v-for="role in Roles[user.id]">
                         <span v-if="role == 1" class="badge text-bg-primary me-1">{{ Groups[role].name }}</span>
                         <span v-if="role != 1" class="badge text-bg-secondary me-1">{{ Groups[role].name }}</span>
                     </template>

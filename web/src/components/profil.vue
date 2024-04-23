@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
+const i18n = inject('i18n');
 
 const user = ref(null)
 const lang = ref([

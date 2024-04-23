@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, watch, watchEffect, reactive } from "vue";
+import { inject, watch, reactive } from "vue";
 import Codemirror from "codemirror-editor-vue3";
 // placeholder
 import "codemirror/addon/display/placeholder.js";
@@ -22,8 +22,7 @@ CodeMirror.defineMode('jinja2-sql', function(config) {
 });
 
 const parameter = inject('parameters');
-const query = inject('Query');
-const path = inject('Path');
+const source = inject('source');
 
 const cmOptions = reactive({
     mode: "jinja2-sql", // Language mode
@@ -50,12 +49,12 @@ watch(parameter, () => {
 <template>
     <div class="mb-3">
         <label for="InputFile" class="form-label">Database Connection String</label>
-        <input type="text" class="form-control" id="InputFile" aria-describedby="FileHelp" v-model="path">
+        <input type="text" class="form-control" id="InputFile" aria-describedby="FileHelp" v-model="source.path">
         <div id="FileHelp" class="form-text">Chemin du fichier sur le serveur où est executé datalchemist.</div>
         <label for="Query" class="form-label">Requete SQL</label>
         <template v-if="parameter.name">
             <div style="height: 50vh; overflow: none;">
-                <Codemirror v-model:value="query" :options="cmOptions" border height="100%" placeholder="Yaml code for narvar ..." @change="change" />
+                <Codemirror v-model:value="source.query" :options="cmOptions" border height="100%" placeholder="Yaml code for narvar ..." @change="change" />
             </div>
         </template>
     </div>

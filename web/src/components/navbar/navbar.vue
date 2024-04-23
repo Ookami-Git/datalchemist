@@ -11,7 +11,6 @@ const route = useRoute();
 const parameter = inject('parameters');
 const apiUrl = inject('apiUrl');
 const save = inject('save');
-const searchBox = inject('searchBox');
 
 const menu = ref(null)
 const menuKey = ref(0);
@@ -23,7 +22,7 @@ const logoStyle = ref('');
 
 // Pour le champ de recherche/filtre
 const filterText = ref('');
-const isFilterablePresent = ref(false);
+const searchBox = inject('searchBox');
 
 const filterTables = () => {
   const tables = document.querySelectorAll('.filterable');
@@ -63,6 +62,8 @@ watch(route, async () => {
     searchBox.value.show = false
     save.value.show = false
     save.value.function = null
+    save.value.color = 'secondary'
+    save.value.disabled = true
 }, { immediate: true });
 
 const logout = async () => {
@@ -98,7 +99,7 @@ const logout = async () => {
                     </template>
                 </template>
             </ul>
-            <button type="button" class="btn btn-success me-2" v-if="save.show" @click="save.function"><i class="bi bi-floppy-fill"></i> Save</button>
+            <button v-if="save.show" type="button" :class="`btn btn-${save.color}`" @click="save.function" :disabled="save.disabled"><i class="bi bi-floppy-fill"></i> Save</button>
             <form class="d-flex" role="search" v-if="searchBox.show">
                 <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" v-model="filterText" @input="filterTables">
             </form>
