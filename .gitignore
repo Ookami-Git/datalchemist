@@ -22,3 +22,7 @@ go.work
 
 #database
 *.sqlite
+
+#Binaries
+datalchemist
+datalchemist.exe
