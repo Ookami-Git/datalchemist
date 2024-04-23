@@ -9,7 +9,7 @@ const save = inject('save');
 save.value.safe()
 
 function SaveParameters () {
-    const save_error = false
+    let save_error = false
     for (const [key, value] of Object.entries(parameter.value)) {
         if (value == original_parameter.value[key]) {
             continue;

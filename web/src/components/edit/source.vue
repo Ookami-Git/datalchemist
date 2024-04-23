@@ -94,7 +94,6 @@ function updateSource() {
 const fetchSource = async (id) => {
   axios.get(`${apiUrl}/source/${id}`)
   .then(function (response) {
-    console.log(response)
     OrigineSourceInfo.value = response.data
     SourceInfo.value = response.data
     if (SourceInfo.value.json) {
@@ -109,7 +108,6 @@ const fetchSource = async (id) => {
 };
 
 function diffArray() {
-    console.log("active : ",activeItems)
     if (activeItems.value) {
         let result = availableItems.value.filter(aItem => {
             return !activeItems.value.some(bItem => JSON.stringify(aItem) === JSON.stringify(bItem));

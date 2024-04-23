@@ -37,7 +37,6 @@ function AddToDA(type) {
     name: NewName.value
   })
   .then(function (response) {
-    console.log(response);
     NewName.value = null
     switch (type) {
         case 'view':
