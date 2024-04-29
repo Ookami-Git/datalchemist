@@ -9,6 +9,7 @@ import edititem from '@/components/edit/item.vue'
 import editview from '@/components/edit/view.vue'
 import profil from '@/components/profil.vue'
 import view from '@/components/view.vue'
+import home from '@/components/home.vue'
 import notfound from '@/components/error/error404.vue'
 import unauthorized from '@/components/error/error401.vue'
 
@@ -23,7 +24,7 @@ const router = createRouter({
         {
             name: "home",
             path: '/', 
-            component: view,
+            component: home,
             props: true,
             meta: { requiresAuth: true }
         },

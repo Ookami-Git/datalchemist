@@ -19,15 +19,23 @@
         "global": {
             "header": "Général",
             "name": "Nom",
-            "theme": "Thème par défaut",
-            "lang": "Langue par défaut",
+            "theme": "Thème",
+            "lang": "Langue",
             "bg": "Arrière plan",
             "dark": "Sombre",
             "light": "Clair",
             "ldap": {
                 "header": "Configurer authentification LDAP",
-                "enable": "Activer"
-            }
+                "enable": "Activer",
+                "skipverify": "Ignorer la validé du certificat",
+                "server": "Serveur",
+                "port": "Port",
+                "basedn": "Base DN",
+                "login": "Champ de l'identifiant",
+                "user": "Utilisateur",
+                "password": "Mot de passe"
+            },
+            "defaultview": "Accueil"
         },
         "navbar": {
             "header": "Barre de navigation",

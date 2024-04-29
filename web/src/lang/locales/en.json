@@ -19,15 +19,23 @@
         "global": {
             "header": "General",
             "name": "Name",
-            "theme": "Default theme",
-            "lang": "Default language",
+            "theme": "Theme",
+            "lang": "Language",
             "bg": "Background",
             "dark": "Dark",
             "light": "Light",
             "ldap": {
                 "header": "Configure LDAP authentication",
-                "enable": "Enable"
-            }
+                "enable": "Enable",
+                "skipverify": "Ignore certificate verification",
+                "server": "Server",
+                "port": "Port",
+                "basedn": "Base DN",
+                "login": "Login field",
+                "user": "User",
+                "password": "Password"
+            },
+            "defaultview": "Home"
         },
         "navbar": {
             "header": "Navbar",
