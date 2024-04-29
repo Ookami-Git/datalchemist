@@ -61,6 +61,7 @@ const fetchParameters = () => {
     })
     .then(data => {
       parameters.value = data;
+      window.document.title = data.name;
     })
     .catch(error => {
       console.error('Erreur lors de la récupération des données de la navbar', error);

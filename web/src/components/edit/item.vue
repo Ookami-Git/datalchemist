@@ -146,8 +146,8 @@ function updateItem() {
  */
 function require(id) {
   axios.post(`${apiUrl}/item/require`, {
-    item_id: itemid,
-    source_id: id,
+    item_id: parseInt(itemid),
+    source_id: parseInt(id),
   })
   .catch(function (error) {
     console.log(error);
