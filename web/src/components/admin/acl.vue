@@ -109,7 +109,7 @@ onMounted(() => {
                 <th scope="row"><span :class="[view.protected ? 'badge text-bg-success' : 'badge text-bg-secondary']" :title="view.protected ? 'View is readable only by authorized groups' : 'View is readable by everyone'"><i :class="[view.protected ? 'bi bi-lock-fill' : 'bi bi-unlock']"></i></span> {{ view.id }}</th>
                 <td> {{ view.name }} </td>
                 <td>
-                    <template v-if="Acls && Acls.views[view.id] && Groups" v-for="gid in Acls.views[view.id]['allow_gid']">
+                    <template v-if="Acls && Acls.views && Acls.views[view.id] && Groups" v-for="gid in Acls.views[view.id]['allow_gid']">
                         <span v-if="gid == 1" class="badge text-bg-primary me-1">{{ Groups[gid].name }}</span>
                         <span v-if="gid != 1" class="badge text-bg-success me-1">{{ Groups[gid].name }}</span>
                     </template>
