@@ -366,7 +366,7 @@ func RolesAdd(c *gin.Context) {
 func RolesDelete(c *gin.Context) {
 	Uid, _ := strconv.Atoi(c.Param("uid"))
 	Gid, _ := strconv.Atoi(c.Param("gid"))
-	log.Printf("Deleting role with uid=%d and gid=%d\n", Uid, Gid)
+
 	Role := models.Roles{
 		Gid:  uint(Gid),
 		User: uint(Uid),
@@ -389,7 +389,7 @@ func AclAdd(c *gin.Context) {
 func AclDelete(c *gin.Context) {
 	Vid, _ := strconv.Atoi(c.Param("vid"))
 	Gid, _ := strconv.Atoi(c.Param("gid"))
-	log.Printf("Deleting role with vid=%d and gid=%d\n", Vid, Gid)
+
 	Acl := models.Acl{
 		Gid:  uint(Gid),
 		View: uint(Vid),

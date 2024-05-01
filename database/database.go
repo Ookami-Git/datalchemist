@@ -554,11 +554,11 @@ func AclView(uid uint, vid uint) (bool, error) {
 
 	query := "SELECT EXISTS (" +
 		"SELECT 1 " +
-		"FROM acl " +
-		"JOIN groups ON acl.gid = groups.id " +
+		"FROM acls " +
+		"JOIN groups ON acls.gid = groups.id " +
 		"JOIN roles ON groups.id = roles.gid " +
 		"WHERE roles.user = $1 " +
-		"AND acl_groups.view = $2 " +
+		"AND acls.view = $2 " +
 		") AS has_permission;"
 
 	err = db.QueryRow(query, uid, vid).Scan(&Access)
