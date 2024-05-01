@@ -34,7 +34,6 @@ const fetchGroups = async () => {
 const fetchAcls = async () => {
     axios.get(`${apiUrl}/acl`)
     .then(function (response) {
-        // console.log(response.data)
         Acls.value = response.data
     })
     .catch(function (error) {
@@ -44,16 +43,16 @@ const fetchAcls = async () => {
 };
 
 const toggleGroup = (groupId) => {
-    if (Acls.value.views[ViewAction.value.id] && Acls.value.views[ViewAction.value.id].allow_gid.includes(groupId)) {
+    if (Acls.value.views && Acls.value.views[ViewAction.value.id] && Acls.value.views[ViewAction.value.id].allow_gid.includes(groupId)) {
         RemoveAcl(ViewAction.value.id, groupId);
     } else {
         AddAcl(ViewAction.value.id, groupId);
     }
 };
 
-function AddAcl(uid, gid) {
+function AddAcl(vid, gid) {
     axios.post(`${apiUrl}/acl`, {
-        "view": uid,
+        "view": vid,
         "gid": gid
     })
     .then(function (response) {
@@ -65,8 +64,8 @@ function AddAcl(uid, gid) {
     });
 }
 
-function RemoveAcl(uid, gid) {
-    axios.delete(`${apiUrl}/acl/view/${uid}/group/${gid}`)
+function RemoveAcl(vid, gid) {
+    axios.delete(`${apiUrl}/acl/view/${vid}/group/${gid}`)
     .then(function (response) {
         fetchAcls();
         // console.log(response);
@@ -87,10 +86,10 @@ function ToggleProtection() {
     });
 }
 
-onMounted(() => {
-    fetchAcls();
-    fetchGroups();
-    fetchViews();
+onMounted(async () => {
+    await fetchAcls();
+    await fetchGroups();
+    await fetchViews();
 });
 </script>
 
@@ -133,7 +132,7 @@ onMounted(() => {
                     <div v-if="ViewAction.name" class="mt-3">
                         <h5>Groupes :</h5>
                         <div v-if="Groups" v-for="group in Groups" :key="group.id" class="form-check">
-                            <input class="form-check-input" type="checkbox" :id="'groupCheckbox_' + group.id" :checked="Acls.views[ViewAction.id] && Acls.views[ViewAction.id].allow_gid.includes(group.id)" @change="toggleGroup(group.id)">
+                            <input class="form-check-input" type="checkbox" :id="'groupCheckbox_' + group.id" :checked="Acls.views && Acls.views[ViewAction.id] && Acls.views[ViewAction.id].allow_gid.includes(group.id)" @change="toggleGroup(group.id)">
                             <label class="form-check-label" :for="'groupCheckbox_' + group.id">{{ group.name }}</label>
                         </div>
                     </div>
