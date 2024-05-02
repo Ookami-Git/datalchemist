@@ -16,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/icza/dyno"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nikolalohinski/gonja"
@@ -252,9 +253,9 @@ func JsonToObject(jsonData string) interface{} {
 	return data
 }
 
-func YamlToObject(yamlData string) map[string]interface{} {
+func YamlToObject(yamlData string) interface{} {
 	// Déclarer une variable pour stocker l'objet
-	var data map[string]interface{}
+	var data interface{}
 
 	// Utiliser yaml.Unmarshal pour transformer le YAML en objet
 	err := yaml.Unmarshal([]byte(yamlData), &data)
@@ -264,7 +265,9 @@ func YamlToObject(yamlData string) map[string]interface{} {
 
 	//fmt.Printf("%+v", data)
 
-	return data
+	dataFormated := dyno.ConvertMapI2MapS(data)
+
+	return dataFormated
 }
 
 func XmlToObject(xmlData string) interface{} {
