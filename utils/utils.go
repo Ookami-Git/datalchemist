@@ -252,7 +252,7 @@ func JsonToObject(jsonData string) interface{} {
 	return data
 }
 
-func YamlToObject(yamlData string) interface{} {
+func YamlToObject(yamlData string) map[string]interface{} {
 	// Déclarer une variable pour stocker l'objet
 	var data map[string]interface{}
 
