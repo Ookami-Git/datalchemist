@@ -4,6 +4,7 @@ import axios from 'axios';
 import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
+import moment from 'moment';
 
 const parameter = inject('parameters');
 
@@ -16,6 +17,40 @@ const fetcherror = ref(null)
 const searchBox = inject('searchBox');
 
 const apiUrl = inject('apiUrl');
+
+// ------------ START Nunjucks custom filter ------------
+var dajucks = new nunjucks.Environment();
+// Filter for finding an item in an array
+dajucks.addFilter("find", function (arr, path, value) {
+  for (const obj of arr) {
+    var currentObj = obj;
+    const keys = path.split(".");
+    
+    for (const key of keys) {
+      if (currentObj && currentObj.hasOwnProperty(key)) {
+        currentObj = currentObj[key];
+      } else {
+        break;
+      }
+    }
+
+    if (currentObj === value) {
+      return obj;
+    }
+  }
+
+  return null;
+});
+// FromJson To Object filter
+dajucks.addFilter("fromjson", function (str) {
+  return JSON.parse(str);
+});
+// output date filter
+dajucks.addFilter("date", function (date, outputformat, inputformat) {
+  return moment(date, inputformat).format(outputformat);
+})
+
+// ------------ END Nunjucks custom filter ------------
 
 const fetchData = async () => {
   axios.get(`${apiUrl}/data/view/` + route.params.viewid, {
@@ -50,7 +85,7 @@ const fetchItems = async (viewid) => {
   .then(function (response) {
     for (const [key, value] of Object.entries(response.data)) {
       try {
-        items.value[key] = nunjucks.renderString( value, dataview.value);
+        items.value[key] = dajucks.renderString( value, dataview.value);
       } catch (err) {
         console.error(`Erreur lors du rendu de l'item ${key}`, err);
         items.value[key] = { error: `Rendering error ${key} : ${err.message}` };
