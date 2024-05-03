@@ -137,7 +137,7 @@ onMounted(async () => {
             </div>
             <div v-if="ViewInfo" class="col-md-10 text-center">
               <div class="input-group">
-                <span class="input-group-text" id="viewname">{{ $t('edit.header') }}</span>
+                <span class="input-group-text" id="viewname">{{ $t('editview.header') }}</span>
                 <span class="input-group-text" id="viewname">ID <i class="bi bi-arrow-right-short"></i> {{ ViewInfo.id }}</span>
                 <input type="text" class="form-control" placeholder="Name" aria-label="View Name" aria-describedby="viewname" v-model="ViewInfo.name">
               </div>

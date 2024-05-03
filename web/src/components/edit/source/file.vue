@@ -7,8 +7,8 @@ const source = inject('source');
 
 <template>
   <div class="mb-3">
-    <label for="InputFile" class="form-label">Chemin</label>
+    <label for="InputFile" class="form-label">{{ $t('editsource.file.path') }}</label>
     <input type="text" class="form-control" id="InputFile" aria-describedby="FileHelp" v-model="source.path">
-    <div id="FileHelp" class="form-text">Chemin du fichier sur le serveur où est executé datalchemist.</div>
+    <div id="FileHelp" class="form-text">{{ $t('editsource.file.helper') }}</div>
   </div>
 </template>

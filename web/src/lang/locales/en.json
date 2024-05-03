@@ -64,7 +64,68 @@
         "items": "Items",
         "views": "Views",
         "name": "Name",
-        "actions": "Actions"
+        "actions": "Actions",
+        "add": "Add"
+    },
+    "edititem": {
+        "header": "Item",
+        "global": {
+            "syntax": "Syntax",
+            "examples": "Examples"
+        },
+        "bootstrap": {
+            "description": "Use Bootstrap classes in your HTML code to unify and customize the visual rendering of your items. The documentation contains many examples for each desired rendering."
+        },
+        "icons": {
+            "header": "Icons",
+            "description": "Use Font Awesome or Bootstrap icons to display items. The documentation contains many examples for each desired rendering."
+        },
+        "table": {
+            "header": "Table",
+            "description": "Use Bootstrap classes to display items. The documentation contains many examples for each desired rendering.",
+            "sortable": {
+                "header": "Sort",
+                "description": "You can use the 'sortable' class to add a sorting function to your tables. Thead serves as buttons for sorting and tbody for the data.",
+                "doc": "Documentation"
+            },
+            "filterable": {
+                "header": "Filter",
+                "description": "You can also use the 'filterable' class to allow the search field to filter the data. The filter applies only to the tbody."
+            }
+        },
+        "mermaid": {
+            "description": "Mermaid allows you to create diagrams. Must be contained in a '<pre></pre>' tag with the class 'mermaid'. Refer to the documentation for more information."
+        },
+        "nunjucks": {
+            "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",
+            "customfilter": "Additional filters",
+            "date": {
+                "description": "Allows to manipulate the format of dates."
+            },
+            "find": {
+                "description": "Allows to search for a value in an array of objects and return the first object that matches."
+            },
+            "fromjson": {
+                "description": "Allows to convert a JSON string to an object."
+            }
+        }
+    },
+    "editsource": {
+        "header": "Source",
+        "database": {
+            "connection": "Database connection string",
+            "helper": "See the help on the right for more information about each supported database type.",
+            "query": "SQL query"
+        },
+        "file": {
+            "path": "Path",
+            "helper": "Path of the file on the server where datalchemist is executed."
+        },
+        "loop": "Loop",
+        "loopinfo": "More information"
+    },
+    "editview": {
+        "header": "View"
     }
 }
 

@@ -163,7 +163,7 @@ onMounted(async () => {
                 </div>
                 <div v-if="SourceInfo" class="col-md-10 text-center">
                   <div class="input-group">
-                    <span class="input-group-text" id="viewname">{{ $t('edit.header') }}</span>
+                    <span class="input-group-text" id="viewname">{{ $t('editsource.header') }}</span>
                     <span class="input-group-text" id="viewname">ID <i class="bi bi-arrow-right-short"></i> {{ SourceInfo.id }}</span>
                     <input type="text" class="form-control" placeholder="Name" aria-label="View Name" aria-describedby="viewname" v-model="SourceInfo.name">
                   </div>
@@ -220,11 +220,11 @@ onMounted(async () => {
                         <div class="card">
                           <div class="card-body">
                             <div class="input-group mb-3">
-                              <span class="input-group-text" id="basic-addon3">Loop</span>
+                              <span class="input-group-text" id="basic-addon3">{{ $t('editsource.loop') }}</span>
                               <input type="text" class="form-control" id="InputLoop" v-model="JsonSource.loop">
                             </div>
                               <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInfoLoop" aria-expanded="false" aria-controls="collapseInfoLoop">
-                                Détails <i class="bi bi-caret-down-square-fill"></i>
+                                {{ $t('editsource.loopinfo') }} <i class="bi bi-caret-down-square-fill"></i>
                               </button>
                               <div class="collapse" id="collapseInfoLoop">
                                 <div class="card card-body">
@@ -239,7 +239,7 @@ onMounted(async () => {
                             <div class="card-header text-center">Sources</div>
                             <div class="card-body">
                                 <div class="input-group mb-3" v-if="SourceInfo">
-                                    <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">Ajouter</button>
+                                    <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">{{ $t('edit.add') }}</button>
                                     <select class="form-select" v-model="selectedItem">
                                         <template v-for="item in availableItems" :key="item.id">
                                             <option v-if="item.id !== SourceInfo.id" :value="item">#{{ item.id }} - {{ item.name }}</option>

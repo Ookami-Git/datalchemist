@@ -48,13 +48,13 @@ watch(parameter, () => {
 
 <template>
     <div class="mb-3">
-        <label for="InputFile" class="form-label">Database Connection String</label>
+        <label for="InputFile" class="form-label">{{ $t('editsource.database.connection') }}</label>
         <input type="text" class="form-control" id="InputFile" aria-describedby="FileHelp" v-model="source.path">
-        <div id="FileHelp" class="form-text">Chemin du fichier sur le serveur où est executé datalchemist.</div>
-        <label for="Query" class="form-label">Requete SQL</label>
+        <div id="FileHelp" class="form-text">{{ $t('editsource.database.helper') }}</div>
+        <label for="Query" class="form-label">{{ $t('editsource.database.query') }}</label>
         <template v-if="parameter.name">
             <div style="height: 50vh; overflow: none;">
-                <Codemirror v-model:value="source.query" :options="cmOptions" border height="100%" placeholder="Yaml code for narvar ..." @change="change" />
+                <Codemirror v-model:value="source.query" :options="cmOptions" border height="100%" placeholder="SQL code ..." @change="change" />
             </div>
         </template>
     </div>

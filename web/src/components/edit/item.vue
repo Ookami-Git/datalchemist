@@ -193,7 +193,7 @@ onMounted(async () => {
                 </div>
                 <div v-if="ItemInfo" class="col-md-10 text-center">
                   <div class="input-group">
-                    <span class="input-group-text" id="viewname">{{ $t('edit.header') }}</span>
+                    <span class="input-group-text" id="viewname">{{ $t('edititem.header') }}</span>
                     <span class="input-group-text" id="viewname">ID <i class="bi bi-arrow-right-short"></i> {{ ItemInfo.id }}</span>
                     <input type="text" class="form-control" placeholder="Name" aria-label="View Name" aria-describedby="viewname" v-model="ItemInfo.name">
                   </div>
@@ -216,39 +216,79 @@ onMounted(async () => {
                                 <a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/" target="_blank">Bootstrap</a> (html/css) <a data-bs-toggle="collapse" href="#collapseBootstrap"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseBootstrap">
                                   <div class="card card-body">
-                                    Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité.
+                                    {{ $t('edititem.bootstrap.description') }}
                                   </div>
                                 </div>
                                 <br>
-                                <span>Icônes</span> (html/css) <a data-bs-toggle="collapse" href="#collapseIcons"><i class="bi bi-caret-down-square-fill"></i></a>
+                                <span class="text-capitalize">{{ $t('edititem.icons.header') }}</span> (html/css) <a data-bs-toggle="collapse" href="#collapseIcons"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseIcons">
                                   <div class="card card-body">
-                                    Vous pouvez utiliser les icones de <a href="https://icons.getbootstrap.com/" target="_blank">bootstrap</a> ou <a href="https://fontawesome.com/search?o=r&m=free" target="_blank">fontawesome</a> en utilisant la syntaxe suivante : <code>&lt;i class="bi bi-[icon-name]"&gt;&lt;/i&gt;</code> ou <code>&lt;i class="fa fa-[icon-name]"&gt;&lt;/i&gt;</code>
+                                    {{ $t('edititem.icons.description') }}  <br>
+                                    <span class="text-capitalize">{{ $t('edititem.global.syntax') }} :</span> 
+                                      <ul>
+                                        <li>Bootstrap : <code>&lt;i class="bi bi-[icon-name]"&gt;&lt;/i&gt;</code></li>
+                                        <li>Fontawesome : <code>&lt;i class="fa fa-[icon-name]"&gt;&lt;/i&gt;</code></li>
+                                      </ul>
+                                    {{ $t('edititem.icons.header') }} :
+                                      <ul>
+                                        <li><a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap</a></li>
+                                        <li><a href="https://fontawesome.com/search?o=r&m=free" target="_blank">Fontawesome</a></li>
+                                      </ul>
                                   </div>
                                 </div>
                                 <br>
-                                <span>Table</span> (html/css) <a data-bs-toggle="collapse" href="#collapseTable"><i class="bi bi-caret-down-square-fill"></i></a>
+                                <span>{{ $t('edititem.table.header') }}</span> (html/css) <a data-bs-toggle="collapse" href="#collapseTable"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseTable">
                                   <div class="card card-body">
-                                    <p><span>Pour ajouter une fonction de tri a vos tableau en ajoutant la classe <code>sortable</code>.</span><br>
-                                    <code>&lt;table class="table sortable"&gt;&lt;/table&gt;</code><br>
-                                    <span>Pour plus de détails sur la façon de trier : <a href="https://github.com/tofsjonas/sortable/blob/main/README.md" target="_blank">Documentation</a></span></p>
-                                    <p><span>Vous pouvez aussi utiliser la classe <code>filterable</code> pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody.</span><br>
-                                    <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code></p>
+                                    <ul>
+                                      <li>
+                                        {{ $t('edititem.table.sortable.header') }} :
+                                        {{ $t('edititem.table.sortable.description') }}<br><a href="https://github.com/tofsjonas/sortable/blob/main/README.md" target="_blank">{{ $t('edititem.table.sortable.doc') }}</a><br>
+                                        {{ $t('edititem.global.syntax') }} : <code>&lt;table class="table sortable"&gt;&lt;/table&gt;</code><br>
+                                      </li>
+                                      <li>
+                                        {{ $t('edititem.table.filterable.header') }} :
+                                        {{ $t('edititem.table.filterable.description') }}<br>
+                                        {{ $t('edititem.global.syntax') }} : <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code><br>
+                                      </li>
+                                    </ul>
                                   </div>
                                 </div>
                                 <br>
                                 <a href="https://mermaid.js.org/intro/" target="_blank">Mermaid</a> (Graphs) <a data-bs-toggle="collapse" href="#collapseMermaid"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseMermaid">
                                   <div class="card card-body">
-                                    Pour créer des graphiques. Doit être contenu dans une balise <code>&lt;pre class="mermaid"&gt;&lt;/pre&gt;</code>
+                                    {{ $t('edititem.mermaid.description') }}<br>
+                                    {{ $t('edititem.global.syntax') }} : <code>&lt;pre class="mermaid"&gt;&lt;/pre&gt;</code>
                                   </div>
                                 </div>
                                 <br>
                                 <a href="https://mozilla.github.io/nunjucks/fr/templating.html" target="_blank">Nunjucks</a> (Template) <a data-bs-toggle="collapse" href="#collapseNunjucks"><i class="bi bi-caret-down-square-fill"></i></a>
                                 <div class="collapse" id="collapseNunjucks">
                                   <div class="card card-body">
-                                    Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...).
+                                    {{ $t('edititem.nunjucks.description') }}<br>
+                                    {{ $t('edititem.nunjucks.customfilter') }} : <br>
+                                    <ul>
+                                      <li>
+                                        <code>date</code> : {{ $t('edititem.nunjucks.date.description') }}<br>
+                                        {{ $t('edititem.global.syntax') }} format : <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Momentjs format</a><br>
+                                        {{ $t('edititem.global.syntax') }} : <code>{{ openBrace }} var_date | date("outputformat","inputformat") {{ closeBrace }}</code><br>
+                                        {{ $t('edititem.global.examples') }} : 
+                                        <ul>
+                                          <li><code>{{ openBrace }} "2022-01-10" | date("DD MMM YYYY") {{ closeBrace }}</code> : 10 jan 2022</li>
+                                          <li><code>{{ openBrace }} now | date("YYYY-MM-DD") {{ closeBrace }}</code> : 2024-01-01 ("now" is undefined var, result is today)</li>
+                                          <li><code>{{ openBrace }} "01/12/2022" | date("YYYY-MM-DD","DD/MM/YYYY") {{ closeBrace }}</code> : 2022-12-01</li>
+                                        </ul>
+                                      </li>
+                                      <li>
+                                        <code>find</code> : {{ $t('edititem.nunjucks.find.description') }}<br>
+                                        Syntaxe : <code>{{ openBrace }} var_array | find("key.path", "value") {{ closeBrace }}</code>
+                                      </li>
+                                      <li>
+                                        <code>fromjson</code> : {{ $t('edititem.nunjucks.fromjson.description') }}<br>
+                                        Syntaxe : <code>{{ openBrace }} var_jsonstring | fromjson {{ closeBrace }}</code>
+                                      </li>
+                                    </ul>
                                   </div>
                                 </div>
                                 <br>
@@ -259,7 +299,7 @@ onMounted(async () => {
                             <div class="card-header text-center"><a type="button" class="btn btn-primary btn-sm" :href="`${apiUrl}/data/item/${itemid}`" target="_blank"><i class="bi bi-eye-fill"></i> Sources</a></div>
                             <div class="card-body">
                                 <div class="input-group mb-3">
-                                    <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">Ajouter</button>
+                                    <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">{{ $t('edit.add') }}</button>
                                     <select class="form-select" v-model="selectedItem">
                                         <option v-for="item in availableItems" :key="item" :value="item">{{ item.name }}</option>
                                     </select>

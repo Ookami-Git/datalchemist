@@ -64,6 +64,67 @@
         "items": "Objets",
         "views": "Vues",
         "name": "Nom",
-        "actions": "Actions"
+        "actions": "Actions",
+        "add": "Ajouter"
+    },
+    "edititem": {
+        "header": "Objet",
+        "global": {
+            "syntax": "Syntaxe",
+            "examples": "Exemples"
+        },
+        "bootstrap": {
+            "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité."
+        },
+        "icons": {
+            "header": "Icônes",
+            "description": "Utilisez les icones de Font Awesome ou Bootstrap pour afficher les objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité."
+        },
+        "table": {
+            "header": "Tableau",
+            "description": "Utilisez les classes de Bootstrap pour afficher les objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité.",
+            "sortable": {
+                "header": "Tri",
+                "description": "Vous pouvez utiliser la classe 'sortable' pour ajouter une fonction de tri a vos tableaux. Thead sert de boutons de tri et tbody pour les données.",
+                "doc": "Documentation"
+            },
+            "filterable": {
+                "header": "Filtre",
+                "description": "Vous pouvez aussi utiliser la classe 'filterable' pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody."
+            }
+        },
+        "mermaid": {
+            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise '<pre></pre>' avec la classe 'mermaid'. Référez vous a la documentation pour plus d'informations."
+        },
+        "nunjucks": {
+            "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez vous a la documentation pour plus d'informations.",
+            "customfilter": "Filtres additionnels",
+            "date": {
+                "description": "Permet de manipuler le format des dates."
+            },
+            "find": {
+                "description": "Permet de rechercher une valeur dans un tableau d'objets et remonte le premier objet qui correspond."
+            },
+            "fromjson": {
+                "description": "Permet de convertir une chaine de caractère JSON en objet."
+            }
+        }
+    },
+    "editsource": {
+        "header": "Source",
+        "database": {
+            "connection": "Chaine de connexion à la base de données",
+            "helper": "Voir l'aide à droite pour plus d'informations sur chaque type de base de données supporté.",
+            "query": "Requête SQL"
+        },
+        "file": {
+            "path": "Chemin",
+            "helper": "Chemin du fichier sur le serveur où est executé datalchemist."
+        },
+        "loop": "Boucle",
+        "loopinfo": "Plus d'informations"
+    },
+    "editview": {
+        "header": "Vue"
     }
 }
