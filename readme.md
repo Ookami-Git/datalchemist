@@ -21,23 +21,27 @@ Download last version from releases and run it.
 ## Options
 - Listen : Configure listen host and port, default value is 0.0.0.0:8080
 - Database : Configure SQLITE database path, default value is datalchsmist.sqlite in the same directory as application
+- Session : Configure time before session expiration in minutes, default value is 3600
 ### Parameters
 You can use app parameters
 ```shell
   -d, --database string
   -l, --listen   string
+  -s, --session  int
 ```
 ### Configuration file
 You can create configuration file named .datalchemist in yaml syntaxe in the same directory as application or $HOME
 ```yaml
 listen:   ":8080"
 database: "datalchsmist.sqlite"
+session:  3600
 ```
 ### Env vars
 You can usr env vars
 ```shell
 export DA_LISTEN=":8080"
 export DA_DATABASE="datalchsmist.sqlite"
+export DA_SESSION=3600
 ```
 ## Getting Started
 ### Startup

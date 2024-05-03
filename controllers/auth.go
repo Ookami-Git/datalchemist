@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-ldap/ldap/v3"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -31,7 +32,9 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("token", token, 3600, "/", GetHost(c), false, true)
+	session_duration := viper.GetInt("session")
+
+	c.SetCookie("token", token, session_duration, "/", GetHost(c), false, true)
 	c.JSON(http.StatusOK, gin.H{"token": token})
 
 }
@@ -239,7 +242,8 @@ func AuthStatus(c *gin.Context) {
 	}
 
 	// Réémettez le cookie avec une nouvelle durée de validité
-	c.SetCookie("token", token, 3600, "/", GetHost(c), false, true)
+	session_duration := viper.GetInt("session")
+	c.SetCookie("token", token, session_duration, "/", GetHost(c), false, true)
 
 	// If we got a user ID without any errors, the user is authenticated.
 	c.JSON(http.StatusOK, gin.H{"authenticated": true})

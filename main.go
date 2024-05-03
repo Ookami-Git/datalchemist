@@ -23,16 +23,19 @@ func main() {
 	// Lire les valeurs par défaut
 	viper.SetDefault("listen", "0.0.0.0:8080")
 	viper.SetDefault("database", "datalchemist.sqlite")
+	viper.SetDefault("session", 3600)
 	//viper.SetDefault("output", "datalchemist.log")
 
 	// Définir les flags
-	pflag.StringP("listen", "l", viper.GetString("listen"), "Adresse d'écoute")
-	pflag.StringP("database", "d", viper.GetString("database"), "Chemin de la base de données")
+	pflag.StringP("listen", "l", viper.GetString("listen"), "Listening address")
+	pflag.StringP("database", "d", viper.GetString("database"), "Path to the database")
+	pflag.IntP("session", "s", viper.GetInt("session"), "Time before session expiration in minutes")
 	pflag.Parse()
 
 	// Lier les flags à viper
 	viper.BindPFlag("listen", pflag.Lookup("listen"))
 	viper.BindPFlag("database", pflag.Lookup("database"))
+	viper.BindPFlag("session", pflag.Lookup("session"))
 
 	viper.SetConfigName(".datalchemist") // name of config file (without extension)
 	viper.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
@@ -51,6 +54,8 @@ func main() {
 
 	// Utiliser viper pour obtenir les valeurs
 	listen := viper.GetString("listen")
+	database_path := viper.GetString("database")
+	session_duration := viper.GetInt("session")
 	// END PARAMETERS ----------------------------
 
 	// LOGS ----------------------------
@@ -81,6 +86,8 @@ func main() {
 
 	// Utiliser une fonction utilitaire
 	log.Printf("Server is running on %s", listen)
+	log.Printf("Database location %s", database_path)
+	log.Printf("Session duration %d", session_duration)
 
 	// Démarrer le serveur
 	r.Run(listen)
