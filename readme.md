@@ -111,11 +111,13 @@ TODO
 - [ ] Source -> URL -> Permettre d'utiliser ou non un proxy
 - [ ] Source -> URL -> Permettre d'utiliser un user/password
 - [ ] Source -> script -> Execute un script et récupère le output -> JSON/XML/YAML
+- [ ] Source -> text -> Ecrire manuellement la source -> JSON/XML/YAML
 - [ ] Vue -> Permettre de désactiver le padding
 - [ ] Vue -> Permettre a tous les objets d'avoir la même taille ( https://getbootstrap.com/docs/5.3/components/card/#grid-cards )
 - [ ] Vue -> Permettre de choisir la couleur du header
 - [ ] Parametres -> Afficher le numero de version
 - [ ] Parametres -> Export / Import des Sources / Objets / Vues
 - [ ] Parametres -> Changer le logo (upload -> base64 -> stocké dans la BDD)
+- [ ] Parametres -> LDAP -> Option (bool) pour ajouter automatiquement un utilisateur lors de sa première connexion
 - [ ] Objet -> Prévisualier
 - [ ] Objet -> Tableau à pages
