@@ -17,6 +17,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
+require github.com/abdfnx/gosh v0.4.0 // indirect
+
 require (
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
