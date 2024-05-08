@@ -10,6 +10,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -122,12 +123,19 @@ func ViewToData(id string, data *map[string]interface{}) {
 
 func GetSourceContent(daSource map[string]interface{}) interface{} {
 	var content string
+	var parameters map[string]interface{}
+
+	if para, ok := daSource["parameters"].(map[string]interface{}); ok {
+		if ok = para[daSource["src"].(string)].(map[string]interface{}) != nil; ok {
+			parameters = para[daSource["src"].(string)].(map[string]interface{})
+		}
+	}
 
 	switch daSource["src"] {
 	case "file":
 		content = FileContent(daSource["path"].(string))
 	case "url":
-		content = UrlContent(daSource["path"].(string))
+		content = UrlContent(daSource["path"].(string), parameters)
 	}
 
 	switch daSource["type"] {
@@ -215,15 +223,45 @@ func FileContent(filePath string) string {
 	return string(content)
 }
 
-func UrlContent(url string) string {
-	// Effectuer une requête HTTP GET
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	client := &http.Client{Transport: tr}
-	response, err := client.Get(url)
+func UrlContent(urlget string, parameters map[string]interface{}) string {
+	req, err := http.NewRequest("GET", urlget, nil)
 	if err != nil {
-		fmt.Println("Erreur lors de la requête HTTP :", err)
+		fmt.Println("URL - Request error :", err)
+	}
+
+	// Effectuer une requête HTTP GET
+	tr := &http.Transport{}
+	for paramkey, value := range parameters {
+		switch paramkey {
+		case "proxy":
+			proxyUrl := value.(string)
+			if proxyUrl != "" {
+				proxy, err := url.Parse(proxyUrl)
+				if err != nil {
+					fmt.Println("URL - Proxy configuration error :", err)
+				} else {
+					tr.Proxy = http.ProxyURL(proxy)
+				}
+			}
+		case "skipverify":
+			skipverify := value.(bool)
+			if skipverify {
+				tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			}
+		case "authentication":
+			authinfo := value.(map[string]interface{})
+			if authinfo["enabled"].(bool) {
+				req.SetBasicAuth(authinfo["user"].(string), authinfo["password"].(string))
+			}
+		}
+	}
+
+	client := &http.Client{Transport: tr}
+
+	response, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("URL - Request error :", err)
 		return ""
 	}
 	defer response.Body.Close()
@@ -231,7 +269,7 @@ func UrlContent(url string) string {
 	// Lire le contenu de la réponse
 	content, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("Erreur lors de la lecture du contenu de la réponse :", err)
+		fmt.Println("URL - Reading response error :", err)
 		return ""
 	}
 

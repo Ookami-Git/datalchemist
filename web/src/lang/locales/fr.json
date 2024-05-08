@@ -114,12 +114,20 @@
         "header": "Source",
         "database": {
             "connection": "Chaine de connexion à la base de données",
-            "helper": "Voir l'aide à droite pour plus d'informations sur chaque type de base de données supporté.",
+            "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaine de connexion.",
             "query": "Requête SQL"
         },
         "file": {
             "path": "Chemin",
             "helper": "Chemin du fichier sur le serveur où est executé datalchemist."
+        },
+        "url": {
+            "skipverify": "Ignorer la validé du certificat SSL",
+            "proxy": "Proxy",
+            "authentication": "Authentification (Basic Auth)",
+            "enable": "Activer",
+            "username": "Nom d'utilisateur",
+            "password": "Mot de passe"
         },
         "loop": "Boucle",
         "loopinfo": "Plus d'informations"

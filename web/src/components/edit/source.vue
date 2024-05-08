@@ -28,7 +28,8 @@ const JsonSource = ref({
                 "type": '',
                 "path": '',
                 "loop": '',
-                "query": ''
+                "query": '',
+                "parameters": {}
               })
 
 const OrigineJsonSource = ref({ ... JsonSource.value })
@@ -78,6 +79,14 @@ const fetchSources = async () => {
 };
 
 function updateSource() {
+  // Clear other type parameters
+  for (let key in JsonSource.value.parameters) {
+    console.log(key)
+    if (key != JsonSource.value.src) {
+      delete JsonSource.value.parameters[key]
+    }
+  }
+
   axios.post(`${apiUrl}/source`, {
     id: SourceInfo.value.id,
     name: SourceInfo.value.name,
@@ -177,46 +186,44 @@ onMounted(async () => {
                             <select class="form-select" v-model="JsonSource.src">
                                 <option v-for="item in support" :key="item" :value="item.value">{{ item.name }}</option>
                             </select>
-                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url'" v-model="JsonSource.type">
+                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url'" v-model="JsonSource.type" :class="{ 'border-success': !supportedFlat.includes(JsonSource.type) }">
                                 <option v-for="item in supportedFlat" :key="item" :value="item">{{ item }}</option>
                             </select>
-                            <select class="form-select" v-if="JsonSource.src === 'database'" v-model="JsonSource.type">
+                            <select class="form-select" v-if="JsonSource.src === 'database'" v-model="JsonSource.type" :class="{ 'border-success': !supportedDb.includes(JsonSource.type) }">
                                 <option v-for="item in supportedDb" :key="item" :value="item">{{ item }}</option>
                             </select>
                         </div>
                         <hr>
-                            <filevue v-if="JsonSource.src === 'file'"></filevue>
-                            <urlvue v-if="JsonSource.src === 'url'"></urlvue>
-                            <databasevue v-if="JsonSource.src === 'database'"></databasevue>
+                          <filevue v-if="JsonSource.src === 'file' && supportedFlat.includes(JsonSource.type)"></filevue>
+                          <urlvue v-if="JsonSource.src === 'url' && supportedFlat.includes(JsonSource.type)"></urlvue>
+                          <databasevue v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)"></databasevue>
                     </div>
                     <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body">
-                                Mysql <a data-bs-toggle="collapse" href="#collapseMysql"><i class="bi bi-caret-down-square-fill"></i></a>
-                                <div class="collapse" id="collapseMysql">
-                                  <div class="card card-body">
-                                    <code>[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...]</code> <br>
-                                    <code>user:password@tcp(localhost:3306)/dbname</code>
-                                  </div>
-                                </div>
-                                <br>
-                                Sqlite <a data-bs-toggle="collapse" href="#collapseSqlite"><i class="bi bi-caret-down-square-fill"></i></a>
-                                <div class="collapse" id="collapseSqlite">
-                                  <div class="card card-body">
-                                    <code>/path/to/dbname.sqlite</code>
-                                  </div>
-                                </div>
-                                <br>
-                                Postgres <a data-bs-toggle="collapse" href="#collapsePostgres"><i class="bi bi-caret-down-square-fill"></i></a>
-                                <div class="collapse" id="collapsePostgres">
-                                  <div class="card card-body">
-                                    <code>user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432</code>
-                                  </div>
-                                </div>
-                                <br>
-                            </div>
-                        </div>
-                        <br>
+                        <template v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)" >
+                          <div class="card">
+                              <div class="card-body">
+                                  {{ $t('editsource.database.connection') }} : {{ JsonSource.type }}
+                                  <hr>
+                                  <template v-if="JsonSource.type === 'mysql'">
+                                    <div class="card card-body">
+                                      <code>[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...]</code> <br>
+                                      <code>user:password@tcp(localhost:3306)/dbname</code>
+                                    </div>
+                                  </template>
+                                  <template v-if="JsonSource.type === 'sqlite'">
+                                    <div class="card card-body">
+                                      <code>/path/to/dbname.sqlite</code>
+                                    </div>
+                                  </template>
+                                  <template v-if="JsonSource.type === 'postgres'">
+                                    <div class="card card-body">
+                                      <code>user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432</code>
+                                    </div>
+                                  </template>
+                              </div>
+                          </div>
+                          <br>
+                        </template>
                         <div class="card">
                           <div class="card-body">
                             <div class="input-group mb-3">

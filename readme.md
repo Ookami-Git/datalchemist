@@ -1,4 +1,5 @@
 # Datalchemist
+Datalchemist is an open-source project that aims to make it easy to extract, transform, and present data from various sources such as databases, files, or URLs.
 ![datalchemist](Datalchemist.png)
 ## Screenshot
 ![datalchemistScreenshot](screenshot.jpg)
@@ -108,8 +109,8 @@ Require this HTML code :
 TODO
 
 ## TODO / Idées
-- [ ] Source -> URL -> Permettre d'utiliser ou non un proxy
-- [ ] Source -> URL -> Permettre d'utiliser un user/password
+- [X] Source -> URL -> Permettre d'utiliser ou non un proxy
+- [X] Source -> URL -> Permettre d'utiliser un user/password
 - [ ] Source -> script -> Execute un script et récupère le output -> JSON/XML/YAML
 - [ ] Vue -> Permettre de désactiver le padding
 - [ ] Vue -> Permettre a tous les objets d'avoir la même taille ( https://getbootstrap.com/docs/5.3/components/card/#grid-cards )

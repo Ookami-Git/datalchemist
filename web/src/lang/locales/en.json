@@ -114,12 +114,20 @@
         "header": "Source",
         "database": {
             "connection": "Database connection string",
-            "helper": "See the help on the right for more information about each supported database type.",
+            "helper": "See the help on the right for more information about the connection string syntax.",
             "query": "SQL query"
         },
         "file": {
             "path": "Path",
             "helper": "Path of the file on the server where datalchemist is executed."
+        },
+        "url": {
+            "skipverify": "Skip verify SSL Certificate",
+            "proxy": "Proxy",
+            "authentication": "Authentication (Basic Auth)",
+            "enable": "Enable",
+            "username": "Username",
+            "password": "Password"
         },
         "loop": "Loop",
         "loopinfo": "More information"
