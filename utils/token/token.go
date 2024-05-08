@@ -8,17 +8,18 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/spf13/viper"
 )
 
 var secret string = "Shrubbery-Trunks-Bony-Profane-Hunting-Swan8"
 
 func GenerateToken(user_id uint) (string, error) {
-	token_lifespan := 5
+	token_lifespan := viper.GetInt("session")
 
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
 	claims["user_id"] = user_id
-	claims["exp"] = time.Now().Add(time.Hour * time.Duration(token_lifespan)).Unix()
+	claims["exp"] = time.Now().Add(time.Minute * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(secret))
