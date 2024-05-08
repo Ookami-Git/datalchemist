@@ -5,6 +5,7 @@ import axios from 'axios';
 import databasevue from './source/database.vue'
 import filevue from './source/file.vue'
 import urlvue from './source/url.vue'
+import executevue from './source/execute.vue'
 
 const route = useRoute();
 const apiUrl = inject('apiUrl');
@@ -16,11 +17,8 @@ const closeBrace = '}}'
 const save = inject('save');
 save.value.safe()
 
-const support = ref([
-    { "value": "file", "name": "Fichier"},
-    { "value": "url", "name": "URL"},
-    { "value": "database", "name": "Base de donnée"},
-])
+//const support = ref(["file","url","execute","database"])
+const support = ref(["file","url","database"])
 const supportedFlat = ref(["json", "xml", "yml"])
 const supportedDb = ref(["sqlite", "postgres", "mysql"])
 const JsonSource = ref({
@@ -184,9 +182,9 @@ onMounted(async () => {
                     <div class="col-md-8">
                         <div class="input-group mb-3">
                             <select class="form-select" v-model="JsonSource.src">
-                                <option v-for="item in support" :key="item" :value="item.value">{{ item.name }}</option>
+                                <option v-for="item in support" :key="item" :value="item">{{ $t(`editsource.type.${item}`) }}</option>
                             </select>
-                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url'" v-model="JsonSource.type" :class="{ 'border-success': !supportedFlat.includes(JsonSource.type) }">
+                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url' || JsonSource.src === 'execute'" v-model="JsonSource.type" :class="{ 'border-success': !supportedFlat.includes(JsonSource.type) }">
                                 <option v-for="item in supportedFlat" :key="item" :value="item">{{ item }}</option>
                             </select>
                             <select class="form-select" v-if="JsonSource.src === 'database'" v-model="JsonSource.type" :class="{ 'border-success': !supportedDb.includes(JsonSource.type) }">
@@ -194,33 +192,34 @@ onMounted(async () => {
                             </select>
                         </div>
                         <hr>
-                          <filevue v-if="JsonSource.src === 'file' && supportedFlat.includes(JsonSource.type)"></filevue>
-                          <urlvue v-if="JsonSource.src === 'url' && supportedFlat.includes(JsonSource.type)"></urlvue>
-                          <databasevue v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)"></databasevue>
+                        <filevue v-if="JsonSource.src === 'file' && supportedFlat.includes(JsonSource.type)"></filevue>
+                        <urlvue v-if="JsonSource.src === 'url' && supportedFlat.includes(JsonSource.type)"></urlvue>
+                        <executevue v-if="JsonSource.src === 'execute' && supportedFlat.includes(JsonSource.type)"></executevue>
+                        <databasevue v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)"></databasevue>
                     </div>
                     <div class="col-md-4">
                         <template v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)" >
                           <div class="card">
-                              <div class="card-body">
-                                  {{ $t('editsource.database.connection') }} : {{ JsonSource.type }}
-                                  <hr>
-                                  <template v-if="JsonSource.type === 'mysql'">
-                                    <div class="card card-body">
-                                      <code>[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...]</code> <br>
-                                      <code>user:password@tcp(localhost:3306)/dbname</code>
-                                    </div>
-                                  </template>
-                                  <template v-if="JsonSource.type === 'sqlite'">
-                                    <div class="card card-body">
-                                      <code>/path/to/dbname.sqlite</code>
-                                    </div>
-                                  </template>
-                                  <template v-if="JsonSource.type === 'postgres'">
-                                    <div class="card card-body">
-                                      <code>user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432</code>
-                                    </div>
-                                  </template>
-                              </div>
+                            <div class="card-body">
+                                {{ $t('editsource.database.connection') }} : {{ JsonSource.type }}
+                                <hr>
+                                <template v-if="JsonSource.type === 'mysql'">
+                                  <div class="card card-body">
+                                    <code>[username[:password]@][protocol[(address)]]/dbname[?param1=value1&...]</code> <br>
+                                    <code>user:password@tcp(localhost:3306)/dbname</code>
+                                  </div>
+                                </template>
+                                <template v-if="JsonSource.type === 'sqlite'">
+                                  <div class="card card-body">
+                                    <code>/path/to/dbname.sqlite</code>
+                                  </div>
+                                </template>
+                                <template v-if="JsonSource.type === 'postgres'">
+                                  <div class="card card-body">
+                                    <code>user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432</code>
+                                  </div>
+                                </template>
+                            </div>
                           </div>
                           <br>
                         </template>

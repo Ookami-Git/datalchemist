@@ -111,6 +111,12 @@
         }
     },
     "editsource": {
+        "type": {
+            "file": "Fichier",
+            "url": "URL",
+            "execute": "Exécuter une commande ou un script",
+            "database": "Base de données"
+        },
         "header": "Source",
         "database": {
             "connection": "Chaine de connexion à la base de données",
@@ -120,6 +126,10 @@
         "file": {
             "path": "Chemin",
             "helper": "Chemin du fichier sur le serveur où est executé datalchemist."
+        },
+        "execute": {
+            "path": "Commande ou script",
+            "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format séléctionné."
         },
         "url": {
             "skipverify": "Ignorer la validé du certificat SSL",

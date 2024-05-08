@@ -121,6 +121,10 @@
             "path": "Path",
             "helper": "Path of the file on the server where datalchemist is executed."
         },
+        "execute": {
+            "path": "Command or script",
+            "helper": "Command or script that will be executed by the application. The standard output must correspond to the selected format."
+        },
         "url": {
             "skipverify": "Skip verify SSL Certificate",
             "proxy": "Proxy",

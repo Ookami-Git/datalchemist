@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/abdfnx/gosh"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/icza/dyno"
@@ -126,7 +127,7 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 	var parameters map[string]interface{}
 
 	if para, ok := daSource["parameters"].(map[string]interface{}); ok {
-		if ok = para[daSource["src"].(string)].(map[string]interface{}) != nil; ok {
+		if ok = para[daSource["src"].(string)] != nil; ok {
 			parameters = para[daSource["src"].(string)].(map[string]interface{})
 		}
 	}
@@ -136,6 +137,8 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		content = FileContent(daSource["path"].(string))
 	case "url":
 		content = UrlContent(daSource["path"].(string), parameters)
+	case "execute":
+		content = ExecuteContent(daSource["path"].(string))
 	}
 
 	switch daSource["type"] {
@@ -274,6 +277,18 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 	}
 
 	return string(content)
+}
+
+func ExecuteContent(commande string) string {
+	// run a command with output
+	err, content, _ := gosh.RunOutput(commande)
+
+	if err != nil {
+		fmt.Println("Error during execution command :", err)
+		return ""
+	}
+
+	return content
 }
 
 func JsonToObject(jsonData string) interface{} {
