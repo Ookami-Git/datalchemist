@@ -148,7 +148,7 @@ onMounted(async () => {
           <template v-for="(ItemsRow, indexRow) in ViewParameters">
             <div class="row align-items-center" >
                 <div class="col-md-1 text-center">
-                  <button type="button" class="btn btn-danger" @click="RemoveRow(indexRow)">Remove Row</button>
+                  <button type="button" class="btn btn-danger" @click="RemoveRow(indexRow)">{{ $t('editview.removerow') }}</button>
                 </div>
                 <div class="col-md-11">
                   <div class="row align-items-center">
@@ -157,16 +157,16 @@ onMounted(async () => {
                               <div class="card-header">
                                   <div class="form-floating input-group mb-3">
                                       <input type="text" class="form-control" id="floatingInput" placeholder="Empty for no header" v-model="Item.title">
-                                      <label for="floatingInput">Header</label>
-                                      <button class="btn btn-outline-danger" type="button"  @click="RemoveItem(indexRow, indexItem)">Remove</button>
+                                      <label for="floatingInput">{{ $t('editview.header_item') }}</label>
+                                      <button class="btn btn-outline-danger" type="button"  @click="RemoveItem(indexRow, indexItem)">{{ $t('editview.removeitem') }}</button>
                                   </div>
                               </div>
                               <div class="card-body">
-                                  <label>Size</label>
+                                  <label>{{ $t('editview.size') }}</label>
                                   <select class="form-select" v-model="Item.size" :key="indexItem">
                                       <option v-for="i in RowSizeCalculator(indexRow, Item.size)" :key=i :value=i>{{ i }}</option>
                                   </select>
-                                  <label>Item</label>
+                                  <label>{{ $t('editview.item') }}</label>
                                   <select class="form-select" v-model="Item.itemid">
                                     <option v-for="items in availableItems" :key="items" :value="items.id">{{ items.name }}</option>
                                   </select>
@@ -174,14 +174,14 @@ onMounted(async () => {
                           </div>
                     </div>
                     <div class="col-md-1 text-center align-items-center" v-if="CanAddItem(indexRow)">
-                      <button type="button" class="btn btn-primary" @click="AddItem(indexRow)">Add item</button>
+                      <button type="button" class="btn btn-primary" @click="AddItem(indexRow)">{{ $t('editview.additem') }}</button>
                     </div>
                   </div>
                 </div>
             </div>
             <hr>
           </template>
-          <div class="col-md-12 text-center"><button type="button" class="btn btn-success" @click="AddRow">Add Row</button></div>
+          <div class="col-md-12 text-center"><button type="button" class="btn btn-success" @click="AddRow">{{ $t('editview.addrow') }}</button></div>
           <br>
         </div>
       </div>

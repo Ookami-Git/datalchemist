@@ -143,6 +143,13 @@
         "loopinfo": "Plus d'informations"
     },
     "editview": {
-        "header": "Vue"
+        "header": "Vue",
+        "header_item": "En-tête",
+        "size": "Taille",
+        "item": "Objet",
+        "addrow": "Ajouter rangée",
+        "additem": "Ajouter objet",
+        "removerow": "Supprimer rangée",
+        "removeitem": "Supprimer"
     }
 }

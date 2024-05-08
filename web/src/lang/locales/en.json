@@ -137,7 +137,14 @@
         "loopinfo": "More information"
     },
     "editview": {
-        "header": "View"
+        "header": "View",
+        "header_item": "Header item",
+        "size": "Item size",
+        "item": "Item",
+        "addrow": "Add row",
+        "additem": "Add item",
+        "removerow": "Remove row",
+        "removeitem": "Remove item"
     }
 }
 
