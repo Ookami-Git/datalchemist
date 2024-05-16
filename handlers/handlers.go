@@ -143,6 +143,7 @@ func ParametersGet(c *gin.Context) {
 				"lang":            Parameters["lang"],
 				"name":            Parameters["name"],
 				"menu":            Parameters["menu"],
+				"defaultview":     Parameters["defaultview"],
 				"isAdmin":         false,
 			}
 		} else {
@@ -169,6 +170,7 @@ func ParametersGet(c *gin.Context) {
 			"bg_color2_dark":  Parameters["bg_color2_dark"],
 			"lang":            Parameters["lang"],
 			"name":            Parameters["name"],
+			"defaultview":     Parameters["defaultview"],
 			"isAdmin":         false,
 			"auth":            false,
 		}

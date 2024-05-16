@@ -42,6 +42,7 @@ func Init() error {
 		{Name: "ldap_filter", Value: "uid"},
 		{Name: "ldap_user", Value: ""},
 		{Name: "ldap_password", Value: ""},
+		{Name: "defaultview", Value: ""},
 	}
 	for _, p := range parameters {
 		var count int64
