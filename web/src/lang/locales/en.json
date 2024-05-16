@@ -145,6 +145,11 @@
         "additem": "Add item",
         "removerow": "Remove row",
         "removeitem": "Remove item"
+    },
+    "home":{
+        "welcome":"Welcome to DataChemist",
+        "header":"This is the home page.",
+        "message":"If you have a default view configured in the parameters, you will be redirected to it, otherwise you can explore the application from here"
     }
 }
 

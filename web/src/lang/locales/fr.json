@@ -151,5 +151,10 @@
         "additem": "Ajouter objet",
         "removerow": "Supprimer rangée",
         "removeitem": "Supprimer"
+    },
+"home": {
+        "welcome": "Bienvenue sur Datalchemist",
+        "header": "Page d'accueil",
+        "message": "Si vous avez une vue par défaut configurée dans les paramètres, vous serez redirigé vers celle-ci. Sinon, vous pouvez explorer l'application à partir d'ici"
     }
 }

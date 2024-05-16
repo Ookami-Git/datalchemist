@@ -79,7 +79,7 @@ const fetchSources = async () => {
 function updateSource() {
   // Clear other type parameters
   for (let key in JsonSource.value.parameters) {
-    console.log(key)
+    //console.log(key)
     if (key != JsonSource.value.src) {
       delete JsonSource.value.parameters[key]
     }

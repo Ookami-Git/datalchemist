@@ -38,30 +38,28 @@ const login = async () => {
                     <div class="card border border-light-subtle rounded-3 shadow-sm">
                         <div class="card-body p-3 p-md-4 p-xl-5">
                             <div class="text-center mb-3">
-                                <a href="#!">
-                                    <img src="/logo.png" alt="BootstrapBrain Logo" width="175">
-                                </a>
+                                <img src="/logo.png" alt="BootstrapBrain Logo" width="175">
                             </div>
-                            <h2 class="fs-6 fw-normal text-center text-secondary mb-4">Sign in to your account</h2>
+                            <h2 class="fs-6 fw-normal text-center text-secondary mb-4">{{ $t('auth.message') }}</h2>
                             <form @submit.prevent="login">
                                 <div class="row gy-2 overflow-hidden">
                                     <div class="col-12">
                                         <div class="form-floating mb-3">
                                             <input type="text" class="form-control" name="username" id="username"
                                                 placeholder="Username" v-model="username" required>
-                                            <label for="username" class="form-label">Username</label>
+                                            <label for="username" class="form-label">{{ $t('auth.user') }}</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-floating mb-3">
                                             <input type="password" class="form-control" name="password" id="password"
                                                 value="" placeholder="Password" v-model="password" required>
-                                            <label for="password" class="form-label">Password</label>
+                                            <label for="password" class="form-label">{{ $t('auth.password') }}</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="d-grid my-3">
-                                            <button class="btn btn-primary btn-lg" type="submit">Log in</button>
+                                            <button class="btn btn-primary btn-lg" type="submit">{{ $t('auth.button') }}</button>
                                         </div>
                                     </div>
                                 </div>
