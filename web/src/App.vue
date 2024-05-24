@@ -19,7 +19,7 @@ const saveButton = ref({
   "saveGuard": function () {
     if (saveButton.value.show && !saveButton.value.disabled) {
       const answer = window.confirm(
-        'Do you really want to leave wihtout save changes ?'
+        i18n.global.t('save.nosave')
       )
       // cancel the navigation and stay on the same page
       return answer

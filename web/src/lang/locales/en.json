@@ -150,6 +150,10 @@
         "welcome":"Welcome to DataChemist",
         "header":"This is the home page.",
         "message":"If you have a default view configured in the parameters, you will be redirected to it, otherwise you can explore the application from here"
+    },
+    "save": {
+        "label": "Save",
+        "nosave": "Do you really want to leave wihtout save changes ?"
     }
 }
 
