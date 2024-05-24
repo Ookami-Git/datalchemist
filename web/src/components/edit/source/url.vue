@@ -3,6 +3,10 @@ import { inject } from "vue";
 
 const source = inject('source');
 
+if (!source.value.parameters) {
+  source.value.parameters = {}
+}
+
 if (!source.value.parameters.url) {
   source.value.parameters.url = {
     authentication: {
