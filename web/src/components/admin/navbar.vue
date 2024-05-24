@@ -45,7 +45,8 @@ function betterTab(cm) {
 const cmOptions = reactive({
     mode: "yaml", // YAML language
     theme: "default", // Default theme
-    extraKeys: {'Tab': betterTab} // Use our betterTab function for the Tab key
+    extraKeys: {'Tab': betterTab}, // Use our betterTab function for the Tab key
+    lineWrapping: true,
 })
 
 // Function called when the content of CodeMirror changes

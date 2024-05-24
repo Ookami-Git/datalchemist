@@ -27,7 +27,8 @@ const source = inject('source');
 const cmOptions = reactive({
     mode: "jinja2-sql", // Language mode
     theme: "default", // Theme
-    tabSize: 2
+    tabSize: 2,
+    lineWrapping: true,
 })
 
 function change () {

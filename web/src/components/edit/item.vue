@@ -38,7 +38,8 @@ const code = ref(null);
 const cmOptions = reactive({
     mode: "jinja2-html", // Language mode
     theme: "default", // Theme
-    tabSize: 2
+    tabSize: 2,
+    lineWrapping: true,
 })
 
 function change () {
