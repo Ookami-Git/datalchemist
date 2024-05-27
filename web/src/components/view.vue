@@ -43,7 +43,11 @@ dajucks.addFilter("find", function (arr, path, value) {
 });
 // FromJson To Object filter
 dajucks.addFilter("fromjson", function (str) {
-  return JSON.parse(str);
+  try {
+    return JSON.parse(str);
+  } catch (error) {
+    return null;
+  }
 });
 // output date filter
 dajucks.addFilter("date", function (date, outputformat, inputformat) {
