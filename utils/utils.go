@@ -3,7 +3,6 @@ package utils
 
 import (
 	"crypto/tls"
-	"database/sql"
 	"datalchemist/database"
 	"encoding/json"
 	"fmt"
@@ -17,11 +16,13 @@ import (
 
 	"github.com/abdfnx/gosh"
 	"github.com/gin-gonic/gin"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/icza/dyno"
-	_ "github.com/lib/pq"
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/nikolalohinski/gonja"
+
+	"github.com/glebarez/sqlite"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/sbabiv/xml2map"
 	"github.com/tidwall/gjson"
@@ -335,53 +336,48 @@ func XmlToObject(xmlData string) interface{} {
 	return data
 }
 
-func SQLToObject(connectionString string, query string, dbtype string) []map[string]interface{} {
-	//SQLITE		connectionString := "/path/to/dbname.sqlite"
-	//MYSQL			connectionString := "user:password@tcp(localhost:3306)/dbname"
-	//PostgreSQL	connectionString := "user=youruser password=yourpassword dbname=yourdbname sslmode=disable host=localhost port=5432"
-	// Ouvrir une connexion à la base de données
-	db, err := sql.Open(dbtype, connectionString)
-	if checkErr(err) {
+func SQLToObject(connectionString string, query string, dbtype string) ([]map[string]interface{}) {
+	var db *gorm.DB
+	var err error
+
+	switch dbtype {
+	case "sqlite3":
+		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+	case "mysql":
+		db, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+	case "postgres":
+		db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{})
+	default:
 		return nil
 	}
-	defer db.Close()
-
-	// Vérifier la connexion à la base de données
-	err = db.Ping()
-	if checkErr(err) {
+	if err != nil {
 		return nil
 	}
 
-	// Exécuter une requête SELECT
-	rows, err := db.Query(query)
-	if checkErr(err) {
+	rows, err := db.Raw(query).Rows()
+	if err != nil {
 		return nil
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
-	if checkErr(err) {
+	if err != nil {
 		return nil
 	}
 
 	var result []map[string]interface{}
 
-	// Parcourir les résultats de la requête
 	for rows.Next() {
-		// Create a slice of empty interfaces to store column values
 		values := make([]interface{}, len(columns))
-		// Create a slice of pointers to values for rows.Scan
 		pointers := make([]interface{}, len(columns))
 		for i := range values {
 			pointers[i] = &values[i]
 		}
 
-		// Scan the row into the slice of pointers
 		if err := rows.Scan(pointers...); err != nil {
-			log.Fatal(err)
+			return nil
 		}
 
-		// Create a map and populate it with column names and values
 		rowData := make(map[string]interface{})
 		for i, col := range columns {
 			// Convert []byte to string (for MYSQL)
@@ -392,17 +388,11 @@ func SQLToObject(connectionString string, query string, dbtype string) []map[str
 			}
 		}
 
-		// Append the map to the result slice
 		result = append(result, rowData)
 	}
 
-	// Vérifier les erreurs après le parcours des résultats
-	err = rows.Err()
-	checkErr(err)
-
 	return result
 }
-
 func checkErr(err error) bool {
 	if err != nil {
 		log.Print("ERROR utils :", err)

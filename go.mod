@@ -6,9 +6,7 @@ require (
 	github.com/gin-contrib/static v1.1.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-ldap/ldap/v3 v3.4.8
-	github.com/go-sql-driver/mysql v1.8.1
-	github.com/lib/pq v1.10.9
-	github.com/mattn/go-sqlite3 v1.14.22
+	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/nikolalohinski/gonja v1.5.3
 	github.com/sbabiv/xml2map v1.2.1
 	github.com/spf13/pflag v1.0.5
@@ -17,13 +15,28 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-require github.com/abdfnx/gosh v0.4.0
+require (
+	github.com/abdfnx/gosh v0.4.0
+	github.com/glebarez/sqlite v1.11.0
+	gorm.io/driver/mysql v1.5.6
+	gorm.io/driver/postgres v1.5.7
+)
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
 	github.com/cloudwego/base64x v0.1.4 // indirect
 	github.com/cloudwego/iasm v0.2.0 // indirect
+	github.com/glebarez/go-sqlite v1.21.2 // indirect
+	github.com/jackc/pgpassfile v1.0.0 // indirect
+	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
+	github.com/jackc/pgx/v5 v5.4.3 // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
+	modernc.org/libc v1.49.3 // indirect
+	modernc.org/mathutil v1.6.0 // indirect
+	modernc.org/memory v1.8.0 // indirect
+	modernc.org/sqlite v1.29.10 // indirect
 )
 
 require (
@@ -54,7 +67,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/exp v0.0.0-20240506185415-9bf2ced13842 // indirect
-	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.10
 )
 
