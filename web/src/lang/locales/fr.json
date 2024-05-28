@@ -9,7 +9,8 @@
         "profil": "Mon compte",
         "logout": "Déconnexion",
         "admin": "Paramètres",
-        "edit": "Édition"
+        "edit": "Édition",
+        "search": "Rechercher"
     },
     "profil": {
         "header": "Mon compte"
@@ -132,7 +133,7 @@
             "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format séléctionné."
         },
         "url": {
-            "skipverify": "Ignorer la validé du certificat SSL",
+            "skipverify": "Ignorer la validité du certificat SSL",
             "proxy": "Proxy",
             "authentication": "Authentification (Basic Auth)",
             "enable": "Activer",

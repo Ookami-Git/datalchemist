@@ -9,7 +9,8 @@
         "profil": "My account",
         "logout": "Logout",
         "admin": "Settings",
-        "edit": "Editor"
+        "edit": "Editor",
+        "search": "Search"
     },
     "profil": {
         "header": "My account"

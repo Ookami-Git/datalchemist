@@ -101,7 +101,7 @@ const logout = async () => {
             </ul>
             <button v-if="save.show" type="button" :class="`btn btn-${save.color}`" @click="save.function" :disabled="save.disabled"><i class="bi bi-floppy-fill"></i> {{ $t('save.label') }}</button>
             <form class="d-flex" role="search" v-if="searchBox.show">
-                <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search" v-model="filterText" @input="filterTables">
+                <input class="form-control me-2" type="search" :placeholder="$t('menu.search')" aria-label="Search" v-model="filterText" @input="filterTables">
             </form>
             <div class="nav-item dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
