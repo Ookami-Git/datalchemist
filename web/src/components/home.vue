@@ -14,15 +14,13 @@ if (parameter.value.defaultview && parameter.value.defaultview != "") {
     <div class="row">
         <div class="col-md-12">
             <div class="card" aria-hidden="true" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-                <div class="card-header bg-primary">Welcome to DataChemist</div>
+                <div class="card-header bg-primary">{{ $t('home.welcome') }}</div>
                 <div class="card-body">
                     <h5 class="card-title placeholder-glow">
-                        <span>This is the home page.</span>
+                        <span>{{ $t('home.header') }}</span>
                     </h5>
                     <p class="card-text">
-                        If you have a default view configured in the
-                        parameters, you will be redirected to it, otherwise you can explore
-                        the application from here
+                        {{ $t('home.message') }}
                     </p>
                 </div>
             </div>
