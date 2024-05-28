@@ -350,9 +350,18 @@ func SQLToObject(connectionString string, query string, dbtype string) ([]map[st
 	default:
 		return nil
 	}
+
 	if err != nil {
 		return nil
 	}
+
+	sqlDB, err := db.DB()
+
+	if err != nil {	
+		return nil
+	}
+
+	defer sqlDB.Close()
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
