@@ -77,46 +77,46 @@ onMounted(() => {
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title">Profil</h5>
+                        <h5 class="card-title">{{ $t('profil.header') }}</h5>
                     </div>
                     <div class="card-body">
                         <p class="card-text">{{ user.name }}</p>
                     </div>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item">Langue : {{ user.lang }}</li>
-                        <li class="list-group-item">Thème : {{ user.theme }}</li>
+                        <li class="list-group-item">{{ $t('profil.language') }} : {{ user.lang }}</li>
+                        <li class="list-group-item">{{ $t('profil.theme') }} : {{ user.theme }}</li>
                     </ul>
                 </div>
             </div>
             <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title">Paramètres</h5>
+                        <h5 class="card-title">{{ $t('profil.parameters') }}</h5>
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label for="inputLang" class="form-label">Langue :</label>
+                            <label for="inputLang" class="form-label">{{ $t('profil.language') }} :</label>
                             <select class="form-select" id="inputLang" v-model="user.lang">
                                 <option v-for="l in lang" :key="l.id" :value="l.id">{{ l.name }}</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="inputTheme" class="form-label">Thème :</label>
+                            <label for="inputTheme" class="form-label">{{ $t('profil.theme') }} :</label>
                             <select class="form-select" id="inputTheme" v-model="user.theme">
                                 <option v-for="t in theme" :key="t.id" :value="t.id">{{ t.name }}</option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="inputPassword" class="form-label">Nouveau mot de passe :</label>
+                            <label for="inputPassword" class="form-label">{{ $t('profil.password') }} :</label>
                             <input type="password" class="form-control" id="inputPassword" v-model="user.password" :class="{'is-invalid': checkPassword()}">
                         </div>
                         <div class="mb-3">
-                            <label for="inputPasswordConfirm" class="form-label">Confirmation du mot de passe :</label>
+                            <label for="inputPasswordConfirm" class="form-label">{{ $t('profil.passwordrepeat') }} :</label>
                             <input type="password" class="form-control" id="inputPasswordConfirm" v-model="passwordConfirm" :class="{'is-invalid': checkPassword()}">
                         </div>
                     </div>
                     <div class="card-footer">
-                        <button type="button" class="btn btn-primary" :disabled="errorPassword" @click="UpdateUser()">Mettre à jour</button>
+                        <button type="button" class="btn btn-primary" :disabled="errorPassword" @click="UpdateUser()">{{ $t('profil.save') }}</button>
                     </div>
                 </div>
             </div>

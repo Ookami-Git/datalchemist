@@ -13,7 +13,13 @@
         "search": "Search"
     },
     "profil": {
-        "header": "My account"
+        "header": "My account",
+        "parameters": "Settings",
+        "language": "Language",
+        "theme": "Theme",
+        "password": "New password",
+        "passwordrepeat": "Confirm new password",
+        "save": "Save changes"
     },
     "admin": {
         "header": "Settings",

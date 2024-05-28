@@ -13,7 +13,13 @@
         "search": "Rechercher"
     },
     "profil": {
-        "header": "Mon compte"
+        "header": "Mon compte",
+        "parameters": "Paramètres",
+        "language": "Langue",
+        "theme": "Thème",
+        "password": "Nouveau mot de passe",
+        "passwordrepeat": "Confirmer le nouveau mot de passe",
+        "save": "Sauvegarder les modifications"
     },
     "admin": {
         "header": "Paramètres",
