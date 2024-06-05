@@ -1,7 +1,14 @@
 {
-    "auth": {
-        "user": "Username",
+    "global": {
+        "apply": "Apply",
+        "cancel": "Cancel",
+        "username": "Username",
         "password": "Password",
+        "yes": "Yes",
+        "no": "No",
+        "groups": "Groups"
+    },
+    "auth": {
         "message": "Please enter your username and password",
         "button": "Login"
     },
@@ -57,7 +64,18 @@
             }
         },
         "users": {
-            "header": "Users"
+            "header": "Users",
+            "user": "User",
+            "type": "Connection type",
+            "groups": "Groups",
+            "actions": "Actions",
+            "adduser": "Add user",
+            "edituser": "Edit user",
+            "changegroups": "Change user groups",
+            "deleteuser": "Delete user",
+            "preview": "Preview user",
+            "password":"Password",
+            "askdelete": "Are you sure you want to delete the user"
         },
         "groups": {
             "header": "Groups"

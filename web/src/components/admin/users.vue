@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const apiUrl = inject('apiUrl');
 const myUser = inject('myUser');
+const i18n = inject('i18n');
 
 const Users = ref(null)
 const Groups = ref(null)
@@ -169,10 +170,10 @@ onMounted(() => {
         <thead>
             <tr>
                 <th scope="col" class="col-1">#</th>
-                <th scope="col" class="col-3">Username</th>
-                <th scope="col" class="col-1">Type</th>
-                <th scope="col" class="col-5">Groups</th>
-                <th scope="col" class="col-2">Actions</th>
+                <th scope="col" class="col-3">{{ $t('global.username') }}</th>
+                <th scope="col" class="col-1">{{ $t('admin.users.type') }}</th>
+                <th scope="col" class="col-5">{{ $t('admin.users.groups') }}</th>
+                <th scope="col" class="col-2">{{ $t('admin.users.actions') }}</th>
             </tr>
             <tr>
                 <td scope="col" colspan="2">
@@ -184,11 +185,11 @@ onMounted(() => {
                         <option value="ldap">LDAP</option>
                     </select>
                 </td>
-                <td scope="col"><button type="button" class="btn btn-outline-success btn-sm me-1" title="Change user groups" @click="UserAction = NewUser" data-bs-toggle="modal" data-bs-target="#ChangeGroups" :disabled="!NewUser.name"><i class="bi bi-people-fill"></i></button></td>
+                <td scope="col"><button type="button" class="btn btn-outline-success btn-sm me-1" :title="i18n.global.t('admin.users.changegroups')" @click="UserAction = NewUser" data-bs-toggle="modal" data-bs-target="#ChangeGroups" :disabled="!NewUser.name"><i class="bi bi-people-fill"></i></button></td>
                 <td scope="col">
                     <div class="input-group">
-                        <button type="button" class="btn btn-outline-success btn-sm" title="Add User" @click="AddUser()" :disabled="!NewUser.name || !((NewUser.type == 'local' && NewUser.password) || NewUser.type == 'ldap') || checkUsername(NewUser.name)"><i class="bi bi-person-plus-fill"></i></button>
-                        <input v-if="NewUser.type == 'local'" type="password" class="form-control form-control-sm" placeholder="Password" aria-label="Password" :disabled="NewUser.type != 'local'" v-model="NewUser.password">
+                        <button type="button" class="btn btn-outline-success btn-sm" :title="i18n.global.t('admin.users.adduser')" @click="AddUser()" :disabled="!NewUser.name || !((NewUser.type == 'local' && NewUser.password) || NewUser.type == 'ldap') || checkUsername(NewUser.name)"><i class="bi bi-person-plus-fill"></i></button>
+                        <input v-if="NewUser.type == 'local'" type="password" class="form-control form-control-sm" :placeholder="i18n.global.t('global.password')" :aria-label="i18n.global.t('global.password')" :disabled="NewUser.type != 'local'" v-model="NewUser.password">
                     </div>
                 </td>
             </tr>
@@ -206,11 +207,11 @@ onMounted(() => {
                 </td>
                 <td>
                     <template v-if="user.id != 0" >
-                        <button type="button" class="btn btn-outline-primary btn-sm me-1" title="Edit User" @click="UserAction = Object.assign({}, user)" data-bs-toggle="modal" data-bs-target="#UpdateUser"><i class="bi bi-pencil-square"></i></button>
-                        <button v-if="user.name != 'admin'" type="button" class="btn btn-outline-success btn-sm me-1" title="Change user groups" @click="UserAction = user" data-bs-toggle="modal" data-bs-target="#ChangeGroups"><i class="bi bi-people-fill"></i></button>
-                        <button v-if="user.name != 'admin'" type="button" class="btn btn-outline-danger btn-sm" title="Delete user" @click="UserAction = user" data-bs-toggle="modal" data-bs-target="#DeleteUser"><i class="bi bi-trash2"></i></button>
+                        <button type="button" class="btn btn-outline-primary btn-sm me-1" :title="i18n.global.t('admin.users.edituser')" @click="UserAction = Object.assign({}, user)" data-bs-toggle="modal" data-bs-target="#UpdateUser"><i class="bi bi-pencil-square"></i></button>
+                        <button v-if="user.name != 'admin'" type="button" class="btn btn-outline-success btn-sm me-1" :title="i18n.global.t('admin.users.changegroups')" @click="UserAction = user" data-bs-toggle="modal" data-bs-target="#ChangeGroups"><i class="bi bi-people-fill"></i></button>
+                        <button v-if="user.name != 'admin'" type="button" class="btn btn-outline-danger btn-sm" :title="i18n.global.t('admin.users.deleteuser')" @click="UserAction = user" data-bs-toggle="modal" data-bs-target="#DeleteUser"><i class="bi bi-trash2"></i></button>
                     </template>
-                    <span v-if="user.id == 0">Preview - New user</span>
+                    <span v-if="user.id == 0">{{ $t('admin.users.preview') }}</span>
                 </td>
             </tr>
         </tbody>
@@ -220,16 +221,16 @@ onMounted(() => {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">User : {{ UserAction.name }}</h1>
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('admin.users.user') }} : {{ UserAction.name }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div v-if="UserAction.id != 1" class="modal-body">
                     <div class="mb-3">
-                        <label for="InputName" class="form-label">New name</label>
+                        <label for="InputName" class="form-label">{{ $t('global.username') }}</label>
                         <input type="text" class="form-control" id="InputName" v-model="UserAction.name">
                     </div>
                     <div class="mb-3">
-                        <label for="InputType" class="form-label">Change authentication type</label>
+                        <label for="InputType" class="form-label">{{ $t('admin.users.type') }}</label>
                         <select class="form-select" id="InputType" v-model="UserAction.type">
                             <option value="local">local</option>
                             <option value="ldap">ldap</option>
@@ -238,13 +239,13 @@ onMounted(() => {
                 </div>
                 <div v-if="UserAction.type == 'local'" class="modal-body">
                     <div class="mb-3">
-                        <label for="InputName" class="form-label">New password</label>
+                        <label for="InputName" class="form-label">{{ $t('global.password') }}</label>
                         <input type="password" class="form-control" id="InputName" v-model="UserAction.password">
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-primary" @click="UserUpdate()" data-bs-dismiss="modal">Appliquer</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
+                    <button type="button" class="btn btn-primary" @click="UserUpdate()" data-bs-dismiss="modal">{{ $t('global.apply') }}</button>
                 </div>
             </div>
         </div>
@@ -254,15 +255,15 @@ onMounted(() => {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">User : {{ UserAction.name }}</h1>
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('admin.users.user') }} : {{ UserAction.name }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Etes vous sûr de vouloir supprimer l'utilisateur {{ UserAction.name }} ?</p>
+                    <p>{{ $t('admin.users.askdelete') }} {{ UserAction.name }} ?</p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                    <button type="button" class="btn btn-danger" @click="RemoveUser(UserAction.id)" data-bs-dismiss="modal">Oui</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
+                    <button type="button" class="btn btn-danger" @click="RemoveUser(UserAction.id)" data-bs-dismiss="modal">{{ $t('global.yes') }}</button>
                 </div>
             </div>
         </div>
@@ -272,12 +273,12 @@ onMounted(() => {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="exampleModalLabel">User : {{ UserAction.name }}</h1>
+                    <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('global.username') }} : {{ UserAction.name }}</h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div v-if="UserAction.name" class="mt-3">
-                        <h5>Groupes :</h5>
+                        <h5>{{ $t('global.groups') }} :</h5>
                         <div v-for="group in Groups" :key="group.id" class="form-check">
                             <input class="form-check-input" type="checkbox" :id="'groupCheckbox_' + group.id" :checked="Roles[UserAction.id] ? Roles[UserAction.id].includes(group.id) : false" :disabled="UserAction.id == myUser.id" @change="toggleGroup(group.id)">
                             <label class="form-check-label" :for="'groupCheckbox_' + group.id">{{ group.name }}</label>

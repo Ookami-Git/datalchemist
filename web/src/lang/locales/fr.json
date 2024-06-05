@@ -1,7 +1,15 @@
 {
-    "auth": {
-        "user": "Nom d'utilisateur",
+    "global": {
+        "apply": "Appliquer",
+        "cancel": "Annuler",
+        "close": "Fermer",
+        "username": "Nom d'utilisateur",
         "password": "Mot de passe",
+        "yes": "Oui",
+        "no": "Non",
+        "groups": "Groupes"
+    },
+    "auth": {
         "message": "Veuillez saisir votre identifiant et mot de passe",
         "button": "Connexion"
     },
@@ -57,7 +65,18 @@
             }
         },
         "users": {
-            "header": "Utilisateurs"
+            "header": "Utilisateurs",
+            "user": "Utilisateur",
+            "type": "Type de connexion",
+            "groups": "Groupes",
+            "actions": "Actions",
+            "adduser": "Ajouter l'utilisateur",
+            "edituser": "Modifier l'utilisateur",
+            "changegroups": "Modifier les groupes",
+            "deleteuser": "Supprimer l'utilisateur",
+            "preview": "Previsualisation de l'utilisateur",
+            "password":"Mot de passe",
+            "askdelete": "Etes vous sûr de vouloir supprimer l'utilisateur"
         },
         "groups": {
             "header": "Groupes"
