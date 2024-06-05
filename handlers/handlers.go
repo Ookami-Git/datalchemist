@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -174,6 +175,10 @@ func ParametersGet(c *gin.Context) {
 			"isAdmin":         false,
 			"auth":            false,
 		}
+	}
+	Parameters["release"] = map[string]string{
+		"version": viper.GetString("version"),
+		"date":    viper.GetString("date"),
 	}
 
 	c.JSON(200, Parameters)

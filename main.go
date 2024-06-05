@@ -18,7 +18,13 @@ import (
 //go:embed web/dist
 var staticFiles embed.FS
 
+var (
+    version = "dev"
+    date    = "unknown"
+)
+
 func main() {
+	
 	// PARAMETERS ----------------------------
 	// Lire les valeurs par défaut
 	viper.SetDefault("listen", "0.0.0.0:8080")
@@ -56,6 +62,10 @@ func main() {
 	listen := viper.GetString("listen")
 	database_path := viper.GetString("database")
 	session_duration := viper.GetInt("session")
+
+	// Variable forcé
+	viper.Set("version", version)
+	viper.Set("date", date)
 	// END PARAMETERS ----------------------------
 
 	// LOGS ----------------------------
@@ -85,9 +95,12 @@ func main() {
 	routes.SetupRoutes(r)
 
 	// Utiliser une fonction utilitaire
-	log.Printf("Server is running on %s", listen)
-	log.Printf("Database location %s", database_path)
-	log.Printf("Session duration %d", session_duration)
+	log.Printf("Datalchemist")
+	log.Printf("Version \t %s", version)
+	log.Printf("Build at \t %s", date)
+	log.Printf("Database location \t %s", database_path)
+	log.Printf("Session duration \t %d", session_duration)
+	log.Printf("Server port \t %s", listen)
 
 	// Démarrer le serveur
 	r.Run(listen)
