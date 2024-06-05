@@ -1,9 +1,12 @@
 <script setup>
+import { inject } from 'vue';
 import global from './global.vue'
 import acl from './acl.vue'
 import users from './users.vue'
 import groups from './groups.vue'
 import navbar from './navbar.vue'
+
+const parameters = inject('parameters');
 
 const tabs = {
     global,
@@ -43,6 +46,20 @@ const tabs = {
                                 </li>
                                 </ul>
                             </nav>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="card text-center border-0">
+                        <div class="card-body d-flex justify-content-center">
+                            <div class="col">
+                                <img src="/logo.png" alt="logo" height="70" class="mb-2"><br>
+                                <small class="d-inline-flex mb-1 px-2 py-1 fw-semibold text-info-emphasis bg-info-subtle border border-info-subtle rounded-2">{{ parameters.release.version }} ({{ parameters.release.date.split('T')[0] }})</small>
+                                <div class="mb-1 px-2 py-1"></div>
+                                <div class="btn-group mb-1 px-2 py-1">
+                                    <a href="https://github.com/Ookami-Git/datalchemist/" class="btn btn-sm btn-dark border-light-subtle" target="_blank"><i class="bi bi-github"></i></a>
+                                    <a :href="'https://github.com/Ookami-Git/datalchemist/releases/tag/' + parameters.release.version" class="btn btn-sm btn-light border-dark-subtle" target="_blank">Changelog</a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
