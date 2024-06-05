@@ -47,14 +47,14 @@ const login = async () => {
                                         <div class="form-floating mb-3">
                                             <input type="text" class="form-control" name="username" id="username"
                                                 placeholder="Username" v-model="username" required>
-                                            <label for="username" class="form-label">{{ $t('auth.user') }}</label>
+                                            <label for="username" class="form-label">{{ $t('global.username') }}</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
                                         <div class="form-floating mb-3">
                                             <input type="password" class="form-control" name="password" id="password"
                                                 value="" placeholder="Password" v-model="password" required>
-                                            <label for="password" class="form-label">{{ $t('auth.password') }}</label>
+                                            <label for="password" class="form-label">{{ $t('global.password') }}</label>
                                         </div>
                                     </div>
                                     <div class="col-12">
