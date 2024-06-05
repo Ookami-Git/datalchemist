@@ -1,10 +1,10 @@
 package database
 
 import (
-	"database/sql"
 	"datalchemist/models"
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/glebarez/sqlite"
 	"github.com/spf13/viper"
@@ -84,10 +84,6 @@ func Init() error {
 }
 
 // Open database
-func Open() (*sql.DB, error) {
-	dbName := viper.GetString("database")
-	return sql.Open("sqlite3", dbName)
-}
 
 func OpenGorm() (*gorm.DB, error) {
 	dbName := viper.GetString("database")
@@ -546,65 +542,67 @@ func RolesByGroups() (map[int][]int, error) {
 }
 
 func AclView(uid uint, vid uint) (bool, error) {
-	var Access bool
+	db, err := OpenGorm()
+	if err != nil {
+		log.Print("ERROR opening database :", err)
+		return false, err
+	}
 
-	db, err := Open()
-	checkErr(err)
+	type Result struct {
+		HasPermission bool
+	}
 
-	query := "SELECT EXISTS (" +
-		"SELECT 1 " +
-		"FROM acls " +
-		"JOIN groups ON acls.gid = groups.id " +
-		"JOIN roles ON groups.id = roles.gid " +
-		"WHERE roles.user = $1 " +
-		"AND acls.view = $2 " +
-		") AS has_permission;"
+	var result Result
 
-	err = db.QueryRow(query, uid, vid).Scan(&Access)
+	err = db.Table("acls").
+		Select("EXISTS (" +
+			"SELECT 1 " +
+			"FROM acls " +
+			"JOIN groups ON acls.gid = groups.id " +
+			"JOIN roles ON groups.id = roles.gid " +
+			"WHERE roles.user = ? " +
+			"AND acls.view = ? " +
+			") AS has_permission", uid, vid).
+		Scan(&result).Error
+
 	if err != nil {
 		log.Print("ERROR database ACL :", err)
 		return false, err
 	}
 
-	db.Close()
-
-	return Access, nil
+	return result.HasPermission, nil
 }
+
 
 func AclList() (map[string]map[string]map[string][]uint, error) {
 	aclMap := make(map[string]map[string]map[string][]uint)
 
-	db, err := Open()
-	checkErr(err)
-
-	rows, err := db.Query("SELECT view, gid FROM acls")
-	defer db.Close()
+	db, err := OpenGorm()
 	if err != nil {
 		return aclMap, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var viewID string
-		var gid uint
+	var results []models.Acl
 
-		err = rows.Scan(&viewID, &gid)
-		if err != nil {
-			return aclMap, err
-		}
+	err = db.Table("acls").Select("view, gid").Scan(&results).Error
+	if err != nil {
+		return aclMap, err
+	}
 
+	for _, result := range results {
+		viewStr := strconv.Itoa(int(result.View))
 		if aclMap["views"] == nil {
 			aclMap["views"] = make(map[string]map[string][]uint)
 		}
 
-		if aclMap["views"][viewID] == nil {
-			aclMap["views"][viewID] = make(map[string][]uint)
+		if aclMap["views"][viewStr] == nil {
+			aclMap["views"][viewStr] = make(map[string][]uint)
 		}
 
-		aclMap["views"][viewID]["allow_gid"] = append(aclMap["views"][viewID]["allow_gid"], gid)
+		aclMap["views"][viewStr]["allow_gid"] = append(aclMap["views"][viewStr]["allow_gid"], result.Gid)
 	}
 
-	return aclMap, err
+	return aclMap, nil
 }
 
 func AclDelete(acl models.Acl) {
