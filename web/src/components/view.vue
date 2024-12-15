@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject, watch, nextTick } from 'vue';
+import { ref, inject, watch, nextTick, onMounted } from 'vue';
 import axios from 'axios';
 import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
@@ -12,6 +12,7 @@ const route = useRoute();
 const view = ref(null)
 const dataview = ref(null)
 const items = ref({});
+const itemsJs = ref([]);
 const loaderror = ref(false)
 const fetcherror = ref(null)
 const searchBox = inject('searchBox');
@@ -89,7 +90,12 @@ const fetchItems = async (viewid) => {
   .then(function (response) {
     for (const [key, value] of Object.entries(response.data)) {
       try {
-        items.value[key] = dajucks.renderString( value, dataview.value);
+        if (value.html && value.html.trim() !== '') {
+          items.value[key] = dajucks.renderString( value.html, dataview.value);
+        }
+        if (value.js && value.js.trim() !== '') {
+          itemsJs.value.push(dajucks.renderString( value.js, dataview.value));
+        }
       } catch (err) {
         console.error(`Erreur lors du rendu de l'item ${key}`, err);
         items.value[key] = { error: `Rendering error ${key} : ${err.message}` };
@@ -103,26 +109,48 @@ const fetchItems = async (viewid) => {
   });
 };
 
+const injectScript = () => {
+  for (const jsCode of itemsJs.value) {
+    try {
+      const scriptEl = document.createElement('script');
+      scriptEl.textContent = jsCode;
+      document.body.appendChild(scriptEl);
+    } catch (err) {
+      console.error('Erreur lors de l\'exécution du script', err);
+    }
+  }
+};
+
 watch(route, async () => {
   loaderror.value = false;
   view.value = null;
   dataview.value = null
   items.value = {}
+  itemsJs.value = []
   await fetchData();
-  mermaid.init({theme: parameter.value.theme});
+  mermaid.initialize({theme: parameter.value.theme});
+  mermaid.run();
 }, { immediate: true });
 
 watch(items, () => {
   nextTick(() => {
-    mermaid.init({theme: parameter.value.theme});
-
+    mermaid.initialize({theme: parameter.value.theme});
+    mermaid.run();
     searchBox.value.show = document.querySelector('.filterable') != null ;
-    console.log(searchBox.value.show)
     if (searchBox.value.show) {
       searchBox.value.function()
     }
+    injectScript();
   });
 }, { deep: true });
+
+// Cleanup dynamic scripts
+watch(route, () => {
+    const scripts = document.querySelectorAll('script:not([src])');
+    for (const script of scripts) {
+        script.remove();
+    }
+}, { immediate: true });
 </script>
 
 <template>
@@ -140,6 +168,7 @@ watch(items, () => {
     </template>
   </div>
   <div v-else-if="loaderror" class="row">
+    <!-- ERROR LOADING -->
     <div class="col-md-12">
       <div class="card" aria-hidden="true" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
         <div class="card-header bg-danger">Erreur {{ fetcherror.status }} - {{ fetcherror.statusText }}</div>
@@ -159,6 +188,8 @@ watch(items, () => {
     </div>
   </div>
   <div v-else class="spinner-grow" role="status" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+    <!-- LOADING IN PROGESS -->
     <span class="sr-only"></span>
   </div>
 </template>
+

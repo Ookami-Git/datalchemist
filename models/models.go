@@ -63,6 +63,7 @@ type Items struct {
 	Name       string `gorm:"unique;not null" json:"name"`
 	Parameters string `json:"parameters"`
 	Template   string `json:"template"`
+	Javascript string `json:"javascript"`
 }
 
 type Item_sources struct {

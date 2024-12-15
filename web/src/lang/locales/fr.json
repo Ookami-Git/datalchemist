@@ -134,6 +134,9 @@
             "fromjson": {
                 "description": "Permet de convertir une chaine de caractère JSON en objet."
             }
+        },
+        "javascript": {
+            "description": "Le code JavaScript est exécuté après le code HTML et peut utiliser Nunjucks. Il est important de noter que chaque objet datalchemist peut contenir son propre code JavaScript associé, il est donc recommandé d'éviter les conflits potentiels avec les autres objets en utilisant des noms de variables ou de fonctions uniques et en minimisant l'impact sur l'environnement global."
         }
     },
     "editsource": {

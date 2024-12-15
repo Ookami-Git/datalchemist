@@ -133,6 +133,9 @@
             "fromjson": {
                 "description": "Allows to convert a JSON string to an object."
             }
+        },
+        "javascript": {
+            "description": "The JavaScript code is executed after the HTML code and can use Nunjucks. It is important to note that each datalchemist object can contain its own associated JavaScript code, so it is recommended to avoid potential conflicts with other objects by using unique variable or function names and minimizing the impact on the global environment."
         }
     },
     "editsource": {
