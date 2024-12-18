@@ -132,6 +132,9 @@
             },
             "fromjson": {
                 "description": "Allows to convert a JSON string to an object."
+            },
+            "setattribute":{
+                "description": "Allows to modify an attribute of an object."
             }
         },
         "javascript": {

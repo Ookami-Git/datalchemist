@@ -133,6 +133,9 @@
             },
             "fromjson": {
                 "description": "Permet de convertir une chaine de caractère JSON en objet."
+            },
+            "setattribute":{
+                "description": "Permet de modifier un attribut d'un objet."
             }
         },
         "javascript": {

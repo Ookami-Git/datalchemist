@@ -54,7 +54,20 @@ dajucks.addFilter("fromjson", function (str) {
 dajucks.addFilter("date", function (date, outputformat, inputformat) {
   return moment(date, inputformat).format(outputformat);
 })
-
+// Add or edit attribute in a object filter 
+dajucks.addFilter('setAttribute', function(dictionary, key, value) {
+  const keys = key.split(/(?<!\\)\./).map(part => part.replace(/\\\./g, '.'));
+  let currentObj = dictionary;
+  for (let i = 0; i < keys.length - 1; i++) {
+    const k = keys[i];
+    if (!currentObj.hasOwnProperty(k) || typeof currentObj[k] !== "object") {
+      currentObj[k] = {};
+    }
+    currentObj = currentObj[k];
+  }
+  currentObj[keys[keys.length - 1]] = value;
+  return dictionary;
+});
 // ------------ END Nunjucks custom filter ------------
 
 const fetchData = async () => {

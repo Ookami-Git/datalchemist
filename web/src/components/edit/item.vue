@@ -339,11 +339,21 @@ const refreshCodeMirror = () => {
                             </li>
                             <li>
                               <code>find</code> : {{ $t('edititem.nunjucks.find.description') }}<br>
-                              Syntaxe : <code>{{ openBrace }} var_array | find("key.path", "value") {{ closeBrace }}</code>
+                              {{ $t('edititem.global.syntax') }} : <code>{{ openBrace }} var_array | find("key.path", "value") {{ closeBrace }}</code>
                             </li>
                             <li>
                               <code>fromjson</code> : {{ $t('edititem.nunjucks.fromjson.description') }}<br>
-                              Syntaxe : <code>{{ openBrace }} var_jsonstring | fromjson {{ closeBrace }}</code>
+                              {{ $t('edititem.global.syntax') }} : <code>{{ openBrace }} var_jsonstring | fromjson {{ closeBrace }}</code>
+                            </li>
+                            <li>
+                              <code>setAttribute</code> : {{ $t('edititem.nunjucks.setattribute.description') }}<br>
+                              {{ $t('edititem.global.syntax') }} : <code>{{ openBrace }} var_object | setAttribute("key.path", "value") {{ closeBrace }}</code><br>
+                              {{ $t('edititem.global.examples') }} : 
+                              <ul>
+                                <li><code>{{ openBrace }} {"key1": "value1", "key2": "value2"} | setAttribute("key2", "new value") | dump {{ closeBrace }}</code> :<br> {"key1": "value1", "key2": "new value"}</li>
+                                <li><code>{{ openBrace }} {"key.with.dot": "value1", "key2": "value2"} | setAttribute("key\\.with\\.dot", "new value") | dump {{ closeBrace }}</code> :<br> {"key.with.dot": "new value", "key2": "value2"}</li>
+                                <li><code>{{ openBrace }} { "key1": {"level1":"value1"} } | setAttribute("key1.level1", {"level2":"new value"}) | dump {{ closeBrace }}</code> :<br> {"key1":{"level1":{"level2":"new value"}}}</li>
+                              </ul>
                             </li>
                           </ul>
                         </div>
