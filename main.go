@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed web/dist
+//go:embed all:web/dist
 var staticFiles embed.FS
 
 var (
