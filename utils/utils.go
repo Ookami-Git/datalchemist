@@ -57,7 +57,6 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 	if loopValue, ok := daSource["loop"]; ok && loopValue != "" {
 		// WITH LOOP
 		SearchResult := SearchInMap(*data, daSource["loop"].(string))
-		Path := daSource["path"].(string)
 		switch loop := SearchResult.(type) {
 		// Case array
 		case []interface{}:
@@ -65,10 +64,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 			for _, value := range loop {
 				context := *data
 				context["item"] = value
-				if query, ok := daSource["query"]; ok {
-					daSource["query"] = Render(query.(string), &context)
-				}
-				daSource["path"] = Render(Path, &context)
+				daSource = RenderAllStrings(daSource, context).(map[string]interface{})
 				daMap = append(daMap, GetSourceContent(daSource))
 			}
 			return daMap
@@ -78,20 +74,14 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 			for key, value := range loop {
 				context := *data
 				context["item"] = value
-				if query, ok := daSource["query"]; ok {
-					daSource["query"] = Render(query.(string), &context)
-				}
-				daSource["path"] = Render(Path, &context)
+				daSource = RenderAllStrings(daSource, context).(map[string]interface{})
 				daMap[key] = GetSourceContent(daSource)
 			}
 			return daMap
 		}
 	} else {
 		// WITHOUT LOOP
-		daSource["path"] = Render(daSource["path"].(string), data)
-		if query, ok := daSource["query"]; ok {
-			daSource["query"] = Render(query.(string), data)
-		}
+		daSource = RenderAllStrings(daSource, *data).(map[string]interface{})
 		daMap := GetSourceContent(daSource)
 		return daMap
 	}
@@ -208,6 +198,25 @@ func Render(template string, data *map[string]interface{}) string {
 	return outputString
 }
 
+func RenderAllStrings(obj interface{}, data map[string]interface{}) interface{} {
+    switch v := obj.(type) {
+    case map[string]interface{}:
+        for key, value := range v {
+            v[key] = RenderAllStrings(value, data)
+        }
+        return v
+    case []interface{}:
+        for i, value := range v {
+            v[i] = RenderAllStrings(value, data)
+        }
+        return v
+    case string:
+        return Render(v, &data)
+    default:
+        return v
+    }
+}
+
 func FileContent(filePath string) string {
 	// Ouvrir le fichier
 	file, err := os.Open(filePath)
@@ -256,6 +265,39 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 			authinfo := value.(map[string]interface{})
 			if authinfo["enabled"].(bool) {
 				req.SetBasicAuth(authinfo["user"].(string), authinfo["password"].(string))
+			}
+		case "method":
+			method := value.(string)
+			if method != "" {
+				req.Method = method
+			}
+		case "headers":
+			headers := value.([]interface{})
+			for _, header := range headers {
+				h := header.(map[string]interface{})
+				key := h["key"].(string)
+				val := h["value"].(string)
+				req.Header.Add(key, val)
+			}
+		case "data":
+			jsondata, ok := value.(string)
+			if ok && jsondata != "" {
+				// Validate and convert JSON to a Go object
+				var jsonObject map[string]interface{}
+				if err := json.Unmarshal([]byte(jsondata), &jsonObject); err != nil {
+					log.Printf("JSON format error: %v", err)
+					return ""
+				}
+
+				// Reconvert to a valid JSON string
+				validJSON, err := json.Marshal(jsonObject)
+				if err != nil {
+					log.Printf("Error during JSON reconversion: %v", err)
+					return ""
+				}
+
+				req.Body = io.NopCloser(strings.NewReader(string(validJSON)))
+				req.ContentLength = int64(len(validJSON)) // Set the content length
 			}
 		}
 	}
