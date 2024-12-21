@@ -1,5 +1,34 @@
 <script setup>
-import { inject, ref } from "vue";
+import { inject, ref, reactive, watch } from "vue";
+import Codemirror from "codemirror-editor-vue3";
+import "codemirror/addon/display/placeholder.js";
+import "codemirror/mode/javascript/javascript.js";
+import 'codemirror/mode/jinja2/jinja2';
+import "codemirror/addon/edit/matchbrackets.js";
+import "codemirror/addon/edit/closebrackets.js";
+
+const parameters = inject('parameters');
+
+CodeMirror.defineMode('jinja2-json', function(config) {
+  return CodeMirror.multiplexingMode (
+    CodeMirror.getMode(config, "application/json"), {
+      open: /\{[%#{]/, close: /[%#}]\}/,
+      mode: CodeMirror.getMode(config, "jinja2"),
+      parseDelimiters: true
+    });
+});
+
+const cmOptions = reactive({
+  mode: "jinja2-json",
+  theme: "default",
+  lineWrapping: true,
+  autoCloseBrackets: true,
+  matchBrackets: true,
+  indentWithTabs: false,
+  extraKeys: {
+    "Shift-Tab": "indentLess"
+  }
+});
 
 // Définir la structure par défaut pour les paramètres URL
 const defaultUrlParameters = () => ({
@@ -44,7 +73,9 @@ const removeHeader = (index) => {
   source.value.parameters.url.headers.splice(index, 1);
 };
 
-console.log(source);
+watch(parameters, () => {
+  cmOptions.theme = parameters.value.theme === "dark" ? "material" : "default";
+}, { deep: true, immediate: true });
 </script>
 
 <template>
@@ -61,7 +92,7 @@ console.log(source);
   </div>
   <div class="mb-3">
     <label for="InputData" class="form-label">Data</label>
-    <textarea class="form-control" id="InputData" v-model="source.parameters.url.data" rows="3"></textarea>
+    <Codemirror v-model:value="source.parameters.url.data" :options="cmOptions" :height="200" border/>
   </div>
   <div class="mb-3">
     <label for="InputHeaders" class="form-label">Headers</label>
