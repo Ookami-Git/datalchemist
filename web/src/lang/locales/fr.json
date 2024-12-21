@@ -147,7 +147,8 @@
             "file": "Fichier",
             "url": "URL",
             "execute": "Exécuter une commande ou un script",
-            "database": "Base de données"
+            "database": "Base de données",
+            "text": "Création"
         },
         "header": "Source",
         "database": {
@@ -170,6 +171,9 @@
             "enable": "Activer",
             "username": "Nom d'utilisateur",
             "password": "Mot de passe"
+        },
+        "text": {
+            "helper": "Saisir l'objet dans le langage selectionné. La syntaxe JINJA est valable."
         },
         "loop": "Boucle",
         "loopinfo": "Plus d'informations"

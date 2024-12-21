@@ -131,6 +131,8 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		content = UrlContent(daSource["path"].(string), parameters)
 	case "execute":
 		content = ExecuteContent(daSource["path"].(string))
+	case "text":
+		content = daSource["query"].(string)
 	}
 
 	switch daSource["type"] {

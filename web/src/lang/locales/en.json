@@ -142,6 +142,13 @@
         }
     },
     "editsource": {
+        "type": {
+            "file": "File",
+            "url": "URL",
+            "execute": "Execute a command or a script",
+            "database": "Database",
+            "text": "Creation"
+        },
         "header": "Source",
         "database": {
             "connection": "Database connection string",
@@ -163,6 +170,9 @@
             "enable": "Enable",
             "username": "Username",
             "password": "Password"
+        },
+        "text": {
+            "helper": "Enter the item in the selected language. The JINJA syntax is valid."
         },
         "loop": "Loop",
         "loopinfo": "More information"

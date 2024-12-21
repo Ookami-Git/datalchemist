@@ -7,6 +7,7 @@ import databasevue from './source/database.vue'
 import filevue from './source/file.vue'
 import urlvue from './source/url.vue'
 import executevue from './source/execute.vue'
+import textInput from './source/textInput.vue'
 
 const typeSource = "source";
 
@@ -19,7 +20,7 @@ const save = inject('save');
 save.value.safe()
 
 //const support = ref(["file","url","execute","database"])
-const support = ref(["file","url","database"])
+const support = ref(["file","url","database","text"])
 const supportedFlat = ref(["json", "xml", "yml"])
 const supportedDb = ref(["sqlite", "postgres", "mysql"])
 const JsonSource = ref({
@@ -115,7 +116,7 @@ onMounted(async () => {
                             <select class="form-select" v-model="JsonSource.src">
                                 <option v-for="item in support" :key="item" :value="item">{{ $t(`editsource.type.${item}`) }}</option>
                             </select>
-                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url' || JsonSource.src === 'execute'" v-model="JsonSource.type" :class="{ 'border-success': !supportedFlat.includes(JsonSource.type) }">
+                            <select class="form-select" v-if="JsonSource.src === 'file' || JsonSource.src === 'url' || JsonSource.src === 'execute' || JsonSource.src === 'text'" v-model="JsonSource.type" :class="{ 'border-success': !supportedFlat.includes(JsonSource.type) }">
                                 <option v-for="item in supportedFlat" :key="item" :value="item">{{ item }}</option>
                             </select>
                             <select class="form-select" v-if="JsonSource.src === 'database'" v-model="JsonSource.type" :class="{ 'border-success': !supportedDb.includes(JsonSource.type) }">
@@ -127,6 +128,7 @@ onMounted(async () => {
                         <urlvue v-if="JsonSource.src === 'url' && supportedFlat.includes(JsonSource.type)"></urlvue>
                         <executevue v-if="JsonSource.src === 'execute' && supportedFlat.includes(JsonSource.type)"></executevue>
                         <databasevue v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)"></databasevue>
+                        <textInput v-if="JsonSource.src === 'text' && supportedFlat.includes(JsonSource.type)"></textInput>
                     </div>
                     <div class="col-md-4">
                         <template v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)" >
