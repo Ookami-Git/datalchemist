@@ -7,8 +7,6 @@ import "codemirror/addon/display/placeholder.js";
 import "codemirror/addon/mode/multiplex";
 import "codemirror/mode/sql/sql.js";
 import 'codemirror/mode/jinja2/jinja2'; // Mode Jinja2
-// placeholder
-import "codemirror/addon/display/placeholder.js";
 // theme
 import "codemirror/theme/material.css";
 
