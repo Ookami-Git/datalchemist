@@ -2,17 +2,18 @@
 import { ref, inject, watch, provide, onMounted } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
+import sources from './common/sources.vue'
 import databasevue from './source/database.vue'
 import filevue from './source/file.vue'
 import urlvue from './source/url.vue'
 import executevue from './source/execute.vue'
 
+const typeSource = "source";
+
 const route = useRoute();
 const apiUrl = inject('apiUrl');
 const SourceInfo = ref(null)
 const OrigineSourceInfo = ref(null)
-const openBrace = '{{'
-const closeBrace = '}}'
 
 const save = inject('save');
 save.value.safe()
@@ -33,48 +34,6 @@ const JsonSource = ref({
 const OrigineJsonSource = ref({ ... JsonSource.value })
 
 provide('source', JsonSource);
-
-const selectedItem = ref('');
-const activeItems = ref([]);
-const availableItems = ref([]);
-
-const addItem = () => {
-  require(selectedItem.value.id)
-  activeItems.value.push(selectedItem.value);
-  const index = availableItems.value.indexOf(selectedItem.value);
-  if (index > -1) {
-    availableItems.value.splice(index, 1);
-  }
-  selectedItem.value = availableItems.value[0] || '';
-};
-
-const removeItem = (index) => {
-  unlink(activeItems.value[index].id)
-  availableItems.value.push(activeItems.value[index]);
-  activeItems.value.splice(index, 1);
-};
-
-const fetchSources = async () => {
-  await axios.get(`${apiUrl}/sources`)
-  .then(function (response) {
-    if (response.data) {
-        availableItems.value = response.data;
-    }
-  })
-  .catch(function (error) {
-    console.error(`Erreur lors de la récupération des objets`, error);
-  });
-
-  await axios.get(`${apiUrl}/source/sources/${route.params.sourceid}`)
-  .then(function (response) {
-    if (response.data) {
-        activeItems.value = response.data;
-    }
-  })
-  .catch(function (error) {
-    console.error(`Erreur lors de la récupération des objets`, error);
-  });
-};
 
 function updateSource() {
   // Clear other type parameters
@@ -114,45 +73,17 @@ const fetchSource = async (id) => {
   });
 };
 
-function diffArray() {
-    if (activeItems.value) {
-        let result = availableItems.value.filter(aItem => {
-            return !activeItems.value.some(bItem => JSON.stringify(aItem) === JSON.stringify(bItem));
-        });
-        availableItems.value = result;
-    }
-}
+watch([SourceInfo, JsonSource], () => {
+  const isJsonSourceChanged = JSON.stringify(OrigineJsonSource.value) !== JSON.stringify(JsonSource.value);
+  const isSourceInfoChanged = JSON.stringify(OrigineSourceInfo.value) !== JSON.stringify(SourceInfo.value);
 
-function require(id) {
-  axios.post(`${apiUrl}/source/require`, {
-    source_id: SourceInfo.value.id,
-    required_source_id: id,
-  })
-  .catch(function (error) {
-    console.log(error);
-  });
-}
-
-function unlink(id) {
-  axios.delete(`${apiUrl}/source/${SourceInfo.value.id}/require/${id}`, {
-    item_id: SourceInfo.value.id,
-    source_id: id,
-  })
-  .catch(function (error) {
-    console.log(error);
-  });
-}
-
-watch ([SourceInfo, JsonSource], () => {
-  if (save.value.show && (OrigineJsonSource.value != JsonSource.value || OrigineSourceInfo.value != SourceInfo.value)) {
-    save.value.status.saveable()
+  if (save.value.show && (isJsonSourceChanged || isSourceInfoChanged)) {
+    save.value.status.saveable();
   }
 }, { deep: true });
 
 onMounted(async () => {
     await fetchSource(route.params.sourceid);
-    await fetchSources()
-    diffArray()
     save.value.function = updateSource
     save.value.status.show()
 })
@@ -241,29 +172,7 @@ onMounted(async () => {
                           </div>
                         </div>
                         <br>
-                        <div class="card">
-                            <div class="card-header text-center">Sources</div>
-                            <div class="card-body">
-                                <div class="input-group mb-3" v-if="SourceInfo">
-                                    <button type="button" class="btn btn-success" @click="addItem()" :disabled="!selectedItem">{{ $t('edit.add') }}</button>
-                                    <select class="form-select" v-model="selectedItem">
-                                        <template v-for="item in availableItems" :key="item.id">
-                                            <option v-if="item.id !== SourceInfo.id" :value="item">#{{ item.id }} - {{ item.name }}</option>
-                                        </template>
-                                    </select>
-                                </div>
-                                <table class="table">
-                                    <tbody>
-                                        <tr v-for="(item, index) in activeItems" :key="index">
-                                            <td><a type="button" class="btn btn-primary btn-sm" :href="`${apiUrl}/data/source/${item.id}`" target="_blank"><i class="bi bi-eye-fill"></i> {{ item.name }}</a></td>
-                                            <td><code>{{ openBrace }} sid.s{{ item.id }} {{ closeBrace }}</code></td>
-                                            <td><code>{{ openBrace }} sn.{{ item.name }} {{ closeBrace }}</code></td>
-                                            <td class="text-end"><button type="button" class="btn btn-danger btn-sm" @click="removeItem(index)"><i class="bi bi-trash-fill"></i></button></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        <sources :typeSource="typeSource" :parentId="route.params.sourceid"/>
                     </div>
                 </div>
                 <br>
