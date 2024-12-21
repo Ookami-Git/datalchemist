@@ -130,12 +130,14 @@ onMounted(async () => {
             </td>
             <td>
               <table>
-                <tr>
-                  <td><code>{{ openBrace }} sid.s{{ item.id }} {{ closeBrace }}</code></td>
-                </tr>
-                <tr>
-                  <td><code>{{ openBrace }} sn.{{ item.name }} {{ closeBrace }}</code></td>
-                </tr>
+                <tbody>
+                  <tr>
+                    <td><code>{{ openBrace }} sid.s{{ item.id }} {{ closeBrace }}</code></td>
+                  </tr>
+                  <tr>
+                    <td><code>{{ openBrace }} sn.{{ item.name }} {{ closeBrace }}</code></td>
+                  </tr>
+                </tbody>
               </table>
             </td>
             <td class="text-end">
