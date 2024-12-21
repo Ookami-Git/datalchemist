@@ -7,7 +7,6 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-ldap/ldap/v3 v3.4.9
 	github.com/go-sql-driver/mysql v1.8.1 // indirect
-	github.com/nikolalohinski/gonja v1.5.3
 	github.com/sbabiv/xml2map v1.2.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -18,6 +17,7 @@ require (
 require (
 	github.com/abdfnx/gosh v0.4.0
 	github.com/glebarez/sqlite v1.11.0
+	github.com/nikolalohinski/gonja/v2 v2.3.3
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/driver/postgres v1.5.11
 )
@@ -62,12 +62,10 @@ require (
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
-	github.com/goph/emperror v0.17.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/yargevad/filepathx v1.0.0 // indirect
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
 	gorm.io/gorm v1.25.12
 )

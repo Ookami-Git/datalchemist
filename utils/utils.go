@@ -17,7 +17,8 @@ import (
 	"github.com/abdfnx/gosh"
 	"github.com/gin-gonic/gin"
 	"github.com/icza/dyno"
-	"github.com/nikolalohinski/gonja"
+	"github.com/nikolalohinski/gonja/v2"
+	"github.com/nikolalohinski/gonja/v2/exec"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
@@ -176,26 +177,27 @@ func SearchInMap(daMap map[string]interface{}, path string) interface{} {
 }
 
 func Render(template string, data *map[string]interface{}) string {
-	context := gonja.Context(*data)
-
 	tpl, err := gonja.FromString(template)
-	if checkErr(err) {
+	if err != nil {
+		log.Print("Gonja Template Error:", err)
 		return "Gonja Template Error"
 	}
 
-	outputString, err := tpl.Execute(context)
+	context := exec.NewContext(*data)
+
+	var outputString strings.Builder
+	err = tpl.Execute(&outputString, context)
 	if err != nil {
-		log.Print("ERROR utils :", err)
-		message := fmt.Sprintf(`<div class="alert alert-danger d-flex align-items-center" role="alert">
+		log.Print("ERROR utils:", err)
+		return fmt.Sprintf(`<div class="alert alert-danger d-flex align-items-center" role="alert">
 		<div>
 		<h5 class="alert-heading">Template SyntaxError :</h5>
 		<p>%v</p>
 		</div>
 	  </div>`, err)
-		return message
 	}
 
-	return outputString
+	return outputString.String()
 }
 
 func RenderAllStrings(obj interface{}, data map[string]interface{}) interface{} {
