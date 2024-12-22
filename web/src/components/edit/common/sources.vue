@@ -78,8 +78,6 @@ function require(id) {
     required_source_id: parseInt(id),
   };
 
-  console.log(data);
-
   axios.post(`${apiUrl}/${props.typeSource}/require`, data)
   .catch(function (error) {
     console.log(error);

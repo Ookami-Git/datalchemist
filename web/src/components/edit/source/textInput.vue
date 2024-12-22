@@ -69,7 +69,6 @@ watch(parameter, () => {
 
 watch(() => source.value.type, () => {
     cmOptions.mode = "jinja2-" + source.value.type;
-    console.log(cmOptions);
 }, { immediate: true });
 </script>
 
