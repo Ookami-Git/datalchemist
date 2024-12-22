@@ -109,14 +109,14 @@ Require this HTML code :
 TODO
 
 ## TODO / Idées
-- [X] Source -> URL -> Permettre d'utiliser ou non un proxy
-- [X] Source -> URL -> Permettre d'utiliser un user/password
+- [X] Source -> URL -> Permettre d'utiliser ou non un proxy (release 0.2.2)
+- [X] Source -> URL -> Permettre d'utiliser un user/password (release 0.2.2)
 - [ ] Source -> script -> Execute un script et récupère le output -> JSON/XML/YAML --> Codé mais jugé trop dangereux
-- [ ] Source -> text -> Ecrire manuellement la source -> JSON/XML/YAML
+- [X] Source -> text -> Ecrire manuellement la source -> JSON/XML/YAML (release 0.7.0)
 - [ ] Vue -> Permettre de désactiver le padding
 - [ ] Vue -> Permettre a tous les objets d'avoir la même taille ( https://getbootstrap.com/docs/5.3/components/card/#grid-cards )
 - [ ] Vue -> Permettre de choisir la couleur du header
-- [ ] Parametres -> Afficher le numero de version
+- [X] Parametres -> Afficher le numero de version (release 0.3.0)
 - [ ] Parametres -> Export / Import des Sources / Objets / Vues
 - [ ] Parametres -> Changer le logo (upload -> base64 -> stocké dans la BDD)
 - [ ] Parametres -> LDAP -> Option (bool) pour ajouter automatiquement un utilisateur lors de sa première connexion
