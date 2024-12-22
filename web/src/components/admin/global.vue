@@ -199,6 +199,20 @@ onMounted(() => {
                 </div>
             </div>
         </div>
+        <br>
+        <div class="card">
+            <div class="card-header text-center">{{ $t('admin.global.export.header') }}</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="input-group mb-3">
+                            <span class="input-group-text">{{ $t('admin.global.export.delimiter') }}</span>
+                            <input type="text" class="form-control" v-model="parameter.export_csv_delimiter" placeholder="Example --> ; , |">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </template>

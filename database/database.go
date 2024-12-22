@@ -41,6 +41,7 @@ func Init() error {
 		{Name: "ldap_user", Value: ""},
 		{Name: "ldap_password", Value: ""},
 		{Name: "defaultview", Value: ""},
+		{Name: "export_csv_delimiter", Value: ","},
 	}
 	for _, p := range parameters {
 		var count int64

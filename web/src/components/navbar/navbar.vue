@@ -2,6 +2,7 @@
 import { watch, ref, inject } from 'vue';
 import item from './item.vue'
 import dropdown from './dropdown.vue';
+import exporttable from './export.vue';
 import YAML from 'yaml';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
@@ -99,6 +100,7 @@ const logout = async () => {
                     </template>
                 </template>
             </ul>
+            <exporttable class="me-2"/>
             <button v-if="save.show" type="button" :class="`btn btn-${save.color}`" @click="save.function" :disabled="save.disabled"><i class="bi bi-floppy-fill"></i> {{ $t('save.label') }}</button>
             <form class="d-flex" role="search" v-if="searchBox.show">
                 <input class="form-control me-2" type="search" :placeholder="$t('menu.search')" aria-label="Search" v-model="filterText" @input="filterTables">

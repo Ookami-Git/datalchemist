@@ -49,7 +49,11 @@
                 "user": "User",
                 "password": "Password"
             },
-            "defaultview": "Home"
+            "defaultview": "Home",
+            "export": {
+                "header": "Export tables to CSV",
+                "delimiter": "CSV delimiter"
+            }
         },
         "navbar": {
             "header": "Navbar",
@@ -116,6 +120,13 @@
             "filterable": {
                 "header": "Filter",
                 "description": "You can also use the 'filterable' class to allow the search field to filter the data. The filter applies only to the tbody."
+            },
+            "exportable": {
+                "header": "Export",
+                "description": "The following classes allow you to export tables to CSV files.",
+                "exportable": "Add the 'exportable' class to the table tag to enable exporting. The id attribute will be used as the file name, otherwise it will be 'table_X'.",
+                "ignore_columns": "Add the 'export-ignore' class to the th tag to ignore the column when exporting CSV.",
+                "export_value": "Add the 'data-export-value' attribute to the td tag to override the value to export."
             }
         },
         "mermaid": {

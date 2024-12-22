@@ -50,7 +50,11 @@
                 "user": "Utilisateur",
                 "password": "Mot de passe"
             },
-            "defaultview": "Accueil"
+            "defaultview": "Accueil",
+            "export": {
+                "header": "Export Tableaux vers CSV",
+                "delimiter": "Séparateur CSV"
+            }
         },
         "navbar": {
             "header": "Barre de navigation",
@@ -116,7 +120,14 @@
             },
             "filterable": {
                 "header": "Filtre",
-                "description": "Vous pouvez aussi utiliser la classe 'filterable' pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody."
+                "description": "Utiliser la classe 'filterable' pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody."
+            },
+            "exportable": {
+                "header": "Exporter",
+                "description": "Les classes ci dessous permettent d'exporter des tableaux vers des fichiers CSV.",
+                "exportable": "Ajouter la classe 'exportable' dans la balise table pour activer l'exportation. L'attribut id sera utiliser commer nom de fichier, dans le cas contraire ça sera 'table_X'.",
+                "ignore_columns": "Ajouter la classe 'export-ignore' dans la balise th pour ignorer la colonne lors de l'export csv.",
+                "export_value": "Ajouter l'attribut 'data-export-value' dans la balise td pour surcharger la valeur à exporter."
             }
         },
         "mermaid": {

@@ -47,6 +47,25 @@
               {{ $t('edititem.table.filterable.description') }}<br>
               {{ $t('edititem.global.syntax') }} : <code>&lt;table class="table filterable"&gt;&lt;/table&gt;</code><br>
             </li>
+            <li>
+              {{ $t('edititem.table.exportable.header') }} :
+              {{ $t('edititem.table.exportable.description') }}<br>
+              {{ $t('edititem.global.syntax') }} : <br>
+              <ul>
+                <li>
+                  {{ $t('edititem.table.exportable.exportable') }}<br>
+                  <code>&lt;table id="filename_export" class="exportable"&gt;&lt;/table&gt;</code>
+                </li>
+                <li>
+                  {{ $t('edititem.table.exportable.ignore_columns') }}<br>
+                  <code>&lt;th class="export-ignore"&gt;&lt;/th&gt;</code>
+                </li>
+                <li>
+                  {{ $t('edititem.table.exportable.export_value') }}<br>
+                  <code>&lt;td data-export-value="exported value in csv file"&gt;value displayed in table&lt;/td&gt;</code>
+                </li>
+              </ul>
+            </li>
           </ul>
         </div>
       </div>
