@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
 import moment from 'moment';
+import loading from './view/loading.vue';
 
 // Inject dependencies
 const parameters = inject('parameters');
@@ -211,8 +212,5 @@ watch(route, () => {
       </div>
     </div>
   </div>
-  <div v-else class="spinner-grow" role="status" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-    <!-- Display loading spinner -->
-    <span class="sr-only"></span>
-  </div>
+  <loading v-else/>
 </template>

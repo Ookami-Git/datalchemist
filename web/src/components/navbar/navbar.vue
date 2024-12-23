@@ -41,10 +41,10 @@ searchBox.value.function = filterTables
 // Mettre à jour le style de la navbar en fonction du thème
 watch(parameter, async () => {
   if (parameter.value.theme === 'dark') {
-    navbarStyle.value = "background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px);";
+    navbarStyle.value = "rgba(0, 0, 0, 0.7)";
     //logoStyle.value = "filter: invert(1);"
   } else if (parameter.value.theme === 'light') {
-    navbarStyle.value = "background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);";
+    navbarStyle.value = "rgba(255, 255, 255, 0.7)";
     //logoStyle.value = null
   }
   try {
@@ -120,5 +120,16 @@ const logout = async () => {
         </div>
     </div>
 </nav>
-<br><br><br><br>
 </template>
+
+<style scoped>
+  .navbar {
+    background: v-bind(navbarStyle);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 30px;
+    margin-left: 5px;
+    margin-right: 5px;
+    margin-top: 5px;
+  }
+</style>

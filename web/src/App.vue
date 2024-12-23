@@ -129,8 +129,15 @@ watch(route, () => {
 <template>
   <body :data-bs-theme="parameters.theme" :style="bodyStyle">
     <navbar></navbar>
-      <div class="container-fluid">
-        <RouterView />
-      </div>
+    <div class="spaceheader"></div>
+    <div class="container-fluid">
+      <RouterView />
+    </div>
   </body>
 </template>
+
+<style scoped>
+  .spaceheader {
+    height: 80px;
+  }
+</style>
