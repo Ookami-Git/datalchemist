@@ -65,8 +65,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 			for _, value := range loop {
 				context := *data
 				context["item"] = value
-				daSource = RenderAllStrings(daSource, context).(map[string]interface{})
-				daMap = append(daMap, GetSourceContent(daSource))
+				daMap = append(daMap, GetSourceContent(RenderAllStrings(daSource, context).(map[string]interface{})))
 			}
 			return daMap
 		// Case map
@@ -75,8 +74,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 			for key, value := range loop {
 				context := *data
 				context["item"] = value
-				daSource = RenderAllStrings(daSource, context).(map[string]interface{})
-				daMap[key] = GetSourceContent(daSource)
+				daMap[key] = GetSourceContent(RenderAllStrings(daSource, context).(map[string]interface{}))
 			}
 			return daMap
 		}
@@ -205,15 +203,17 @@ func Render(template string, data *map[string]interface{}) string {
 func RenderAllStrings(obj interface{}, data map[string]interface{}) interface{} {
     switch v := obj.(type) {
     case map[string]interface{}:
+        newObj := map[string]interface{}{}
         for key, value := range v {
-            v[key] = RenderAllStrings(value, data)
+            newObj[key] = RenderAllStrings(value, data)
         }
-        return v
+        return newObj
     case []interface{}:
+        newSlice := make([]interface{}, len(v))
         for i, value := range v {
-            v[i] = RenderAllStrings(value, data)
+            newSlice[i] = RenderAllStrings(value, data)
         }
-        return v
+        return newSlice
     case string:
         return Render(v, &data)
     default:
