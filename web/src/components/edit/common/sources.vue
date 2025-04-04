@@ -37,6 +37,10 @@ const fetchSources = async () => {
   .then(function (response) {
     if (response.data) {
         availableSources.value = response.data;
+        if (props.typeSource === 'source') {
+          // Exclure la source avec l'id égal à parentId
+          availableSources.value = availableSources.value.filter(item => item.id !== Number(props.parentId));
+        }
     }
   })
   .catch(function (error) {
