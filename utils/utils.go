@@ -143,6 +143,8 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		return XmlToObject(content)
 	case "hcl":
 		return HclToObject(content)
+	case "text": 
+		return content
 	case "sqlite":
 		return SQLToObject(daSource["path"].(string), daSource["query"].(string), "sqlite3")
 	case "postgres":
@@ -347,8 +349,8 @@ func HclToObject(hclData string) interface{} {
 
 	// Conversion HCL → JSON → map[string]interface{}
 	dataJson, err := convert.Bytes([]byte(hclData), "", convert.Options{})
-	if err != nil {
-		log.Fatalf("Erreur de conversion HCL → JSON : %v", err)
+	if checkErr(err) {
+		return nil
 	}
 
 	data := JsonToObject(string(dataJson))
