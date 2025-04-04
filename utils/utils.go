@@ -2,6 +2,8 @@
 package utils
 
 import (
+	"bytes"
+	"context"
 	"crypto/tls"
 	"datalchemist/database"
 	"encoding/json"
@@ -13,6 +15,13 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"crypto/sha256"
+	"encoding/hex"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 
 	"github.com/abdfnx/gosh"
 	"github.com/gin-gonic/gin"
@@ -249,7 +258,11 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 	req, err := http.NewRequest("GET", urlget, nil)
 	if err != nil {
 		fmt.Println("URL - Request error :", err)
+		return ""
 	}
+
+	aws_auth := false
+	awsSigV4 := make(map[string]interface{})
 
 	// Effectuer une requête HTTP GET
 	tr := &http.Transport{}
@@ -289,16 +302,15 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 				req.Header.Add(key, val)
 			}
 		case "data":
+			// Traiter le corps de la requête en premier
 			jsondata, ok := value.(string)
 			if ok && jsondata != "" {
-				// Validate and convert JSON to a Go object
 				var jsonObject map[string]interface{}
 				if err := json.Unmarshal([]byte(jsondata), &jsonObject); err != nil {
 					log.Printf("JSON format error: %v", err)
 					return ""
 				}
 
-				// Reconvert to a valid JSON string
 				validJSON, err := json.Marshal(jsonObject)
 				if err != nil {
 					log.Printf("Error during JSON reconversion: %v", err)
@@ -306,15 +318,26 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 				}
 
 				req.Body = io.NopCloser(strings.NewReader(string(validJSON)))
-				req.ContentLength = int64(len(validJSON)) // Set the content length
+				req.ContentLength = int64(len(validJSON))
 			}
+		case "aws_auth":
+			awsSigV4 = value.(map[string]interface{})
+			aws_auth = awsSigV4["enabled"].(bool)
+		}
+	}
+
+	// Traiter aws_auth après avoir configuré le corps de la requête
+	if aws_auth {
+		err := signAWSRequest(req, awsSigV4)
+		if err != nil {
+			fmt.Println("URL - AWS SigV4 signing error :", err)
+			return ""
 		}
 	}
 
 	client := &http.Client{Transport: tr}
 
 	response, err := client.Do(req)
-
 	if err != nil {
 		fmt.Println("URL - Request error :", err)
 		return ""
@@ -329,6 +352,54 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 	}
 
 	return string(content)
+}
+
+func signAWSRequest(req *http.Request, awsSigV4 map[string]interface{}) error {
+	service := awsSigV4["service"].(string)
+	region := awsSigV4["region"].(string)
+	accessKey := awsSigV4["access_key"].(string)
+	secretKey := awsSigV4["secret_key"].(string)
+
+	// Signer la requête avec AWS SigV4
+	signer := v4.NewSigner()
+	now := time.Now().UTC()
+	credentials := aws.Credentials{
+		AccessKeyID:     accessKey,
+		SecretAccessKey: secretKey,
+	}
+
+	var bodyBytes []byte
+	if req.Body != nil {
+		var err error
+		bodyBytes, err = io.ReadAll(req.Body)
+		if err != nil {
+			return fmt.Errorf("error reading request body: %w", err)
+		}
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes)) // Réinitialiser req.Body
+	} else {
+		bodyBytes = []byte{} // Corps vide
+	}
+
+	err := signer.SignHTTP(context.TODO(), credentials, req, payloadHash(bytes.NewReader(bodyBytes)), service, region, now)
+	if err != nil {
+		return fmt.Errorf("error signing request: %w", err)
+	}
+
+	return nil
+}
+
+func payloadHash(body io.ReadSeeker) string {
+	if body == nil {
+		return hex.EncodeToString(sha256.New().Sum(nil)) // Hash d'un corps vide
+	}
+
+	hasher := sha256.New()
+	_, err := io.Copy(hasher, body)
+	if err != nil {
+		log.Fatalf("Unable to calculate payload hash: %v", err)
+	}
+	body.Seek(0, io.SeekStart)
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 func ExecuteContent(commande string) string {

@@ -39,7 +39,6 @@ provide('source', JsonSource);
 function updateSource() {
   // Clear other type parameters
   for (let key in JsonSource.value.parameters) {
-    //console.log(key)
     if (key != JsonSource.value.src) {
       delete JsonSource.value.parameters[key]
     }

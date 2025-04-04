@@ -44,6 +44,15 @@ const defaultUrlParameters = () => ({
   proxy: ''
 });
 
+// Ajouter les paramètres par défaut pour AWS Sign
+const defaultAwsAuthParameters = () => ({
+  enabled: false,
+  access_key: '',
+  secret_key: '',
+  region: '',
+  service: ''
+});
+
 const source = inject('source');
 
 // Initialiser les paramètres URL avec la structure par défaut si nécessaire
@@ -56,6 +65,14 @@ if (!source.value.parameters.url) {
 } else {
   // S'assurer que toutes les valeurs existent dans les paramètres URL
   source.value.parameters.url = { ...defaultUrlParameters(), ...source.value.parameters.url };
+}
+
+// Initialiser les paramètres AWS Sign si nécessaire
+if (!source.value.parameters.url.aws_auth) {
+  source.value.parameters.url.aws_auth = defaultAwsAuthParameters();
+} else {
+  // S'assurer que toutes les valeurs existent dans les paramètres AWS Sign
+  source.value.parameters.url.aws_auth = { ...defaultAwsAuthParameters(), ...source.value.parameters.url.aws_auth };
 }
 
 const newHeaderKey = ref('');
@@ -130,6 +147,31 @@ watch(parameters, () => {
       <div class="col">
         <label for="InputPassword" class="form-label">{{ $t('editsource.url.password') }}</label>
         <input type="password" class="form-control" id="InputPassword" v-model="source.parameters.url.authentication.password">
+      </div>
+    </div>
+  </fieldset>
+  <fieldset class="mb-3">
+    <legend class="form-label">AWS Signature v4</legend>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="InputAwsAuthEnabled" v-model="source.parameters.url.aws_auth.enabled">
+      <label class="form-check-label" for="InputAwsAuthEnabled">Enable AWS Signature v4</label>
+    </div>
+    <div v-if="source.parameters.url.aws_auth.enabled">
+      <div class="mb-3">
+        <label for="InputAwsAccessKey" class="form-label">Access Key</label>
+        <input type="text" class="form-control" id="InputAwsAccessKey" v-model="source.parameters.url.aws_auth.access_key">
+      </div>
+      <div class="mb-3">
+        <label for="InputAwsSecretKey" class="form-label">Secret Key</label>
+        <input type="password" class="form-control" id="InputAwsSecretKey" v-model="source.parameters.url.aws_auth.secret_key">
+      </div>
+      <div class="mb-3">
+        <label for="InputAwsRegion" class="form-label">Region</label>
+        <input type="text" class="form-control" id="InputAwsRegion" v-model="source.parameters.url.aws_auth.region" placeholder="e.g., us-east-1">
+      </div>
+      <div class="mb-3">
+        <label for="InputAwsService" class="form-label">Service</label>
+        <input type="text" class="form-control" id="InputAwsService" v-model="source.parameters.url.aws_auth.service" placeholder="e.g., s3">
       </div>
     </div>
   </fieldset>
