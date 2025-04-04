@@ -19,6 +19,7 @@ import (
 	"github.com/icza/dyno"
 	"github.com/nikolalohinski/gonja/v2"
 	"github.com/nikolalohinski/gonja/v2/exec"
+	"github.com/tmccombs/hcl2json/convert"
 
 	"github.com/glebarez/sqlite"
 	"gorm.io/driver/mysql"
@@ -140,6 +141,8 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		return YamlToObject(content)
 	case "xml":
 		return XmlToObject(content)
+	case "hcl":
+		return HclToObject(content)
 	case "sqlite":
 		return SQLToObject(daSource["path"].(string), daSource["query"].(string), "sqlite3")
 	case "postgres":
@@ -336,6 +339,21 @@ func ExecuteContent(commande string) string {
 	}
 
 	return content
+}
+
+func HclToObject(hclData string) interface{} {
+	// Déclarer une variable pour stocker l'objet
+	//var data interface{}
+
+	// Conversion HCL → JSON → map[string]interface{}
+	dataJson, err := convert.Bytes([]byte(hclData), "", convert.Options{})
+	if err != nil {
+		log.Fatalf("Erreur de conversion HCL → JSON : %v", err)
+	}
+
+	data := JsonToObject(string(dataJson))
+
+	return data
 }
 
 func JsonToObject(jsonData string) interface{} {
