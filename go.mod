@@ -16,6 +16,7 @@ require (
 
 require (
 	github.com/abdfnx/gosh v0.4.0
+	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/glebarez/sqlite v1.11.0
 	github.com/nikolalohinski/gonja/v2 v2.3.3
 	github.com/tmccombs/hcl2json v0.6.7
@@ -27,8 +28,6 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
-	github.com/aws/aws-sdk-go v1.55.6 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.36.3 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/bytedance/sonic/loader v0.2.4 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
