@@ -7,7 +7,9 @@
         "password": "Mot de passe",
         "yes": "Oui",
         "no": "Non",
-        "groups": "Groupes"
+        "groups": "Groupes",
+        "add": "Ajouter",
+        "remove": "Supprimer"
     },
     "auth": {
         "message": "Veuillez saisir votre identifiant et mot de passe",
@@ -181,7 +183,16 @@
             "authentication": "Authentification (Basic Auth)",
             "enable": "Activer",
             "username": "Nom d'utilisateur",
-            "password": "Mot de passe"
+            "password": "Mot de passe",
+            "ak": "Clé d'accès",
+            "sk": "Clé secrète",
+            "region": "Région",
+            "service": "Service",
+            "headers": "En-têtes",
+            "method": "Méthode",
+            "data": "Donnée (corps de la requête)",
+            "key": "Clé",
+            "value": "Valeur"
         },
         "text": {
             "helper": "Saisir l'objet dans le langage selectionné. La syntaxe JINJA est valable."

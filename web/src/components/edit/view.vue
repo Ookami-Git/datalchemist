@@ -133,7 +133,8 @@ onMounted(async () => {
         <div class="card-header">
           <div class="row">
             <div class="col-md-1">
-              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit'}" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+              <RouterLink type="button" class="btn btn-secondary btn-sm me-2" :to="{ name:'edit'}" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+              <RouterLink v-if="ViewInfo" type="button" class="btn btn-primary btn-sm" :title="`${ $t('editview.header') } ${ ViewInfo.id }`" :to="{ name:'view', params:{ viewid: ViewInfo.id}}" target="_blank"><i class="bi bi-eye-fill"></i></RouterLink>
             </div>
             <div v-if="ViewInfo" class="col-md-10 text-center">
               <div class="input-group">

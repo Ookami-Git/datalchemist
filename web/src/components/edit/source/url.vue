@@ -100,34 +100,34 @@ watch(parameters, () => {
     <label for="InputUrl" class="form-label">URL</label>
     <input type="text" class="form-control" id="InputURL" v-model="source.path">
   </div>
+  <div class="mb-3 form-check">
+    <input class="form-check-input" type="checkbox" id="InputSkipverify" v-model="source.parameters.url.skipverify">
+    <label class="form-check-label" for="InputSkipverify">{{ $t('editsource.url.skipverify') }}</label>
+  </div>
   <div class="mb-3">
-    <label for="InputMethod" class="form-label">Method</label>
+    <label for="InputMethod" class="form-label">{{ $t('editsource.url.method') }}</label>
     <select class="form-select" id="InputMethod" v-model="source.parameters.url.method">
       <option value="GET">GET</option>
       <option value="POST">POST</option>
     </select>
   </div>
   <div class="mb-3">
-    <label for="InputData" class="form-label">Data</label>
+    <label for="InputData" class="form-label">{{ $t('editsource.url.data') }}</label>
     <Codemirror v-model:value="source.parameters.url.data" :options="cmOptions" :height="200" border/>
   </div>
   <div class="mb-3">
-    <label for="InputHeaders" class="form-label">Headers</label>
+    <label for="InputHeaders" class="form-label">{{ $t('editsource.url.headers') }}</label>
     <div class="input-group mb-3">
       <input type="text" class="form-control" placeholder="Key" v-model="newHeaderKey">
       <input type="text" class="form-control" placeholder="Value" v-model="newHeaderValue">
-      <button class="btn btn-primary" type="button" @click="addHeader">Add Header</button>
+      <button class="btn btn-primary" type="button" @click="addHeader">{{ $t('global.add') }}</button>
     </div>
     <ul class="list-group">
       <li class="list-group-item d-flex justify-content-between align-items-center" v-for="(header, index) in source.parameters.url.headers" :key="index">
         <span>{{ header.key }}: {{ header.value }}</span>
-        <button class="btn btn-danger btn-sm" @click="removeHeader(index)">Remove</button>
+        <button class="btn btn-danger btn-sm" @click="removeHeader(index)">{{ $t('global.remove') }}</button>
       </li>
     </ul>
-  </div>
-  <div class="mb-3 form-check">
-    <input class="form-check-input" type="checkbox" id="InputSkipverify" v-model="source.parameters.url.skipverify">
-    <label class="form-check-label" for="InputSkipverify">{{ $t('editsource.url.skipverify') }}</label>
   </div>
   <div class="mb-3">
     <label for="InputProxy" class="form-label">{{ $t('editsource.url.proxy') }}</label>
@@ -139,14 +139,16 @@ watch(parameters, () => {
       <input class="form-check-input" type="checkbox" id="InputAuthentication" v-model="source.parameters.url.authentication.enabled">
       <label class="form-check-label" for="InputAuthentication">{{ $t('editsource.url.enable') }}</label>
     </div>
-    <div class="row">
-      <div class="col">
-        <label for="InputUser" class="form-label">{{ $t('editsource.url.username') }}</label>
-        <input type="text" class="form-control" id="InputUser" v-model="source.parameters.url.authentication.user">
-      </div>
-      <div class="col">
-        <label for="InputPassword" class="form-label">{{ $t('editsource.url.password') }}</label>
-        <input type="password" class="form-control" id="InputPassword" v-model="source.parameters.url.authentication.password">
+    <div v-if="source.parameters.url.authentication.enabled">
+      <div class="row">
+        <div class="col">
+          <label for="InputUser" class="form-label">{{ $t('editsource.url.username') }}</label>
+          <input type="text" class="form-control" id="InputUser" v-model="source.parameters.url.authentication.user">
+        </div>
+        <div class="col">
+          <label for="InputPassword" class="form-label">{{ $t('editsource.url.password') }}</label>
+          <input type="password" class="form-control" id="InputPassword" v-model="source.parameters.url.authentication.password">
+        </div>
       </div>
     </div>
   </fieldset>
@@ -154,23 +156,23 @@ watch(parameters, () => {
     <legend class="form-label">AWS Signature v4</legend>
     <div class="form-check">
       <input class="form-check-input" type="checkbox" id="InputAwsAuthEnabled" v-model="source.parameters.url.aws_auth.enabled">
-      <label class="form-check-label" for="InputAwsAuthEnabled">Enable AWS Signature v4</label>
+      <label class="form-check-label" for="InputAwsAuthEnabled">{{ $t('editsource.url.enable') }}</label>
     </div>
     <div v-if="source.parameters.url.aws_auth.enabled">
       <div class="mb-3">
-        <label for="InputAwsAccessKey" class="form-label">Access Key</label>
+        <label for="InputAwsAccessKey" class="form-label">{{ $t('editsource.url.ak') }}</label>
         <input type="text" class="form-control" id="InputAwsAccessKey" v-model="source.parameters.url.aws_auth.access_key">
       </div>
       <div class="mb-3">
-        <label for="InputAwsSecretKey" class="form-label">Secret Key</label>
+        <label for="InputAwsSecretKey" class="form-label">{{ $t('editsource.url.sk') }}</label>
         <input type="password" class="form-control" id="InputAwsSecretKey" v-model="source.parameters.url.aws_auth.secret_key">
       </div>
       <div class="mb-3">
-        <label for="InputAwsRegion" class="form-label">Region</label>
+        <label for="InputAwsRegion" class="form-label">{{ $t('editsource.url.region') }}</label>
         <input type="text" class="form-control" id="InputAwsRegion" v-model="source.parameters.url.aws_auth.region" placeholder="e.g., us-east-1">
       </div>
       <div class="mb-3">
-        <label for="InputAwsService" class="form-label">Service</label>
+        <label for="InputAwsService" class="form-label">{{ $t('editsource.url.service') }}</label>
         <input type="text" class="form-control" id="InputAwsService" v-model="source.parameters.url.aws_auth.service" placeholder="e.g., s3">
       </div>
     </div>

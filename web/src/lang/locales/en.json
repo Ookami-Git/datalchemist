@@ -6,7 +6,9 @@
         "password": "Password",
         "yes": "Yes",
         "no": "No",
-        "groups": "Groups"
+        "groups": "Groups",
+        "add": "Add",
+        "remove": "Remove"
     },
     "auth": {
         "message": "Please enter your username and password",
@@ -180,7 +182,16 @@
             "authentication": "Authentication (Basic Auth)",
             "enable": "Enable",
             "username": "Username",
-            "password": "Password"
+            "password": "Password",
+            "ak": "Access Key",
+            "sk": "Secret Key",
+            "region": "Region",
+            "service": "Service",
+            "headers": "Headers",
+            "method": "Method",
+            "data": "Data (Body request)",
+            "key": "Key",
+            "value": "Value"
         },
         "text": {
             "helper": "Enter the item in the selected language. The JINJA syntax is valid."
