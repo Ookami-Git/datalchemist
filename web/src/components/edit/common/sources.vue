@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const props = defineProps({
   typeSource: String,
-  parentId: Number,
+  parentId: String,
 });
 
 const apiUrl = inject('apiUrl');
