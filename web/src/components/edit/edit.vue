@@ -161,6 +161,7 @@ fetchViews()
                             <td scope="row" class="text-end">
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button type="button" class="btn btn-outline-primary" title="Editer" @click="$router.push({ name:'edititem', params:{ itemid: row.id}})"><i class="bi bi-pencil-square"></i></button>
+                                    <RouterLink type="button" class="btn btn-outline-primary" title="Voir" :to="{ name:'item', params:{ itemid: row.id}}" target="_blank"><i class="bi bi-eye-fill"></i></RouterLink>
                                     <button type="button" class="btn btn-outline-danger" title="Supprimer" @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem"><i class="bi bi-trash3"></i></button>
                                 </div>
                             </td>

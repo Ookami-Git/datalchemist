@@ -241,14 +241,11 @@ func ViewItems(c *gin.Context) {
 	id := c.Param("id")
 	items, err := utils.ViewItems(id)
 	checkErr(err, c)
-	result := make(map[string]map[string]string)
+	result := make(map[string]models.Items)
 	for _, itemId := range items {
 		item, err := database.ItemGet(itemId)
 		checkErr(err, c)
-		result["i"+itemId] = map[string]string{
-			"html": item.Template,
-			"js":   item.Javascript,
-		}
+		result["i"+itemId] = item
 	}
 	c.JSON(200, result)
 }

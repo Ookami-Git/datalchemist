@@ -91,7 +91,8 @@ const refreshCodeMirror = () => {
             <div class="card-header">
               <div class="row">
                 <div class="col-md-1">
-                  <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name:'edit' }" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+                  <RouterLink type="button" class="btn btn-secondary btn-sm me-2" :to="{ name:'edit' }" active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
+                  <RouterLink v-if="ItemInfo" type="button" class="btn btn-primary btn-sm" :title="`${ $t('edititem.header') } ${ ItemInfo.id }`" :to="{ name:'item', params:{ itemid: ItemInfo.id}}" target="_blank"><i class="bi bi-eye-fill"></i></RouterLink>
                 </div>
                 <div v-if="ItemInfo" class="col-md-10 text-center">
                   <div class="input-group">

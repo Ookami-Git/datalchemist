@@ -84,6 +84,12 @@ const fetchUser = () => {
     });
 };
 
+const removeDynamicScripts = () => {
+  const scripts = document.querySelectorAll('script.dynamic-javascript-datalchemist');
+  // Remove all dynamic scripts
+  scripts.forEach(script => script.remove());
+};
+
 const updateBodyStyle = () => {
   // Mettez à jour bodyStyle avec les nouvelles valeurs
   bodyStyle.value = {
@@ -113,6 +119,10 @@ watch(parameters, () => {
 
 onMounted(() => {
   fetchParameters();
+});
+
+watch(() => route.fullPath, () => {
+  removeDynamicScripts();
 });
 
 watch(route, () => {
