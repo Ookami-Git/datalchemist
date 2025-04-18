@@ -111,10 +111,10 @@ const logout = async () => {
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><RouterLink class="dropdown-item" :to="{ name:'profil'}" active-class="active"><i class="bi bi-person-square"></i> {{ $t('menu.profil') }}</RouterLink></li>
-                    <li><a class="dropdown-item" @click="logout" active-class="active" href=""><i class="bi bi-box-arrow-right"></i> {{ $t('menu.logout') }}</a></li>
+                    <li><a class="dropdown-item" @click="logout" active-class="active" href=""><i class="bi bi-box-arrow-right text-danger"></i> {{ $t('menu.logout') }}</a></li>
                     <li v-if="parameter.isAdmin"><hr class="dropdown-divider"></li>
                     <li v-if="parameter.isAdmin"><RouterLink class="dropdown-item" :to="{ name:'admin', params:{ page: 'global'}}" active-class="active"><i class="bi bi-wrench-adjustable-circle"></i> {{ $t('menu.admin') }}</RouterLink></li>
-                    <li v-if="parameter.isAdmin"><RouterLink class="dropdown-item" :to="{ name:'edit'}" active-class="active"><i class="bi bi-vector-pen"></i> {{ $t('menu.edit') }}</RouterLink></li>
+                    <li v-if="parameter.isAdmin"><RouterLink class="dropdown-item" :to="{ name:'edit'}" active-class="active"><i class="bi bi-vector-pen text-info"></i> {{ $t('menu.edit') }}</RouterLink></li>
                 </ul>
             </div>
         </div>
