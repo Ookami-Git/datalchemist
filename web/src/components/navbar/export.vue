@@ -90,7 +90,7 @@ function download(table, name) {
         </button>
         <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
             <li v-for="(table, index) in tables" :key="index">
-                <a class="dropdown-item" @click="() => download(table.element, table.id)"><i class="bi bi-file-earmark-spreadsheet"></i> {{ table.id }}</a>
+                <button class="dropdown-item" @click="() => download(table.element, table.id)"><i class="bi bi-file-earmark-spreadsheet"></i> {{ table.id }}</button>
             </li>
         </ul>
     </div>
