@@ -62,4 +62,3 @@ dockers:
       - "--platform=linux/arm64"
     dockerfile: Dockerfile
     skip_push: false
-    use: podman
