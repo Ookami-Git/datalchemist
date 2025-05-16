@@ -1,0 +1,14 @@
+services:
+  datalchemist:
+    image: ookamidock/datalchemist:latest
+    ports:
+      - "80:80"
+    environment:
+      - DA_LISTEN=:80
+      - DA_DATABASE=/sqlite/datalchemist.sqlite
+      - DA_SESSION=3600
+    restart: always
+    volumes:
+      - data:/sqlite/
+volumes:
+  data:

@@ -26,4 +26,8 @@ go.work
 #Binaries
 datalchemist
 datalchemist.exe
+
+#Local build
+.goreleaser.yaml
+Dockerfile
 dist/

@@ -52,3 +52,13 @@ changelog:
     exclude:
       - "^docs:"
       - "^test:"
+
+dockers:
+  - image_templates:
+      - "docker.io/ookamidock/datalchemist:latest"
+      - "docker.io/ookamidock/datalchemist:{{ .Tag }}"
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--platform=linux/arm64"
+    dockerfile: Dockerfile
+    skip_push: false
