@@ -28,5 +28,4 @@ datalchemist
 datalchemist.exe
 
 #Local build
-Dockerfile
 dist/
