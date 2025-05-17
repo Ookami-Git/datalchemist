@@ -86,6 +86,21 @@ Create your menu (navbar) with YAML syntax
 For source Datalchemist use [GONJA](https://pkg.go.dev/github.com/noirbizarre/gonja) for templating. The syntaxe is [jinja](https://jinja.palletsprojects.com/en/) compatible.
 
 When you use loop, you can use ```{{ item }}``` var for each iteration of loop.
+### Secrets
+The secrets in Datalchemist are managed in a secure way to ensure the confidentiality of sensitive information. To use secrets, follow the steps below:
+1. **Enable secrets**:
+   - To use secrets, you must launch the application with the `secretkey` parameter (`--secretkey "value"`, `-k "value"`, `export DA_SECRETKEY=value` at extrvar or `secretkey: value` in config file)
+
+2. **Creating secrets**:
+   - Secrets must be created and managed through the Datalchemist user interface. This allows you to define secure values that will be stored encrypted.
+
+3. **Using secrets in sources**:
+   - To use a secret in your sources, you can reference it using the following syntax: `{{ secret.secretname | secret }}`.
+   - This syntax allows you to decrypt the secret named `secretname` and use its decrypted value in your templates.
+
+4. **Decryption on the backend**:
+   - Note that the password or decrypted value of the secret is never directly exposed in the frontend application. Therefore, secrets can only be used in sources, not objects.
+
 ## Items
 ### Variables
 Use nunjucks syntax for vars : https://mozilla.github.io/nunjucks/templating.html
