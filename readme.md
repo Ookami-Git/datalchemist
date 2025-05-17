@@ -23,12 +23,21 @@ Download last version from releases and run it.
 - Listen : Configure listen host and port, default value is 0.0.0.0:8080
 - Database : Configure SQLITE database path, default value is datalchsmist.sqlite in the same directory as application
 - Session : Configure time before session expiration in minutes, default value is 3600
+- Secret Key : Passphrase used by the app to encrypt your secrets. Secrets are only available if you use a secret key. If you give a wrong secret key after having set this parameter one time, the app will not start.
+- Secret Migration : Old passphrase when you want to change the secret. Put the new passphrase in the secretkey parameter. The app will not start when you use secret migration; remove this option after migration.
+  ```shell
+  ./datalchemist --secretkey "MyNewSecretKey" --secretmigration "MyOldSecretKey"
+    Secrets migration: 2 success, 0 failed, 0 already use new passphrase
+  ./datalchemist --secretkey "MyNewSecretKey" #Now app started
+  ```
 ### Parameters
 You can use app parameters
 ```shell
-  -d, --database string
-  -l, --listen   string
-  -s, --session  int
+  -d, --database  string
+  -l, --listen    string
+  -s, --session   int
+  -k, --secretkey string
+  -m, --secretmigration string
 ```
 ### Configuration file
 You can create configuration file named .datalchemist in yaml syntaxe in the same directory as application or $HOME
@@ -36,6 +45,7 @@ You can create configuration file named .datalchemist in yaml syntaxe in the sam
 listen:   ":8080"
 database: "datalchsmist.sqlite"
 session:  3600
+secretkey: "YourSecretKey"
 ```
 ### Env vars
 You can usr env vars
@@ -43,6 +53,7 @@ You can usr env vars
 export DA_LISTEN=":8080"
 export DA_DATABASE="datalchsmist.sqlite"
 export DA_SESSION=3600
+export DA_SECRETKEY="YourSecretKey"
 ```
 ## Getting Started
 ### Startup
@@ -120,5 +131,5 @@ TODO
 - [ ] Parametres -> Export / Import des Sources / Objets / Vues
 - [ ] Parametres -> Changer le logo (upload -> base64 -> stocké dans la BDD)
 - [ ] Parametres -> LDAP -> Option (bool) pour ajouter automatiquement un utilisateur lors de sa première connexion
-- [ ] Objet -> Prévisualier
+- [X] Objet -> Prévisualier
 - [ ] Objet -> Tableau à pages
