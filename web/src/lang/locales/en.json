@@ -2,13 +2,23 @@
     "global": {
         "apply": "Apply",
         "cancel": "Cancel",
+        "close": "Close",
         "username": "Username",
         "password": "Password",
         "yes": "Yes",
         "no": "No",
         "groups": "Groups",
         "add": "Add",
-        "remove": "Remove"
+        "remove": "Remove",
+        "edit": "Edit",
+        "preview": "Preview",
+        "error": {
+            "unknown": "Unknown error",
+            "fetch_sources": "Error while fetching sources",
+            "fetch_items": "Error while fetching items",
+            "fetch_views": "Error while fetching views",
+            "fetch_secrets": "Error while fetching secrets"
+        }
     },
     "auth": {
         "message": "Please enter your username and password",
@@ -96,7 +106,9 @@
         "views": "Views",
         "name": "Name",
         "actions": "Actions",
-        "add": "Add"
+        "add": "Add",
+        "secrets": "Secrets",
+        "secret_value": "Secret value"
     },
     "edititem": {
         "header": "Item",

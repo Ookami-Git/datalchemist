@@ -149,6 +149,12 @@ func ParametersGet(c *gin.Context) {
 			}
 		} else {
 			Parameters["isAdmin"] = true
+			has_secretkey := viper.GetString("secretkey") != ""
+			if has_secretkey {
+				Parameters["enableSecret"] = true
+			} else {	
+				Parameters["enableSecret"] = false
+			}
 		}
 		user, err := database.UserByIdGet(user_id)
 		if err == nil {
@@ -402,6 +408,40 @@ func AclDelete(c *gin.Context) {
 		View: uint(Vid),
 	}
 	database.AclDelete(Acl)
+}
+
+func SecretList(c *gin.Context) {
+	Secrets, err := database.SecretList()
+	checkErr(err, c)
+	c.JSON(200, Secrets)
+}
+
+func SecretAdd(c *gin.Context) {
+	Secret := models.Secrets{}
+	c.BindJSON(&Secret)
+	err := database.SecretAdd(Secret)
+	checkErr(err, c)
+}
+
+func SecretUpdate(c *gin.Context) {
+	Secret := models.Secrets{}
+	c.BindJSON(&Secret)
+	id, err := strconv.Atoi(c.Param("id"))
+	checkErr(err, c)
+	Secret.ID = uint(id)
+	err = database.SecretUpdate(Secret)
+	checkErr(err, c)
+}
+
+func SecretDelete(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid id"})
+		return
+	}
+	id, err = database.SecretDelete(int(id))
+	checkErr(err, c)
+	c.JSON(200, id)
 }
 
 func checkErr(err error, c *gin.Context) {

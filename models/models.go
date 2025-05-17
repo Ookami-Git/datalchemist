@@ -119,3 +119,10 @@ type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims
 }
+
+type Secrets struct {
+	ID         uint   `gorm:"primary_key" json:"id"`
+	Name       string `gorm:"unique;not null" json:"name"`
+	Secret     string `gorm:"not null" json:"secret"`
+	KeyHash    string `gorm:"not null" json:"keyhash"`
+}

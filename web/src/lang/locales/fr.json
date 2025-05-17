@@ -9,7 +9,16 @@
         "no": "Non",
         "groups": "Groupes",
         "add": "Ajouter",
-        "remove": "Supprimer"
+        "remove": "Supprimer",
+        "edit": "Modifier",
+        "preview": "Aperçu",
+        "error": {
+            "unknown": "Erreur inconnue",
+            "fetch_sources": "Erreur lors de la récupération des sources",
+            "fetch_items": "Erreur lors de la récupération des objets",
+            "fetch_views": "Erreur lors de la récupération des vues",
+            "fetch_secrets": "Erreur lors de la récupération des secrets"
+        }
     },
     "auth": {
         "message": "Veuillez saisir votre identifiant et mot de passe",
@@ -97,7 +106,9 @@
         "views": "Vues",
         "name": "Nom",
         "actions": "Actions",
-        "add": "Ajouter"
+        "add": "Ajouter",
+        "secrets": "Secrets",
+        "secret_value": "Valeur du secret"
     },
     "edititem": {
         "header": "Objet",

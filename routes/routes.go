@@ -89,5 +89,10 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/api/acl", handlers.AclList)
 		protected.POST("/api/acl", handlers.AclAdd)
 		protected.DELETE("/api/acl/view/:vid/group/:gid", handlers.AclDelete)
+
+		protected.DELETE("/api/secret/:id", handlers.SecretDelete)
+		protected.POST("/api/secret", handlers.SecretAdd)
+		protected.PUT("/api/secret/:id", handlers.SecretUpdate)
+		protected.GET("/api/secrets", handlers.SecretList)
 	}
 }

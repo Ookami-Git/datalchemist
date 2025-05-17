@@ -6,6 +6,7 @@ import (
 	"context"
 	"crypto/tls"
 	"datalchemist/database"
+	"datalchemist/utils/secrets"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -22,6 +23,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	v4 "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
+	"github.com/spf13/viper"
 
 	"github.com/abdfnx/gosh"
 	"github.com/gin-gonic/gin"
@@ -44,6 +46,17 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 	requirement, err := database.SourceRequire(id)
 	if checkErr(err) {
 		return nil
+	}
+
+	if _, ok := (*data)["secret"].(map[string]interface{}); !ok {
+		(*data)["secret"] = make(map[string]interface{})
+		secrets, err := database.SecretsGet()
+		if checkErr(err) {
+			return nil
+		}
+		for _, secret := range secrets {
+			(*data)["secret"].(map[string]interface{})[secret.Name] = secret.Secret
+		}
 	}
 
 	for _, source := range requirement {
@@ -191,6 +204,8 @@ func SearchInMap(daMap map[string]interface{}, path string) interface{} {
 }
 
 func Render(template string, data *map[string]interface{}) string {
+	gonja.DefaultEnvironment.Filters.Register("secret", secretFilter)
+
 	tpl, err := gonja.FromString(template)
 	if err != nil {
 		log.Print("Gonja Template Error:", err)
@@ -578,4 +593,102 @@ func ViewItems(viewID string) ([]string, error) {
 	}
 
 	return result, err
+}
+
+func SecretInit(secret string, update bool) error {
+	// Calculer le hash SHA256 du secret fourni
+	hash := sha256.Sum256([]byte(secret))
+	hashStr := hex.EncodeToString(hash[:])
+
+	secrethash, err := database.ParameterGetValue("secrethash")
+	if err != nil {
+		return err
+	}
+
+	if update || secrethash.Value == "" { 
+		secrethash.Value = hashStr
+		database.ParametersUpdate(secrethash)
+		return nil
+	}
+
+	// Si le paramètre existe, vérifier la valeur
+	if secrethash.Value != hashStr {
+		return fmt.Errorf("wrong secret hash, please check your secret key")
+	}
+
+	return nil
+}
+
+func SecretsMigrate(oldSecretKey string, newSecretKey string) error {
+	SecretInit(newSecretKey, true)
+
+	keyHash, err := database.ParameterGetValue("secrethash")
+	if err != nil {
+		return err
+	}
+
+	secretsList, err := database.SecretsGet()
+	if err != nil {
+		return err
+	}
+
+	successCount := 0
+	failCount := 0
+	alreadymigrated := 0
+
+	for _, secret := range secretsList {
+		if secret.KeyHash == keyHash.Value {
+			// Skip if the secret is already migrated
+			alreadymigrated++
+			continue
+		}
+		// Decrypt the with old secretkey
+		decrypted, err := secrets.Decrypt(secret.Secret, oldSecretKey)
+		if err != nil {
+			log.Printf("Error while decrypting secret %s: %v\n", secret.Name, err)
+			failCount++
+			continue
+		}
+
+		// Remplace value and save
+		secret.Secret = decrypted
+		err = database.SecretUpdate(secret)
+		if err != nil {
+			log.Printf("Error while saving secret %s: %v\n", secret.Name, err)
+			failCount++
+			continue
+		}
+
+		successCount++
+	}
+
+	log.Printf("Secrets migration: %d success, %d failed, %d already use new passphrase\n", successCount, failCount, alreadymigrated)
+
+	if failCount > 0 {
+		return fmt.Errorf("%d Secrets failed to migrate", failCount)
+	}
+	return nil
+}
+
+// Custom filter for Gonja
+// Custom filter to decrypt secrets
+var secretFilter exec.FilterFunction = func(e *exec.Evaluator, in *exec.Value, params *exec.VarArgs) *exec.Value {
+    // Check if the input is valid
+    if in.IsError() {
+        return in
+    }
+	if err := params.Take(); err != nil {
+		return exec.AsValue(exec.ErrInvalidCall(err))
+	}
+
+    // Get the encrypted text
+    encryptedSecret := in.String()
+
+    // Decrypt the secret
+    decryptedSecret, err := secrets.Decrypt(encryptedSecret, viper.GetString("secretkey"))
+    if err != nil {
+        return exec.AsValue(fmt.Sprintf("ERROR: %v", err))
+    }
+
+    return exec.AsValue(decryptedSecret)
 }

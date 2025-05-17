@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
+
+	"datalchemist/utils/secrets"
 )
 
 var dbGorm *gorm.DB
@@ -20,7 +22,7 @@ func Init() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{})
+	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{}, &models.Secrets{})
 	// Ajouter les données si elles n'existent pas déjà
 	parameters := []*models.Parameters{
 		{Name: "name", Value: "datalchemist"},
@@ -42,6 +44,7 @@ func Init() error {
 		{Name: "ldap_password", Value: ""},
 		{Name: "defaultview", Value: ""},
 		{Name: "export_csv_delimiter", Value: ","},
+		{Name: "secrethash", Value: ""},
 	}
 	for _, p := range parameters {
 		var count int64
@@ -313,6 +316,20 @@ func ParametersGet() map[string]interface{} {
 	return Parameters
 }
 
+func ParameterGetValue(name string) (models.Parameters, error) {
+	var param models.Parameters
+
+	db, err := OpenGorm()
+	checkErr(err)
+
+	err = db.Where("name = ?", name).First(&param).Error
+	if err != nil {
+		return param, err
+	}
+
+	return param, nil
+}
+
 func ParametersUpdate(Parameters models.Parameters) {
 	db, err := OpenGorm()
 	checkErr(err)
@@ -556,13 +573,13 @@ func AclView(uid uint, vid uint) (bool, error) {
 	var result Result
 
 	err = db.Table("acls").
-		Select("EXISTS (" +
-			"SELECT 1 " +
-			"FROM acls " +
-			"JOIN groups ON acls.gid = groups.id " +
-			"JOIN roles ON groups.id = roles.gid " +
-			"WHERE roles.user = ? " +
-			"AND acls.view = ? " +
+		Select("EXISTS ("+
+			"SELECT 1 "+
+			"FROM acls "+
+			"JOIN groups ON acls.gid = groups.id "+
+			"JOIN roles ON groups.id = roles.gid "+
+			"WHERE roles.user = ? "+
+			"AND acls.view = ? "+
 			") AS has_permission", uid, vid).
 		Scan(&result).Error
 
@@ -573,7 +590,6 @@ func AclView(uid uint, vid uint) (bool, error) {
 
 	return result.HasPermission, nil
 }
-
 
 func AclList() (map[string]map[string]map[string][]uint, error) {
 	aclMap := make(map[string]map[string]map[string][]uint)
@@ -653,4 +669,73 @@ func checkErr(err error) {
 		log.Print("ERROR database :", err)
 		return
 	}
+}
+
+func SecretAdd(Secret models.Secrets) (error) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	secretEncrypted, err := secrets.Encrypt(Secret.Secret, viper.GetString("secretkey"))
+	checkErr(err)
+
+	Secret.Secret = secretEncrypted
+	SecretHash, err := ParameterGetValue("secrethash")
+	checkErr(err)
+
+	Secret.KeyHash = SecretHash.Value
+
+	err = db.Create(&Secret).Error
+	checkErr(err)
+	return err
+}
+
+func SecretUpdate(Secret models.Secrets) (error) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	Secret.Secret, err = secrets.Encrypt(Secret.Secret, viper.GetString("secretkey"))
+	checkErr(err)
+
+	SecretHash, err := ParameterGetValue("secrethash")
+	checkErr(err)
+	Secret.KeyHash = SecretHash.Value
+
+	err = db.Updates(&Secret).Error
+	return err
+}
+
+func SecretDelete(SecretId int) (int, error) {
+	db, err := OpenGorm()
+	checkErr(err)
+
+	db.Where("id = ?", SecretId).Delete(&models.Secrets{})
+	return SecretId, err
+}
+
+func SecretList() ([]models.Secrets, error) {
+	var Secrets []models.Secrets
+
+	db, err := OpenGorm()
+	if err != nil {
+		return Secrets, err
+	}
+
+	query := db.Table("secrets").Select("id, name").Order("id")
+
+	err = query.Scan(&Secrets).Error
+
+	return Secrets, err
+}
+
+func SecretsGet() ([]models.Secrets, error) {
+	var Secrets []models.Secrets
+
+	db, err := OpenGorm()
+	if err != nil {
+		return Secrets, err
+	}
+
+	err = db.Find(&Secrets).Error
+
+	return Secrets, err
 }
