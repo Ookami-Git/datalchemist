@@ -9,21 +9,29 @@ import (
 	"fmt"
 	"io"
 
+	"datalchemist/database"
+
+	"github.com/spf13/viper"
 	"golang.org/x/crypto/scrypt"
 )
 
-// deriveKey génère une clé à partir de la passphrase (issue de viper) et d'un salt fixe.
+// deriveKey génère une clé à partir de la passphrase (issue de viper) et d'un salt.
 func deriveKey(secretkey string) ([]byte, error) {
 	passphrase := secretkey
 	if passphrase == "" {
 		return nil, errors.New("secretkey parameter is required")
 	}
-	salt := []byte("datalchemist_salt_2024")
+	salt_value, err := database.ParameterGetValue("secret_salt")
+	if err != nil {
+		return nil, err
+	}
+	salt := []byte(salt_value.Value)
 	return scrypt.Key([]byte(passphrase), salt, 32768, 8, 1, 32)
 }
 
 // Encrypt chiffre un texte en clair, retourne une string base64 (nonce + ciphertext)
-func Encrypt(plaintext string, secretkey string) (string, error) {
+func Encrypt(plaintext string) (string, error) {
+	secretkey := viper.GetString("secretkey")
 	key, err := deriveKey(secretkey)
 	if err != nil {
 		return "", err

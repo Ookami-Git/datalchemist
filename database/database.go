@@ -2,16 +2,16 @@ package database
 
 import (
 	"datalchemist/models"
+	"datalchemist/utils/generator"
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/glebarez/sqlite"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-
-	"datalchemist/utils/secrets"
 )
 
 var dbGorm *gorm.DB
@@ -44,7 +44,9 @@ func Init() error {
 		{Name: "ldap_password", Value: ""},
 		{Name: "defaultview", Value: ""},
 		{Name: "export_csv_delimiter", Value: ","},
-		{Name: "secrethash", Value: ""},
+		{Name: "secret_hash", Value: ""},
+		{Name: "secret_salt", Value: generator.String(32)},
+		{Name: "secret_salt_session", Value: generator.String(32)},
 	}
 	for _, p := range parameters {
 		var count int64
@@ -306,11 +308,12 @@ func ParametersGet() map[string]interface{} {
 	var parameters []models.Parameters
 	db.Find(&parameters)
 
-	// Initialiser la carte pour stocker les résultats
 	Parameters := make(map[string]interface{})
 
 	for _, p := range parameters {
-		Parameters[p.Name] = p.Value
+		if !strings.HasPrefix(p.Name, "secret_") {
+			Parameters[p.Name] = p.Value
+		}
 	}
 
 	return Parameters
@@ -675,15 +678,6 @@ func SecretAdd(Secret models.Secrets) (error) {
 	db, err := OpenGorm()
 	checkErr(err)
 
-	secretEncrypted, err := secrets.Encrypt(Secret.Secret, viper.GetString("secretkey"))
-	checkErr(err)
-
-	Secret.Secret = secretEncrypted
-	SecretHash, err := ParameterGetValue("secrethash")
-	checkErr(err)
-
-	Secret.KeyHash = SecretHash.Value
-
 	err = db.Create(&Secret).Error
 	checkErr(err)
 	return err
@@ -692,13 +686,6 @@ func SecretAdd(Secret models.Secrets) (error) {
 func SecretUpdate(Secret models.Secrets) (error) {
 	db, err := OpenGorm()
 	checkErr(err)
-
-	Secret.Secret, err = secrets.Encrypt(Secret.Secret, viper.GetString("secretkey"))
-	checkErr(err)
-
-	SecretHash, err := ParameterGetValue("secrethash")
-	checkErr(err)
-	Secret.KeyHash = SecretHash.Value
 
 	err = db.Updates(&Secret).Error
 	return err

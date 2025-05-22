@@ -97,7 +97,7 @@ func main() {
 			}
 			return
 		}
-		if err := utils.SecretInit(viper.GetString("secretkey"), false); err != nil {
+		if err := utils.SecretInit(false); err != nil {
 			log.Fatal(err)
 		}
 	}

@@ -1,6 +1,7 @@
 package token
 
 import (
+	"datalchemist/database"
 	"fmt"
 	"strconv"
 	"strings"
@@ -11,8 +12,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-var secret string = "Shrubbery-Trunks-Bony-Profane-Hunting-Swan8"
-
+func GetSalt() (string) {
+	param, err := database.ParameterGetValue("secret_salt_session")
+	if err != nil {
+		panic(fmt.Sprintf("failed to get secret_salt: %v", err))
+	}
+	return param.Value
+}
 func GenerateToken(user_id uint) (string, error) {
 	token_lifespan := viper.GetInt("session")
 
@@ -22,7 +28,7 @@ func GenerateToken(user_id uint) (string, error) {
 	claims["exp"] = time.Now().Add(time.Minute * time.Duration(token_lifespan)).Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString([]byte(secret))
+	return token.SignedString([]byte(GetSalt()))
 }
 
 func TokenValid(c *gin.Context) error {
@@ -31,7 +37,7 @@ func TokenValid(c *gin.Context) error {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(secret), nil
+		return []byte(GetSalt()), nil
 	})
 	if err != nil {
 		return err
@@ -59,7 +65,7 @@ func ExtractTokenID(c *gin.Context) (uint, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(secret), nil
+		return []byte(GetSalt()), nil
 	})
 	if err != nil {
 		return 0, err

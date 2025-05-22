@@ -7,6 +7,7 @@ services:
       - DA_LISTEN=:80
       - DA_DATABASE=/sqlite/datalchemist.sqlite
       - DA_SESSION=3600
+      - DA_SECRETKEY=MySecretKey
     restart: always
     volumes:
       - data:/sqlite/

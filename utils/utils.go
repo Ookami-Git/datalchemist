@@ -595,12 +595,13 @@ func ViewItems(viewID string) ([]string, error) {
 	return result, err
 }
 
-func SecretInit(secret string, update bool) error {
+func SecretInit(update bool) error {
+	secret := viper.GetString("secretkey")
 	// Calculer le hash SHA256 du secret fourni
 	hash := sha256.Sum256([]byte(secret))
 	hashStr := hex.EncodeToString(hash[:])
 
-	secrethash, err := database.ParameterGetValue("secrethash")
+	secrethash, err := database.ParameterGetValue("secret_hash")
 	if err != nil {
 		return err
 	}
@@ -620,9 +621,9 @@ func SecretInit(secret string, update bool) error {
 }
 
 func SecretsMigrate(oldSecretKey string, newSecretKey string) error {
-	SecretInit(newSecretKey, true)
+	SecretInit(true)
 
-	keyHash, err := database.ParameterGetValue("secrethash")
+	keyHash, err := database.ParameterGetValue("secret_hash")
 	if err != nil {
 		return err
 	}
@@ -651,7 +652,11 @@ func SecretsMigrate(oldSecretKey string, newSecretKey string) error {
 		}
 
 		// Remplace value and save
-		secret.Secret = decrypted
+		secret.Secret, err = secrets.Encrypt(decrypted)
+		// Add hash
+		secretHash, err := database.ParameterGetValue("secret_hash")
+		checkErr(err)
+		secret.KeyHash = secretHash.Value
 		err = database.SecretUpdate(secret)
 		if err != nil {
 			log.Printf("Error while saving secret %s: %v\n", secret.Name, err)

@@ -5,7 +5,9 @@ import (
 	"datalchemist/database"
 	"datalchemist/models"
 	"datalchemist/utils"
+	"datalchemist/utils/secrets"
 	"datalchemist/utils/token"
+
 	"log"
 	"strconv"
 
@@ -419,7 +421,16 @@ func SecretList(c *gin.Context) {
 func SecretAdd(c *gin.Context) {
 	Secret := models.Secrets{}
 	c.BindJSON(&Secret)
-	err := database.SecretAdd(Secret)
+	// Encrypt the secret
+	EncryptedSecret, err := secrets.Encrypt(Secret.Secret)
+	checkErr(err, c)
+	Secret.Secret = EncryptedSecret
+	// Add hash
+	SecretHash, err := database.ParameterGetValue("secret_hash")
+	checkErr(err, c)
+	Secret.KeyHash = SecretHash.Value
+	// Add the secret
+	err = database.SecretAdd(Secret)
 	checkErr(err, c)
 }
 
@@ -429,6 +440,15 @@ func SecretUpdate(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	checkErr(err, c)
 	Secret.ID = uint(id)
+	// Encrypt the secret
+	EncryptedSecret, err := secrets.Encrypt(Secret.Secret)
+	checkErr(err, c)
+	Secret.Secret = EncryptedSecret
+	// Add hash
+	SecretHash, err := database.ParameterGetValue("secret_hash")
+	checkErr(err, c)
+	Secret.KeyHash = SecretHash.Value
+	// Update the secret
 	err = database.SecretUpdate(Secret)
 	checkErr(err, c)
 }
