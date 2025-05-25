@@ -7,6 +7,7 @@ import (
 	"crypto/tls"
 	"datalchemist/database"
 	"datalchemist/utils/secrets"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -165,6 +166,8 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		return XmlToObject(content)
 	case "hcl":
 		return HclToObject(content)
+	case "csv":
+		return CsvToObject(content)
 	case "text": 
 		return content
 	case "sqlite":
@@ -673,6 +676,29 @@ func SecretsMigrate(oldSecretKey string, newSecretKey string) error {
 		return fmt.Errorf("%d Secrets failed to migrate", failCount)
 	}
 	return nil
+}
+
+func CsvToObject(csvData string) interface{} {
+    reader := csv.NewReader(strings.NewReader(csvData))
+    records, err := reader.ReadAll()
+    if checkErr(err) {
+        return nil
+    }
+    if len(records) < 1 {
+        return []map[string]interface{}{}
+    }
+    headers := records[0]
+    var result []map[string]interface{}
+    for _, row := range records[1:] {
+        obj := make(map[string]interface{})
+        for i, header := range headers {
+            if i < len(row) {
+                obj[header] = row[i]
+            }
+        }
+        result = append(result, obj)
+    }
+    return result
 }
 
 // Custom filter for Gonja
