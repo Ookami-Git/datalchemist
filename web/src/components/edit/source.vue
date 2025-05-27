@@ -21,7 +21,7 @@ save.value.safe()
 
 //const support = ref(["file","url","execute","database"])
 const support = ref(["file","url","database","text"])
-const supportedFlat = ref(["json", "xml", "yml", "hcl", "text"])
+const supportedFlat = ref(["json", "yml", "csv", "xml", "hcl", "text"])
 const supportedDb = ref(["sqlite", "postgres", "mysql"])
 const JsonSource = ref({
                 "src": '',
