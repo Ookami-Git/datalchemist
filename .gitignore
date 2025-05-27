@@ -31,3 +31,4 @@ datalchemist.exe
 dist/
 Dockerfile
 .goreleaser.yaml
+.vite/

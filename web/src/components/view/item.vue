@@ -1,114 +1,55 @@
 <script setup>
+// --- Imports Vue & Libs ---
 import { ref, inject, watch, nextTick } from 'vue';
-import axios from 'axios';
 import { useRoute } from 'vue-router';
+import axios from 'axios';
 import nunjucks from 'nunjucks';
-import moment from 'moment';
 import mermaid from 'mermaid';
+import he from 'he';
+import { setDataTablesLanguage } from '@/utils/dataTables.js';
+// --- DataTables & Dépendances ---
+import jQuery from "jquery";
+import jszip from 'jszip';
+import pdfmake from 'pdfmake';
+import pdfFonts from 'pdfmake/build/vfs_fonts.js';
+import DataTable from 'datatables.net-bs5';
+// --- UI Components ---
 import loading from './loading.vue';
 
-// ------------ Start of custom Nunjucks filters ------------
+// --- Injections ---
+const parameters = inject('parameters');
+const apiUrl = inject('apiUrl');
+
+// --- Nunjucks Environment & Filtres personnalisés ---
+import { registerNunjucksFilters } from '@/utils/nunjucksFilters.js';
 if (!window.nunjucksEnv) {
   window.nunjucksEnv = new nunjucks.Environment();
+  registerNunjucksFilters(window.nunjucksEnv);
 }
 const nunjucksEnv = window.nunjucksEnv;
 
-// Filter to find an element in an array
-nunjucksEnv.addFilter("find", function (arr, path, value) {
-  for (const obj of arr) {
-    var currentObj = obj;
-    const keys = path.split(".");
-    
-    for (const key of keys) {
-      if (currentObj && currentObj.hasOwnProperty(key)) {
-        currentObj = currentObj[key];
-      } else {
-        break;
-      }
-    }
-
-    if (currentObj === value) {
-      return obj;
-    }
-  }
-
-  return null;
-});
-
-// Filter to convert a JSON string to an object
-nunjucksEnv.addFilter("fromjson", function (str) {
-  try {
-    return JSON.parse(str);
-  } catch (error) {
-    return null;
-  }
-});
-
-// Filter to format a date
-nunjucksEnv.addFilter("date", function (date, outputformat, inputformat) {
-  return moment(date, inputformat).format(outputformat);
-});
-
-// Filter to add or modify an attribute in an object
-nunjucksEnv.addFilter('setAttribute', function(dictionary, key, value) {
-  const keys = key.split(/(?<!\\)\./).map(part => part.replace(/\\\./g, '.'));
-  let currentObj = dictionary;
-  for (let i = 0; i < keys.length - 1; i++) {
-    const k = keys[i];
-    if (!currentObj.hasOwnProperty(k) || typeof currentObj[k] !== "object") {
-      currentObj[k] = {};
-    }
-    currentObj = currentObj[k];
-  }
-  currentObj[keys[keys.length - 1]] = value;
-  return dictionary;
-});
-// ------------ End of custom Nunjucks filters ------------
-
-const parameters = inject('parameters');
-const searchBox = inject('searchBox');
-
-// Props to accept data when is called from view
+// --- Props ---
 const props = defineProps({
-  providedItemData: {
-    type: Object,
-    default: null
-  },
-  itemDescribe: {
-    type: Object,
-    default: null
-  },
-  providedItemStructure: {
-    type: Object,
-    default: null
-  }
+  providedItemData: { type: Object, default: null },
+  itemDescribe: { type: Object, default: null },
+  providedItemStructure: { type: Object, default: null }
 });
 
-// Inject dependencies
-const apiUrl = inject('apiUrl');
-
-// Declare reactive variables
-const itemStructure = ref(null); // Holds the item structure (HTML and Jinja2)
-const itemData = ref(null); // Holds the item data (JSON values)
-const renderedItem = ref(null);
+// --- Réactifs ---
+const itemStructure = ref(null); // Structure HTML/Jinja2
+const itemData = ref(null);      // Données JSON
+const renderedItem = ref(null);  // HTML rendu
 const hasLoadError = ref(false);
 const fetchError = ref(null);
 
-// Add custom Nunjucks filters to the existing Nunjucks environment
-nunjucksEnv.addFilter("date", (date, outputformat, inputformat) => {
-  return moment(date, inputformat).format(outputformat);
-});
-
-// Function to fetch the item structure and data
+// --- Fonctions de récupération ---
 const fetchItem = async (itemid) => {
   if (props.providedItemStructure) {
-    // Use provided item structure if available
     itemStructure.value = props.providedItemStructure;
   } else {
     try {
-      // Fetch the item structure (HTML and Jinja2)
-      const structureResponse = await axios.get(`${apiUrl}/item/${itemid}`);
-      itemStructure.value = structureResponse.data;
+      const res = await axios.get(`${apiUrl}/item/${itemid}`);
+      itemStructure.value = res.data;
     } catch (error) {
       fetchError.value = error.response;
       hasLoadError.value = true;
@@ -119,25 +60,20 @@ const fetchItem = async (itemid) => {
 
 const fetchItemData = async (itemid) => {
   if (props.providedItemData) {
-    // Use provided item data if available
     itemData.value = props.providedItemData;
   } else {
-    await axios.get(`${apiUrl}/data/item/${itemid}`, {
-      params: route.query
-    })
-    .then((response) => {
-      itemData.value = response.data;
-      console.log(response.data);
-    })
-    .catch((error) => {
+    try {
+      const res = await axios.get(`${apiUrl}/data/item/${itemid}`, { params: route.query });
+      itemData.value = res.data;
+    } catch (error) {
       fetchError.value = error.response;
       hasLoadError.value = true;
       console.error('Error fetching item data', error);
-    });
+    }
   }
 };
 
-// Function to render the item
+// --- Rendu Nunjucks ---
 const renderItem = async () => {
   try {
     if (itemStructure.value?.template?.trim() && itemData.value) {
@@ -151,23 +87,20 @@ const renderItem = async () => {
   }
 };
 
-// Function to inject dynamic JavaScript scripts
-const injectDynamicScripts = (itemid) => {
-  const jsCode = itemStructure.value?.javascript;
-  if (jsCode) {
-    try {
-      const scriptEl = document.createElement('script');
-      scriptEl.id = 'js-i-' + itemid;
-      scriptEl.className = 'dynamic-javascript-datalchemist';
-      scriptEl.textContent = nunjucksEnv.renderString(jsCode, itemData.value);;
-      document.body.appendChild(scriptEl);
-    } catch (err) {
-      console.error('Error executing script', err);
-    }
+// --- Exécution JS dynamique isolée ---
+function runDynamicJs(jsCode, context = {}) {
+  try {
+    const decodedJsCode = he.decode(jsCode);
+    const argNames = Object.keys(context);
+    const argValues = Object.values(context);
+    const fn = new Function(...argNames, `"use strict";\n${decodedJsCode}`);
+    fn(...argValues);
+  } catch (err) {
+    console.error('Error executing dynamic JS:', err);
   }
-};
+}
 
-// Watch for route changes or provided data to reload the item
+// --- Watch route/data pour recharger l'item ---
 const route = useRoute();
 watch(
   [route, () => props.providedItemData],
@@ -183,41 +116,70 @@ watch(
       await fetchItem(itemid);
       await renderItem();
 
-      // Initialiser et exécuter Mermaid après le rendu
+      // --- DataTables: Langue ---
+      setDataTablesLanguage(parameters.value.lang);
+
       nextTick(() => {
+        // --- JS dynamique ---
+        if (itemStructure.value?.javascript) {
+          runDynamicJs(
+            nunjucksEnv.renderString(itemStructure.value.javascript, itemData.value),
+            { jQuery, DataTable, itemData: itemData.value, itemid, jszip, pdfmake, pdfFonts }
+          );
+        }
         mermaid.initialize({ theme: parameters.value.theme });
         mermaid.run();
-        searchBox.value.show = document.querySelector('.filterable') != null;
-        if (searchBox.value.show) {
-          searchBox.value.function();
-        }
-        injectDynamicScripts(itemid);
       });
     } catch (error) {
       hasLoadError.value = true;
       console.error('Error during item loading or rendering:', error);
     }
-    
   },
   { immediate: true }
 );
 </script>
 
 <template>
-    <div v-if="renderedItem" class="card">
-      <div v-if="props.itemDescribe?.title" class="card-header" v-html="props.itemDescribe.title"></div>
-      <div class="card-body" v-html="renderedItem"></div>
-    </div>
-    <div v-else-if="hasLoadError" class="row">
-      <!-- Display loading error -->
-      <div class="card" aria-hidden="true" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
-        <div class="card-header bg-danger">Error {{ fetchError?.status || 'Unknown' }} - {{ fetchError?.statusText || 'Error occurred' }}</div>
-        <div class="card-body">
-          <h5 class="card-title placeholder-glow">
-            <span>Unable to load item: {{ props.itemDescribe?.itemid || route.params.itemid }}</span>
-          </h5>
-        </div>
+  <div v-if="renderedItem" class="card">
+    <div v-if="props.itemDescribe?.title" class="card-header" v-html="props.itemDescribe.title"></div>
+    <div class="card-body" v-html="renderedItem"></div>
+  </div>
+  <div v-else-if="hasLoadError" class="row">
+    <div class="card" aria-hidden="true" style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+      <div class="card-header bg-danger">
+        Error {{ fetchError?.status || 'Unknown' }} - {{ fetchError?.statusText || 'Error occurred' }}
+      </div>
+      <div class="card-body">
+        <h5 class="card-title placeholder-glow">
+          <span>Unable to load item: {{ props.itemDescribe?.itemid || route.params.itemid }}</span>
+        </h5>
       </div>
     </div>
-    <loading v-else />
+  </div>
+  <loading v-else />
 </template>
+
+<style>
+  /* Dark mode fix for DataTables rowgrouping */
+  [data-bs-theme="dark"] .dtrg-group,
+  [data-bs-theme="dark"] .dtrg-level-0,
+  [data-bs-theme="dark"] .dtrg-level-1,
+  [data-bs-theme="dark"] .dtrg-level-2 {
+    background-color: #23272b !important;
+    color: #fff !important;
+  }
+</style>
+
+<style>
+@import url('datatables.net-bs5');
+@import url('datatables.net-buttons-bs5');
+@import url('datatables.net-fixedcolumns-bs5');
+@import url('datatables.net-fixedheader-bs5');
+@import url('datatables.net-responsive-bs5');
+@import url('datatables.net-rowgroup-bs5');
+@import url('datatables.net-scroller-bs5');
+@import url('datatables.net-searchbuilder-bs5');
+@import url('datatables.net-searchpanes-bs5');
+@import url('datatables.net-select-bs5');
+@import url('datatables.net-colreorder-bs5');
+</style>

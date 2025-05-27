@@ -193,6 +193,7 @@ fetchSecrets()
               <button v-else type="button" class="btn btn-secondary btn-sm" :title="$t('edit.add')" disabled><i class="bi bi-plus-lg"></i></button>
             </h5>
             <div class="card-body">
+              <div class="scrollable-table-container">
                 <table class="table table-hover" v-if="secrets">
                     <thead>
                         <tr>
@@ -214,6 +215,7 @@ fetchSecrets()
                         </tr>
                     </tbody>
                 </table>
+              </div>
             </div>
         </div>
     </div>
@@ -221,6 +223,7 @@ fetchSecrets()
         <div class="card">
             <h5 class="card-header text-center">{{ $t('edit.sources') }}  <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addsource"><i class="bi bi-plus-lg"></i></button></h5>
             <div class="card-body">
+              <div class="scrollable-table-container">
                 <table class="table table-hover" v-if="sources">
                     <thead>
                         <tr>
@@ -243,6 +246,7 @@ fetchSecrets()
                         </tr>
                     </tbody>
                 </table>
+              </div>
             </div>
         </div>
     </div>
@@ -250,6 +254,7 @@ fetchSecrets()
         <div class="card">
             <h5 class="card-header text-center">{{ $t('edit.items') }}  <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#additem"><i class="bi bi-plus-lg"></i></button></h5>
             <div class="card-body">
+              <div class="scrollable-table-container">
                 <table class="table table-hover" v-if="items">
                     <thead>
                         <tr>
@@ -272,6 +277,7 @@ fetchSecrets()
                         </tr>
                     </tbody>
                 </table>
+              </div>
             </div>
         </div>
     </div>
@@ -279,6 +285,7 @@ fetchSecrets()
         <div class="card">
             <h5 class="card-header text-center">{{ $t('edit.views') }}  <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addview"><i class="bi bi-plus-lg"></i></button></h5>
             <div class="card-body">
+              <div class="scrollable-table-container">
                 <table class="table table-hover" v-if="views">
                     <thead>
                         <tr>
@@ -301,6 +308,7 @@ fetchSecrets()
                         </tr>
                     </tbody>
                 </table>
+              </div>
             </div>
         </div>
     </div>
@@ -390,3 +398,10 @@ fetchSecrets()
   </div>
 </div>
 </template>
+
+<style scoped>
+.scrollable-table-container {
+  max-height: 80vh;
+  overflow-y: auto;
+}
+</style>

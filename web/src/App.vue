@@ -43,10 +43,7 @@ const saveButton = ref({
     },
   }
 })
-const searchBox = ref({
-  "show": false,
-  "function": null
-})
+
 const myUser = ref({})
 
 const apiUrl = window.location.origin + window.location.pathname + `api`;
@@ -84,20 +81,13 @@ const fetchUser = () => {
     });
 };
 
-const removeDynamicScripts = () => {
-  const scripts = document.querySelectorAll('script.dynamic-javascript-datalchemist');
-  // Remove all dynamic scripts
-  scripts.forEach(script => script.remove());
-};
-
 const updateBodyStyle = () => {
   // Mettez à jour bodyStyle avec les nouvelles valeurs
-  bodyStyle.value = {
-    'background-color': parameters.value['bg_color_' + parameters.value.theme],
-    'background': `-webkit-linear-gradient(to right, ${parameters.value['bg_color_' + parameters.value.theme]}, ${parameters.value['bg_color2_' + parameters.value.theme]})`,
-    'background': `linear-gradient(to right, ${parameters.value['bg_color_' + parameters.value.theme]}, ${parameters.value['bg_color2_' + parameters.value.theme]})`,
-    'min-height': '100vh',
-  };
+  // Applique les styles dynamiques au <body> du document principal
+  document.body.style.backgroundColor = parameters.value['bg_color_' + parameters.value.theme] || '';
+  const gradient = `linear-gradient(to right, ${parameters.value['bg_color_' + parameters.value.theme] || ''}, ${parameters.value['bg_color2_' + parameters.value.theme] || ''})`;
+  document.body.style.background = gradient;
+  document.body.style.minHeight = '100vh';
 };
 
 const bodyStyle = ref({
@@ -110,19 +100,22 @@ provide('parameters', parameters);
 provide('apiUrl', apiUrl);
 provide('save', saveButton);
 provide('myUser', myUser);
-provide('searchBox', searchBox)
 
 watch(parameters, () => {
   updateBodyStyle()
-  i18n.global.locale = parameters.value.lang;
+  i18n.global.locale.value = parameters.value.lang;
+  // Ajoute ou met à jour l'attribut data-bs-theme sur la balise <html>
+  if (parameters.value.theme) {
+    document.documentElement.setAttribute('data-bs-theme', parameters.value.theme);
+  }
 }, { deep: true })
 
 onMounted(() => {
   fetchParameters();
-});
-
-watch(() => route.fullPath, () => {
-  removeDynamicScripts();
+  // Applique le thème au chargement initial
+  if (parameters.value.theme) {
+    document.documentElement.setAttribute('data-bs-theme', parameters.value.theme);
+  }
 });
 
 watch(route, () => {
@@ -137,17 +130,20 @@ watch(route, () => {
 </script>
 
 <template>
-  <body :data-bs-theme="parameters.theme" :style="bodyStyle">
     <navbar></navbar>
     <div class="spaceheader"></div>
     <div class="container-fluid">
       <RouterView />
     </div>
-  </body>
 </template>
 
 <style scoped>
   .spaceheader {
     height: 80px;
   }
+</style>
+
+<style>
+@import url('bootstrap-icons');
+@import url('@fortawesome/fontawesome-free/css/all.css');
 </style>

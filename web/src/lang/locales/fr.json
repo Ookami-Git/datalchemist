@@ -123,28 +123,11 @@
             "header": "Icônes",
             "description": "Utilisez les icones de Font Awesome ou Bootstrap pour afficher les objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité."
         },
-        "table": {
-            "header": "Tableau",
-            "description": "Utilisez les classes de Bootstrap pour afficher les objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité.",
-            "sortable": {
-                "header": "Tri",
-                "description": "Vous pouvez utiliser la classe 'sortable' pour ajouter une fonction de tri a vos tableaux. Thead sert de boutons de tri et tbody pour les données.",
-                "doc": "Documentation"
-            },
-            "filterable": {
-                "header": "Filtre",
-                "description": "Utiliser la classe 'filterable' pour permettre au champ de recherche de filtrer les données. Le filtre s'applique uniquement sur le tbody."
-            },
-            "exportable": {
-                "header": "Exporter",
-                "description": "Les classes ci dessous permettent d'exporter des tableaux vers des fichiers CSV.",
-                "exportable": "Ajouter la classe 'exportable' dans la balise table pour activer l'exportation. L'attribut id sera utiliser commer nom de fichier, dans le cas contraire ça sera 'table_X'.",
-                "ignore_columns": "Ajouter la classe 'export-ignore' dans la balise th pour ignorer la colonne lors de l'export csv.",
-                "export_value": "Ajouter l'attribut 'data-export-value' dans la balise td pour surcharger la valeur à exporter."
-            }
+        "datatable": {
+            "description": "DataTables permet d'ajouter facilement la recherche, le tri, l'export et la pagination à vos tableaux HTML. Pour utiliser le thème Bootstrap, ajoutez la classe 'table'. Référez-vous à la documentation pour des examples et plus d'informations."
         },
         "mermaid": {
-            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise '<pre></pre>' avec la classe 'mermaid'. Référez vous a la documentation pour plus d'informations."
+            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez vous a la documentation pour plus d'informations."
         },
         "nunjucks": {
             "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez vous a la documentation pour plus d'informations.",

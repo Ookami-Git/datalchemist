@@ -123,28 +123,11 @@
             "header": "Icons",
             "description": "Use Font Awesome or Bootstrap icons to display items. The documentation contains many examples for each desired rendering."
         },
-        "table": {
-            "header": "Table",
-            "description": "Use Bootstrap classes to display items. The documentation contains many examples for each desired rendering.",
-            "sortable": {
-                "header": "Sort",
-                "description": "You can use the 'sortable' class to add a sorting function to your tables. Thead serves as buttons for sorting and tbody for the data.",
-                "doc": "Documentation"
-            },
-            "filterable": {
-                "header": "Filter",
-                "description": "You can also use the 'filterable' class to allow the search field to filter the data. The filter applies only to the tbody."
-            },
-            "exportable": {
-                "header": "Export",
-                "description": "The following classes allow you to export tables to CSV files.",
-                "exportable": "Add the 'exportable' class to the table tag to enable exporting. The id attribute will be used as the file name, otherwise it will be 'table_X'.",
-                "ignore_columns": "Add the 'export-ignore' class to the th tag to ignore the column when exporting CSV.",
-                "export_value": "Add the 'data-export-value' attribute to the td tag to override the value to export."
-            }
+        "datatable": {
+            "description": "DataTables allows you to easily add search, sorting, export, and pagination to your HTML tables. To use the Bootstrap theme, add the 'table' class. Refer to the documentation for examples and more information."
         },
         "mermaid": {
-            "description": "Mermaid allows you to create diagrams. Must be contained in a '<pre></pre>' tag with the class 'mermaid'. Refer to the documentation for more information."
+            "description": "Mermaid allows you to create diagrams. Must be contained in a 'pre' tag with the class 'mermaid'. Refer to the documentation for more information."
         },
         "nunjucks": {
             "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",

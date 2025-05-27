@@ -2,7 +2,6 @@
 import { watch, ref, inject } from 'vue';
 import item from './item.vue'
 import dropdown from './dropdown.vue';
-import exporttable from './export.vue';
 import YAML from 'yaml';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
@@ -20,23 +19,6 @@ const menuYaml = ref(null)
 // Créer une ref pour le style de la navbar
 const navbarStyle = ref('');
 const logoStyle = ref('');
-
-// Pour le champ de recherche/filtre
-const filterText = ref('');
-const searchBox = inject('searchBox');
-
-const filterTables = () => {
-  const tables = document.querySelectorAll('.filterable');
-  tables.forEach(table => {
-    const rows = table.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-      const textMatch = Array.from(row.cells).some(cell => cell.textContent.toLowerCase().includes(filterText.value.toLowerCase()));
-      row.style.display = textMatch ? '' : 'none';
-    });
-  });
-};
-
-searchBox.value.function = filterTables
 
 // Mettre à jour le style de la navbar en fonction du thème
 watch(parameter, async () => {
@@ -60,7 +42,6 @@ watch(parameter, async () => {
 }, { deep: true });
 
 watch(route, async () => {
-    searchBox.value.show = false
     save.value.show = false
     save.value.function = null
     save.value.color = 'secondary'
@@ -100,11 +81,7 @@ const logout = async () => {
                     </template>
                 </template>
             </ul>
-            <exporttable class="me-2"/>
             <button v-if="save.show" type="button" :class="`btn btn-${save.color}`" @click="save.function" :disabled="save.disabled"><i class="bi bi-floppy-fill"></i> {{ $t('save.label') }}</button>
-            <form class="d-flex" role="search" v-if="searchBox.show">
-                <input class="form-control me-2" type="search" :placeholder="$t('menu.search')" aria-label="Search" v-model="filterText" @input="filterTables">
-            </form>
             <div class="nav-item dropdown">
                 <button class="btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                     <span class="navbar-toggler-icon"></span>
