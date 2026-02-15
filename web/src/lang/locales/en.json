@@ -202,7 +202,9 @@
         "addrow": "Add row",
         "additem": "Add item",
         "removerow": "Remove row",
-        "removeitem": "Remove item"
+        "removeitem": "Remove item",
+        "float": "Float",
+        "resize": "Adjusted sizing"
     },
     "home":{
         "welcome":"Welcome to DataChemist",
@@ -211,7 +213,7 @@
     },
     "save": {
         "label": "Save",
-        "nosave": "Do you really want to leave wihtout save changes ?"
+        "nosave": "Do you really want to leave without saving changes ?"
     }
 }
 

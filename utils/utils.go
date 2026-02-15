@@ -573,29 +573,68 @@ func MakeData(c *gin.Context) map[string]interface{} {
 	}
 }
 
+func extractV1Items(rows []interface{}, ids map[string]bool) []string {
+    result := []string{}
+    for _, row := range rows {
+        if rowArr, ok := row.([]interface{}); ok {
+            for _, item := range rowArr {
+                if itemMap, ok := item.(map[string]interface{}); ok {
+                    itemID, ok := itemMap["itemid"].(float64)
+                    if ok && !ids[strconv.Itoa(int(itemID))] {
+                        result = append(result, strconv.Itoa(int(itemID)))
+                        ids[strconv.Itoa(int(itemID))] = true
+                    }
+                }
+            }
+        }
+    }
+    return result
+}
+
 func ViewItems(viewID string) ([]string, error) {
-	ids := make(map[string]bool)
-	view, err := database.ViewGet(viewID)
-	checkErr(err)
+    ids := make(map[string]bool)
+    view, err := database.ViewGet(viewID)
+    checkErr(err)
 
-	var params [][]map[string]interface{}
-	err = json.Unmarshal([]byte(view.Parameters), &params)
-	checkErr(err)
+    var params interface{}
+    err = json.Unmarshal([]byte(view.Parameters), &params)
+    checkErr(err)
 
-	result := make([]string, 0, len(params))
-	for _, vp := range params {
-		for _, vpv := range vp {
-			itemID, ok := vpv["itemid"].(float64)
-			if ok {
-				if !ids[strconv.Itoa(int(itemID))] {
-					result = append(result, strconv.Itoa(int(itemID)))
-					ids[strconv.Itoa(int(itemID))] = true
-				}
-			}
-		}
-	}
+    result := []string{}
 
-	return result, err
+    // Si c'est un objet avec une version
+    if m, ok := params.(map[string]interface{}); ok && m["version"] != nil {
+        version, _ := m["version"].(float64)
+        switch int(version) {
+        case 2:
+            // V2 : items = tableau d'objets
+            if items, ok := m["items"].([]interface{}); ok {
+                for _, item := range items {
+                    if itemMap, ok := item.(map[string]interface{}); ok {
+                        itemID, ok := itemMap["itemid"].(float64)
+                        if ok && !ids[strconv.Itoa(int(itemID))] {
+                            result = append(result, strconv.Itoa(int(itemID)))
+                            ids[strconv.Itoa(int(itemID))] = true
+                        }
+                    }
+                }
+            }
+            return result, err
+        case 1:
+            // Nouveau V1 : items = tableau de lignes
+            if items, ok := m["items"].([]interface{}); ok {
+                return extractV1Items(items, ids), err
+            }
+            return result, err
+        }
+    }
+
+    // Ancien V1 (pas de version, tableau direct)
+    if rows, ok := params.([]interface{}); ok {
+        return extractV1Items(rows, ids), err
+    }
+
+    return result, err
 }
 
 func SecretInit(update bool) error {

@@ -202,7 +202,9 @@
         "addrow": "Ajouter rangée",
         "additem": "Ajouter objet",
         "removerow": "Supprimer rangée",
-        "removeitem": "Supprimer l'objet"
+        "removeitem": "Supprimer l'objet",
+        "float": "Flottant",
+        "resize": "Dimensionnement ajusté"
     },
     "home": {
         "welcome": "Bienvenue sur Datalchemist",
