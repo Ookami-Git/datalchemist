@@ -42,7 +42,7 @@ async function fetchRealData(itemid) {
                         {
                             itemid: props.item.id || itemid || 1,
                             size: 12,
-                            title: props.item.title || "Aperçu de l'item",
+                            title: props.item.title || "Item Preview",
                         }
                     ]
                 ]
@@ -73,7 +73,7 @@ async function fetchRealData(itemid) {
                     {
                         itemid: itemid,
                         size: 12,
-                        title: itemRes.data?.title || "Aperçu de l'item",
+                        title: itemRes.data?.title || "Item Preview",
                     }
                 ]
             ]
@@ -86,9 +86,9 @@ async function fetchRealData(itemid) {
     } catch (e) {
         viewStructure.value = {
             version: 1,
-            items: [[{ itemid: 1, size: 12, title: "Erreur de chargement" }]]
+            items: [[{ itemid: 1, size: 12, title: "Error Loading Item" }]]
         };
-        viewItems.value = { i1: { itemid: 1, title: 'Erreur', template: '<div>Erreur de chargement</div>' } };
+        viewItems.value = { i1: { itemid: 1, title: 'Error', template: '<div>Error Loading Item</div>' } };
         viewData.value = {};
         provide('data', ref(viewData.value));
     }
