@@ -1,72 +1,80 @@
 <script setup>
+
 import { ref, inject, watch, provide } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import loading from './view/loading.vue';
-
 import viewGrid from './view/viewGrid.vue';
 import viewRow from './view/viewRow.vue';
+
+const props = defineProps({
+  viewStructure: Object,
+  viewItems: Object,
+  viewData: Object
+});
 
 const route = useRoute();
 const apiUrl = inject('apiUrl');
 
-const viewStructure = ref(null);
-const viewItems = ref(null);
-const viewData = ref(null);
+const viewStructure = ref(props.viewStructure || null);
+const viewItems = ref(props.viewItems || null);
+const viewData = ref(props.viewData || null);
 
 provide('data', viewData);
 
 const hasLoadError = ref(false);
 const fetchError = ref(null);
 
-const fetchViewStructure = async () => {
-  try {
-    const response = await axios.get(`${apiUrl}/view/` + route.params.viewid);
-    viewStructure.value = JSON.parse(response.data.parameters);
-  } catch (error) {
-    fetchError.value = error.response;
-    hasLoadError.value = true;
-    console.error('Error fetching view structure', error);
-  }
-};
 
-// Function to fetch view items
-const fetchViewItems = async () => {
-  axios.get(`${apiUrl}/view/${route.params.viewid}/items`)
-    .then(function (response) {
-      viewItems.value = response.data;
-    })
-    .catch(function (error) {
+if (!props.viewStructure || !props.viewItems) {
+  // Mode normal : chargement API
+  const fetchViewStructure = async () => {
+    try {
+      const response = await axios.get(`${apiUrl}/view/` + route.params.viewid);
+      viewStructure.value = JSON.parse(response.data.parameters);
+    } catch (error) {
       fetchError.value = error.response;
       hasLoadError.value = true;
-      console.error(`Error fetching items for view ${route.params.viewid}`, error);
-    });
-};
+      console.error('Error fetching view structure', error);
+    }
+  };
 
-// Function to fetch view data
-const fetchViewData = async () => {
-  axios.get(`${apiUrl}/data/view/` + route.params.viewid, {
-    params: route.query
-  })
-    .then((response) => {
-      viewData.value = response.data;
+  const fetchViewItems = async () => {
+    axios.get(`${apiUrl}/view/${route.params.viewid}/items`)
+      .then(function (response) {
+        viewItems.value = response.data;
+      })
+      .catch(function (error) {
+        fetchError.value = error.response;
+        hasLoadError.value = true;
+        console.error(`Error fetching items for view ${route.params.viewid}`, error);
+      });
+  };
+
+  const fetchViewData = async () => {
+    axios.get(`${apiUrl}/data/view/` + route.params.viewid, {
+      params: route.query
     })
-    .catch((error) => {
-      fetchError.value = error.response;
-      hasLoadError.value = true;
-      console.error('Error fetching view data', error);
-    });
-};
+      .then((response) => {
+        viewData.value = response.data;
+      })
+      .catch((error) => {
+        fetchError.value = error.response;
+        hasLoadError.value = true;
+        console.error('Error fetching view data', error);
+      });
+  };
 
-watch(route, async () => {
-  hasLoadError.value = false;
-  viewStructure.value = null;
-  viewData.value = null;
-  viewItems.value = null;
-  await fetchViewStructure();
-  await fetchViewData();
-  await fetchViewItems();
-}, { immediate: true });
+  watch(route, async () => {
+    hasLoadError.value = false;
+    viewStructure.value = null;
+    viewData.value = null;
+    viewItems.value = null;
+    await fetchViewStructure();
+    await fetchViewData();
+    await fetchViewItems();
+  }, { immediate: true });
+}
 </script>
 
 <template>
