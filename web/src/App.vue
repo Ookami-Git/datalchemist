@@ -4,6 +4,11 @@ import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import navbar from './components/navbar/navbar.vue'
 
 const route = useRoute();
+const skipNextRouteTransition = ref(false);
+
+const requestNoTransition = () => {
+  skipNextRouteTransition.value = true;
+};
 
 const i18n = inject('i18n');
 const parameters = ref([]);
@@ -100,6 +105,7 @@ provide('parameters', parameters);
 provide('apiUrl', apiUrl);
 provide('save', saveButton);
 provide('myUser', myUser);
+provide('skipNextRouteTransition', requestNoTransition);
 
 watch(parameters, () => {
   updateBodyStyle()
@@ -126,21 +132,49 @@ watch(route, () => {
     fetchUser();
     localStorage.removeItem('reloadparameters');
   }
+
+  if (skipNextRouteTransition.value) {
+    queueMicrotask(() => {
+      skipNextRouteTransition.value = false;
+    });
+  }
 });
 </script>
 
 <template>
-    <navbar></navbar>
-    <div class="spaceheader"></div>
-    <div class="container-fluid">
-      <RouterView />
-    </div>
+  <navbar></navbar>
+  <div class="spaceheader"></div>
+  <div class="container-fluid">
+    <RouterView v-slot="{ Component }">
+      <transition v-if="!skipNextRouteTransition" name="fade" mode="out-in">
+        <div :key="route.fullPath">
+          <component :is="Component" />
+        </div>
+      </transition>
+      <div v-else :key="route.fullPath">
+        <component :is="Component" />
+      </div>
+    </RouterView>
+  </div>
 </template>
 
+
 <style scoped>
-  .spaceheader {
-    height: 80px;
-  }
+.spaceheader {
+  height: 80px;
+}
+</style>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.125s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
 </style>
 
 <style>

@@ -127,7 +127,7 @@ watch(
   <div class="row">
     <div class="col-md-12">
       <div class="card">
-        <div class="card-header">
+        <div class="card-header" style="z-index: 11;">
           <div class="row">
             <div class="col-md-1">
               <RouterLink type="button" class="btn btn-secondary btn-sm me-2" :to="{ name: 'edit' }"
