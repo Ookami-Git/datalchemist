@@ -1,6 +1,7 @@
 <script setup>
 // --- Imports Vue & Libs ---
 import { ref, inject, watch, nextTick } from 'vue';
+import { onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
@@ -36,6 +37,22 @@ const props = defineProps({
 const renderedItem = ref(null);  // HTML rendu
 const hasLoadError = ref(false);
 const fetchError = ref(null);
+const itemRoot = ref(null);
+
+function cleanupDataTables() {
+  if (!itemRoot.value) return;
+
+  const tables = itemRoot.value.querySelectorAll('table');
+  tables.forEach((table) => {
+    try {
+      if (jQuery.fn?.dataTable?.isDataTable(table)) {
+        jQuery(table).DataTable().destroy();
+      }
+    } catch (err) {
+      console.error('Error destroying DataTable instance:', err);
+    }
+  });
+}
 
 // --- Rendu Nunjucks ---
 const renderItem = async () => {
@@ -69,6 +86,7 @@ const route = useRoute();
 watch(
   [route, () => props.providedItemData],
   async () => {
+    cleanupDataTables();
     hasLoadError.value = false;
     fetchError.value = null;
     renderedItem.value = null;
@@ -100,10 +118,14 @@ watch(
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  cleanupDataTables();
+});
 </script>
 
 <template>
-  <div v-if="renderedItem" v-html="renderedItem">
+  <div ref="itemRoot" v-if="renderedItem" v-html="renderedItem">
   </div>
   <div v-else-if="hasLoadError" class="row">
     <div class="card" aria-hidden="true"
