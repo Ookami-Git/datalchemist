@@ -8,6 +8,7 @@ import viewGrid from './view/viewGrid.vue';
 import viewRow from './view/viewRow.vue';
 
 const props = defineProps({
+  viewid: [String, Number],
   viewStructure: Object,
   viewItems: Object,
   viewData: Object
