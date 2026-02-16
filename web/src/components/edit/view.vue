@@ -48,7 +48,7 @@ watch([parameters, viewInfo], (newVal) => {
 
 async function fetchViewInfo() {
   try {
-    const response = await axios.get(`/api/view/${route.params.viewid}`);
+    const response = await axios.get(`${apiUrl}/view/${route.params.viewid}`);
     viewInfo.value = response.data;
     if (response.data.parameters) {
       const parsed = JSON.parse(response.data.parameters);
@@ -73,7 +73,7 @@ async function fetchViewInfo() {
 }
 
 async function fetchItems() {
-  await axios.get(`/api/items`)
+  await axios.get(`${apiUrl}/items`)
     .then(function (response) {
       if (response.data) {
         availableItems.value = response.data;
