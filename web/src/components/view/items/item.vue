@@ -18,6 +18,7 @@ import loading from '../loading.vue';
 // --- Injections ---
 const parameters = inject('parameters');
 const resizeWidget = inject('resizeWidget', null);
+const globalSearch = inject('enableGlobalSearch', null);
 
 // --- Nunjucks Environment & Filtres personnalisés ---
 import { registerNunjucksFilters } from '@/utils/nunjucksFilters.js';
@@ -42,15 +43,33 @@ let renderCycle = 0;
 function cleanupDataTables() {
   if (!itemRoot.value) return;
 
-  const tables = itemRoot.value.querySelectorAll('table');
+  const root = itemRoot.value;
+
+  try {
+    if (typeof DataTable?.tables === 'function') {
+      const allTablesApi = DataTable.tables({ api: true });
+      allTablesApi.every(function () {
+        const tableNode = this.table()?.node?.();
+        if (!tableNode || !root.contains(tableNode)) return;
+
+        const settings = this.settings?.()[0];
+        if (!settings || settings.bDestroying) return;
+
+        this.destroy(true);
+      });
+    }
+  } catch {
+    // Ignore teardown race conditions from DataTables plugins during route transitions.
+  }
+
+  const tables = root.querySelectorAll('table');
   tables.forEach((table) => {
     try {
-      if (jQuery.fn?.dataTable?.isDataTable(table)) {
-        const dtApi = jQuery(table).DataTable();
-        const settings = dtApi.settings?.()[0];
-        if (!settings || settings.bDestroying) return;
-        dtApi.destroy(true);
-      }
+      if (!jQuery.fn?.dataTable?.isDataTable(table)) return;
+      const dtApi = jQuery(table).DataTable();
+      const settings = dtApi.settings?.()[0];
+      if (!settings || settings.bDestroying) return;
+      dtApi.destroy(true);
     } catch {
       // Ignore teardown race conditions from DataTables plugins during route transitions.
     }
@@ -82,6 +101,31 @@ function runDynamicJs(jsCode, context = {}) {
   } catch (err) {
     console.error('Error executing dynamic JS:', err);
   }
+}
+
+function scheduleResizeWidgetPasses() {
+  if (!resizeWidget) return;
+
+  resizeWidget();
+  setTimeout(() => {
+    resizeWidget();
+  }, 0);
+  setTimeout(() => {
+    resizeWidget();
+  }, 50);
+}
+
+function hasSearchInputInItemRoot() {
+  if (!itemRoot.value) {
+    return false;
+  }
+
+  const found = !!itemRoot.value.querySelector('input[type="search"], .dataTables_filter input');
+  if (found) {
+    console.log(found);
+    globalSearch.value = true;
+  }
+  return found;
 }
 
 // --- Watch route/data pour recharger l'item ---
@@ -121,9 +165,16 @@ watch(
           { jQuery, DataTable, itemData: props.data, itemid, jszip, pdfmake, pdfFonts }
         );
       }
+
       mermaid.initialize({ theme: parameters.value.theme });
-      mermaid.run();
-      if (resizeWidget) resizeWidget();
+      await mermaid.run();
+      if (canceled || currentCycle !== renderCycle) return;
+
+      await nextTick();
+      if (canceled || currentCycle !== renderCycle) return;
+
+      scheduleResizeWidgetPasses();
+      hasSearchInputInItemRoot();
     } catch (error) {
       hasLoadError.value = true;
       console.error('Error during item loading or rendering:', error);
@@ -134,6 +185,7 @@ watch(
 
 onBeforeUnmount(() => {
   cleanupDataTables();
+  if (globalSearch) globalSearch.value = false;
 });
 </script>
 
