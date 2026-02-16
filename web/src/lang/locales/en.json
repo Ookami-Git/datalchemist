@@ -143,6 +143,9 @@
             },
             "setattribute":{
                 "description": "Allows to modify an attribute of an object."
+            },
+            "split": {
+                "description": "Allows splitting a string into an array using a separator."
             }
         },
         "javascript": {
