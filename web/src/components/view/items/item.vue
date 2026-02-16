@@ -1,6 +1,6 @@
 <script setup>
 // --- Imports Vue & Libs ---
-import { ref, inject, watch, nextTick } from 'vue';
+import { ref, inject, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
@@ -36,6 +36,26 @@ const props = defineProps({
 const renderedItem = ref(null);  // HTML rendu
 const hasLoadError = ref(false);
 const fetchError = ref(null);
+const itemRoot = ref(null);
+let renderCycle = 0;
+
+function cleanupDataTables() {
+  if (!itemRoot.value) return;
+
+  const tables = itemRoot.value.querySelectorAll('table');
+  tables.forEach((table) => {
+    try {
+      if (jQuery.fn?.dataTable?.isDataTable(table)) {
+        const dtApi = jQuery(table).DataTable();
+        const settings = dtApi.settings?.()[0];
+        if (!settings || settings.bDestroying) return;
+        dtApi.destroy(true);
+      }
+    } catch {
+      // Ignore teardown race conditions from DataTables plugins during route transitions.
+    }
+  });
+}
 
 // --- Rendu Nunjucks ---
 const renderItem = async () => {
@@ -67,8 +87,17 @@ function runDynamicJs(jsCode, context = {}) {
 // --- Watch route/data pour recharger l'item ---
 const route = useRoute();
 watch(
-  [route, () => props.providedItemData],
-  async () => {
+  [() => route.fullPath, () => props.data, () => props.itemDescribe],
+  async (_, __, onCleanup) => {
+    const currentCycle = ++renderCycle;
+    let canceled = false;
+
+    onCleanup(() => {
+      canceled = true;
+      cleanupDataTables();
+    });
+
+    cleanupDataTables();
     hasLoadError.value = false;
     fetchError.value = null;
     renderedItem.value = null;
@@ -77,22 +106,24 @@ watch(
 
     try {
       await renderItem();
+      if (canceled || currentCycle !== renderCycle) return;
 
       // --- DataTables: Langue ---
       setDataTablesLanguage(parameters.value.lang);
 
-      nextTick(() => {
-        // --- JS dynamique ---
-        if (props.itemDescribe?.javascript) {
-          runDynamicJs(
-            nunjucksEnv.renderString(props.itemDescribe.javascript, props.data),
-            { jQuery, DataTable, itemData: props.data, itemid, jszip, pdfmake, pdfFonts }
-          );
-        }
-        mermaid.initialize({ theme: parameters.value.theme });
-        mermaid.run();
-        if (resizeWidget) resizeWidget();
-      });
+      await nextTick();
+      if (canceled || currentCycle !== renderCycle) return;
+
+      // --- JS dynamique ---
+      if (props.itemDescribe?.javascript) {
+        runDynamicJs(
+          nunjucksEnv.renderString(props.itemDescribe.javascript, props.data),
+          { jQuery, DataTable, itemData: props.data, itemid, jszip, pdfmake, pdfFonts }
+        );
+      }
+      mermaid.initialize({ theme: parameters.value.theme });
+      mermaid.run();
+      if (resizeWidget) resizeWidget();
     } catch (error) {
       hasLoadError.value = true;
       console.error('Error during item loading or rendering:', error);
@@ -100,10 +131,14 @@ watch(
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  cleanupDataTables();
+});
 </script>
 
 <template>
-  <div v-if="renderedItem" v-html="renderedItem">
+  <div ref="itemRoot" v-if="renderedItem" v-html="renderedItem">
   </div>
   <div v-else-if="hasLoadError" class="row">
     <div class="card" aria-hidden="true"

@@ -96,7 +96,7 @@ const router = createRouter({
     ]
 })
 
-router.beforeEach(async(to, from, next) => {
+router.beforeEach(async(to) => {
     i18n.locale = localStorage.getItem('language') || 'en'
 
     // Request the authentication status from the server
@@ -106,26 +106,26 @@ router.beforeEach(async(to, from, next) => {
             const responseAdmin = await fetch(`${window.location.origin}${window.location.pathname}api/auth/isadmin`);
             const json = await responseAdmin.json();
             if (!json.admin) {
-                next({ name: 'unauthorized' });
+                return { name: 'unauthorized' };
             }
         }
         if (to.path === '/login' || to.path === '/redirect') {
             const redirectPath = localStorage.getItem('redirectPath') || '/';
             localStorage.removeItem('redirectPath'); // Supprimez le chemin de redirection après utilisation
             localStorage.setItem('reloadparameters', true);
-            next(redirectPath);
+            return redirectPath;
         }
     } else {
         if (to.meta.requiresAuth) {
             localStorage.setItem('reloadparameters', true);
             localStorage.setItem('redirectPath', to.fullPath);
-            next('/login');
+            return '/login';
         }
         if (to.name === 'unauthorized') {
-            next('/');
+            return '/';
         }
     }
-    next();
+    return true;
 })
 
 export default router;

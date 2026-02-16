@@ -143,6 +143,9 @@
             },
             "setattribute":{
                 "description": "Permet de modifier un attribut d'un objet."
+            },
+            "split": {
+                "description": "Permet de découper une chaîne de caractères en tableau selon un séparateur."
             }
         },
         "javascript": {

@@ -9,10 +9,14 @@ import Helpers from "./item/Helpers.vue";
 import sources from "./common/sources.vue";
 import Preview from '../view/preview.vue';
 
+const props = defineProps({
+  itemid: [String, Number]
+});
+
 const typeSource = "item";
 
 const route = useRoute();
-const itemid = route.params.itemid;
+const itemid = props.itemid || route.params.itemid;
 const save = inject('save');
 const apiUrl = inject('apiUrl');
 save.value.safe();
