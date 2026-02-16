@@ -2,6 +2,7 @@
 import { watch, ref, inject } from 'vue';
 import item from './item.vue'
 import dropdown from './dropdown.vue';
+import NavbarFilter from './filter.vue';
 import YAML from 'yaml';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
@@ -91,6 +92,7 @@ const logout = async () => {
             </template>
           </template>
         </ul>
+        <NavbarFilter />
         <button v-if="save.show" type="button" :class="`btn btn-${save.color}`" @click="save.function"
           :disabled="save.disabled"><i class="bi bi-floppy-fill"></i> {{ $t('save.label') }}</button>
         <div class="nav-item dropdown">
@@ -146,7 +148,8 @@ const logout = async () => {
     min-width 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     border-radius 0.6s cubic-bezier(0.4, 0, 0.2, 1),
     background 0.6s cubic-bezier(0.4, 0, 0.2, 1),
-    font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Style compact et centré */
@@ -161,5 +164,11 @@ const logout = async () => {
   padding: 2px 0px;
   border-radius: 20px;
   background: v-bind(navbarStyle);
+  transform: translateY(calc(-100% + 10px));
+}
+
+.compact-navbar:hover,
+.compact-navbar:focus-within {
+  transform: translateY(0);
 }
 </style>

@@ -48,6 +48,8 @@ const saveButton = ref({
     },
   }
 })
+const enableGlobalSearch = ref(false);
+provide('enableGlobalSearch', enableGlobalSearch);
 
 const myUser = ref({})
 
