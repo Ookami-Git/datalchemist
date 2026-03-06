@@ -12,6 +12,7 @@ const requestNoTransition = () => {
 
 const i18n = inject('i18n');
 const parameters = ref([]);
+const isSidebarCollapsed = ref(false);
 const saveButton = ref({
   "show": false,
   "disabled": true,
@@ -108,6 +109,7 @@ provide('apiUrl', apiUrl);
 provide('save', saveButton);
 provide('myUser', myUser);
 provide('skipNextRouteTransition', requestNoTransition);
+provide('isSidebarCollapsed', isSidebarCollapsed);
 
 watch(parameters, () => {
   updateBodyStyle()
@@ -144,26 +146,69 @@ watch(route, () => {
 </script>
 
 <template>
-  <navbar></navbar>
-  <div class="spaceheader"></div>
-  <div class="container-fluid">
-    <RouterView v-slot="{ Component }">
-      <transition v-if="!skipNextRouteTransition" name="fade" mode="out-in">
-        <div :key="route.fullPath">
+  <div class="app-layout">
+    <navbar></navbar>
+    <main
+      :class="['app-content', 'container-fluid', { 'with-sidebar': parameters.auth, 'is-collapsed': parameters.auth && isSidebarCollapsed }]">
+      <RouterView v-slot="{ Component }">
+        <transition v-if="!skipNextRouteTransition" name="fade" mode="out-in">
+          <div :key="route.fullPath">
+            <component :is="Component" />
+          </div>
+        </transition>
+        <div v-else :key="route.fullPath">
           <component :is="Component" />
         </div>
-      </transition>
-      <div v-else :key="route.fullPath">
-        <component :is="Component" />
-      </div>
-    </RouterView>
+      </RouterView>
+    </main>
   </div>
 </template>
 
 
 <style scoped>
-.spaceheader {
-  height: 80px;
+.app-layout {
+  --sidebar-width: 200px;
+  --sidebar-collapsed-width: 72px;
+  min-height: 100vh;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.app-content.with-sidebar {
+  margin-left: var(--sidebar-width);
+  width: calc(100% - var(--sidebar-width));
+  max-width: calc(100% - var(--sidebar-width));
+}
+
+.app-content.with-sidebar.is-collapsed {
+  margin-left: var(--sidebar-collapsed-width);
+  width: calc(100% - var(--sidebar-collapsed-width));
+  max-width: calc(100% - var(--sidebar-collapsed-width));
+}
+
+.app-content {
+  box-sizing: border-box;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  transition:
+    margin-left 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: margin-left, width, max-width;
+}
+
+@media (max-width: 991.98px) {
+  .app-content.with-sidebar {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-content {
+    transition: none;
+  }
 }
 </style>
 

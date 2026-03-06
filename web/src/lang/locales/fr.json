@@ -29,7 +29,8 @@
         "logout": "Déconnexion",
         "admin": "Paramètres",
         "edit": "Édition",
-        "search": "Rechercher"
+        "search": "Filtrer tableaux",
+        "clearsearch": "Effacer le filtre"
     },
     "profil": {
         "header": "Mon compte",

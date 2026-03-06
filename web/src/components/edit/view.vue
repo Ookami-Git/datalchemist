@@ -129,14 +129,14 @@ watch(
       <div class="card">
         <div class="card-header" style="z-index: 11;">
           <div class="row">
-            <div class="col-md-1">
+            <div class="col-md-2">
               <RouterLink type="button" class="btn btn-secondary btn-sm me-2" :to="{ name: 'edit' }"
                 active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
               <RouterLink v-if="viewInfo" type="button" class="btn btn-primary btn-sm" :title="`View ${viewInfo.id}`"
                 :to="{ name: 'view', params: { viewid: viewInfo.id } }" target="_blank"><i class="bi bi-eye-fill"></i>
               </RouterLink>
             </div>
-            <div v-if="viewInfo" class="col-md-8 text-center">
+            <div v-if="viewInfo" class="col-md-7 text-center">
               <div class="input-group">
                 <span class="input-group-text" id="viewname">{{ $t('editview.header') }}</span>
                 <span class="input-group-text" id="viewname">ID <i class="bi bi-arrow-right-short"></i> {{ viewInfo.id

@@ -99,13 +99,13 @@ const refreshCodeMirror = () => {
       <div class="card">
         <div class="card-header">
           <div class="row">
-            <div class="col-md-1">
+            <div class="col-md-2">
               <RouterLink type="button" class="btn btn-secondary btn-sm me-2" :to="{ name: 'edit' }"
                 active-class="active"><i class="bi bi-arrow-left"></i> {{ $t('menu.edit') }}</RouterLink>
               <button v-if="ItemInfo" class="btn btn-outline-info btn-sm" @click="openPreview" title="Live Preview"><i
                   class="bi bi-eye"></i></button>
             </div>
-            <div v-if="ItemInfo" class="col-md-10 text-center">
+            <div v-if="ItemInfo" class="col-md-9 text-center">
               <div class="input-group">
                 <span class="input-group-text" id="viewname">{{ $t('edititem.header') }}</span>
                 <span class="input-group-text" id="viewname">ID <i class="bi bi-arrow-right-short"></i> {{ ItemInfo.id

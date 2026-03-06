@@ -36,53 +36,53 @@ function betterTab(cm) {
     cm.indentSelection("add");
   } else {
     // Insert spaces or a tab depending on the configuration
-    cm.replaceSelection(cm.getOption("indentWithTabs")? "\t":
+    cm.replaceSelection(cm.getOption("indentWithTabs") ? "\t" :
       Array(cm.getOption("indentUnit") + 1).join(" "), "end", "+input");
   }
 }
 
 // CodeMirror configuration options (reactive)
 const cmOptions = reactive({
-    mode: "yaml", // YAML language
-    theme: "default", // Default theme
-    extraKeys: {'Tab': betterTab}, // Use our betterTab function for the Tab key
-    lineWrapping: true,
+  mode: "yaml", // YAML language
+  theme: "default", // Default theme
+  extraKeys: { 'Tab': betterTab }, // Use our betterTab function for the Tab key
+  lineWrapping: true,
 })
 
 // Function called when the content of CodeMirror changes
-function change () {
-    // Validate the YAML menu
-    isValidMenu(code.value)
+function change() {
+  // Validate the YAML menu
+  isValidMenu(code.value)
 }
 
 // Function to validate a YAML menu item
 function isValidMenuItem(item) {
   if (!item.name) {
     // Handle the case where the name is missing
-    tagErrorMessage.value="admin.navbar.error.req-name"
-    tagerror.value=`<b>Code</b> : <br><pre>`+YAML.stringify(item)+"</pre>"
+    tagErrorMessage.value = "admin.navbar.error.req-name"
+    tagerror.value = `<b>Code</b> : <br><pre>` + YAML.stringify(item) + "</pre>"
     return false;
   }
   for (const [key, value] of Object.entries(item)) {
     // Display details in case of an error
-    tagerror.value=`<b>Key</b> : ${key}<br><b>Code</b> : <br><pre>`+YAML.stringify(item)+"</pre>"
+    tagerror.value = `<b>Key</b> : ${key}<br><b>Code</b> : <br><pre>` + YAML.stringify(item) + "</pre>"
     switch (key) {
       case "name":
-          if (typeof value !== 'string') {
-            // Handle the case where the name is not a string
-            tagErrorMessage.value="admin.navbar.error.req-string"
-            return false;
-          }
+        if (typeof value !== 'string') {
+          // Handle the case where the name is not a string
+          tagErrorMessage.value = "admin.navbar.error.req-string"
+          return false;
+        }
         break;
       case "subitems":
-          if (value.some((subitem) => { return subitem.subitems })) {
-            // Handle the case where a submenu contains another submenu
-            tagErrorMessage.value="admin.navbar.error.subitems"
-            return false;
-          }
+        if (value.some((subitem) => { return subitem.subitems })) {
+          // Handle the case where a submenu contains another submenu
+          tagErrorMessage.value = "admin.navbar.error.subitems"
+          return false;
+        }
         if (!Array.isArray(value)) {
           // Handle the case where 'subitems' is not an array
-          tagErrorMessage.value="admin.navbar.error.req-array"
+          tagErrorMessage.value = "admin.navbar.error.req-array"
           return false;
         } else {
           if (value.some((subitem) => { return !(isValidMenuItem(subitem)) })) {
@@ -94,34 +94,41 @@ function isValidMenuItem(item) {
       case "link":
         if (typeof value !== 'string') {
           // Handle the case where 'link' is not a string
-          tagErrorMessage.value="admin.navbar.error.req-string"
+          tagErrorMessage.value = "admin.navbar.error.req-string"
+          return false;
+        }
+        break;
+      case "icon":
+        if (typeof value !== 'string') {
+          // Handle the case where 'icon' is not a string
+          tagErrorMessage.value = "admin.navbar.error.req-string"
           return false;
         }
         break;
       case "newtab":
         if (typeof value !== 'boolean') {
           // Handle the case where 'newtab' is not a boolean
-          tagErrorMessage.value="admin.navbar.error.req-boolean"
+          tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       case "external":
         if (typeof value !== 'boolean') {
           // Handle the case where 'external' is not a boolean
-          tagErrorMessage.value="admin.navbar.error.req-boolean"
+          tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       case "divider":
         if (typeof value !== 'boolean') {
           // Handle the case where 'divider' is not a boolean
-          tagErrorMessage.value="admin.navbar.error.req-boolean"
+          tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       default:
         // Handle the case where the key is unknown
-        tagErrorMessage.value="admin.navbar.error.unknown-key"
+        tagErrorMessage.value = "admin.navbar.error.unknown-key"
         return false
     }
   };
@@ -133,19 +140,19 @@ function isValidMenu(menu) {
   try {
     const menuobj = YAML.parse(menu);
     if (Array.isArray(menuobj)) {
-        if (menuobj.some((menuitem) => { return !(isValidMenuItem(menuitem)) })) {
-          // Handle the case where a menu item is not valid
-          menutag(false)
-        } else {
-          // If everything is valid, update the menu
-          parameter.value.menu = code.value
-          menutag(true)
-        }
+      if (menuobj.some((menuitem) => { return !(isValidMenuItem(menuitem)) })) {
+        // Handle the case where a menu item is not valid
+        menutag(false)
+      } else {
+        // If everything is valid, update the menu
+        parameter.value.menu = code.value
+        menutag(true)
+      }
     }
   } catch (error) {
     // Handle errors related to YAML parsing
-    tagErrorMessage.value="admin.navbar.error.yaml"
-    tagerror.value=(error)
+    tagErrorMessage.value = "admin.navbar.error.yaml"
+    tagerror.value = (error)
     menutag(false)
     return false
   }
@@ -154,94 +161,72 @@ function isValidMenu(menu) {
 
 // Function to update the class and errors
 function menutag(valid) {
-  isError.value=!valid
+  isError.value = !valid
   if (valid) {
-    tagclass.value="badge text-bg-success"
+    tagclass.value = "badge text-bg-success"
     false
   } else {
-    tagclass.value="badge text-bg-danger"
+    tagclass.value = "badge text-bg-danger"
   }
 }
 
 function SaveMenu() {
-      axios.put(`${apiUrl}/parameter/menu`, {
-          Name: 'menu',
-          Value: `${code.value}`
-      })
-      .then(function (response) {
-          console.log(response);
-      })
-      .catch(function (error) {
-          console.log(error);
-      });
+  axios.put(`${apiUrl}/parameter/menu`, {
+    Name: 'menu',
+    Value: `${code.value}`
+  })
+    .then(function () {
+      localStorage.setItem('reloadparameters', true);
+      save.value.status.show();
+    })
+    .catch(function (error) {
+      console.log(error);
+      save.value.status.error();
+    });
 }
 
 // Watcher to update the code and perform validations
 watch(parameter, () => {
-    localStorage.setItem('reloadparameters', true);
-    if ( code.value === null && parameter.value.menu) {
-        code.value = parameter.value.menu
-        isValidMenu(code.value)
-    }
-    switch (parameter.value.theme) {
-        case "dark":
-            // Change CodeMirror theme to dark mode
-            cmOptions.theme = "material"
-            break;
-        default:
-            // Revert to the default CodeMirror theme
-            cmOptions.theme = "default"
-            break;
-    }
+  localStorage.setItem('reloadparameters', true);
+  if (code.value === null && parameter.value.menu) {
+    code.value = parameter.value.menu
+    isValidMenu(code.value)
+  }
+  switch (parameter.value.theme) {
+    case "dark":
+      // Change CodeMirror theme to dark mode
+      cmOptions.theme = "material"
+      break;
+    default:
+      // Revert to the default CodeMirror theme
+      cmOptions.theme = "default"
+      break;
+  }
 }, { deep: true, immediate: true });
 
 onMounted(() => {
-    save.value.function = SaveMenu
-    save.value.status.show()
-    save.value.safe()
+  save.value.function = SaveMenu
+  save.value.status.show()
+  save.value.safe()
 })
 
 watch(code, () => {
-    if (isValidMenu(code.value)) {
-        save.value.status.saveable()
-    } else {
-        save.value.color = "danger"
-        save.value.disabled = true
-    }
+  if (isValidMenu(code.value)) {
+    save.value.status.saveable()
+  } else {
+    save.value.color = "danger"
+    save.value.disabled = true
+  }
 }, { deep: true });
 
-</script>
-
-<template>
-    <div class="row">
-        <div class="col-md-8">
-            <template v-if="parameter.name">
-                <div style="height: 75vh; overflow: none;">
-                    <Codemirror v-model:value="code" :options="cmOptions" border height="100%" @change="change" />
-                </div>
-            </template>
-        </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                  <div v-if="isError" class="alert alert-danger" role="alert" v-html="$t(tagErrorMessage)+'<br><br>'+tagerror"></div>
-                  <div v-if="!isError" class="alert alert-success" role="alert">Le code YAML du menu est OK</div>
-                </div>
-                <div class="card-body">
-
-                    <var>name</var> (string) : Nom affiché sur le lien<br>
-                    <var>link</var> (string) : Destination du lien <br>
-                    <var>subitems</var> (array) : Sous menu  -- Sous menu imbriqué impossible<br>
-                    <var>external</var> (bool) : Ne se réfère pas à une page de l'application <br>
-                    <var>divider</var> (bool) : Séparateur <br>
-                    <var>newtab</var> (bool) : Ouvre le lien dans un nouvel onglet <br><br>
-                    <h6>Exemples :</h6>
-                    <pre><code>
+const yamlExample = `          
 - name: View 1
   link: /view/1
+  icon: bi bi-pencil-square
 - name: Separator
   divider: true
 - name: Sub menu
+  icon: bi bi-folder
   subitems:
     - name: sub-item view
       link: /view/viewname
@@ -250,11 +235,43 @@ watch(code, () => {
 - name: othersite
   link: http://www.othersite.com
   newtab: true
-  external: true
-                    </code></pre>
-                </div>
-            </div>
+  external: true`
+</script>
+
+<template>
+  <div class="row">
+    <div class="col-md-8">
+      <template v-if="parameter.name">
+        <div style="height: 75vh; overflow: none;">
+          <Codemirror v-model:value="code" :options="cmOptions" border height="100%" @change="change" />
         </div>
+      </template>
     </div>
-    <br>
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <div v-if="isError" class="alert alert-danger" role="alert"
+            v-html="$t(tagErrorMessage) + '<br><br>' + tagerror">
+          </div>
+          <div v-if="!isError" class="alert alert-success" role="alert">Le code YAML du menu est OK</div>
+        </div>
+        <div class="card-body">
+
+          <var>name</var> (string) : Nom affiché sur le lien<br>
+          <var>link</var> (string) : Destination du lien <br>
+          <var>icon</var> (string) : Classe CSS de l'icone (ex: bi bi-123 <a href="https://icons.getbootstrap.com/"
+            target="_blank"><i class="bi bi-bootstrap"></i></a> -
+          <a href="https://fontawesome.com/search?o=r&m=free" target="_blank"><i
+              class="fab fa-font-awesome"></i></a>)<br>
+          <var>subitems</var> (array) : Sous menu -- Sous menu imbriqué impossible<br>
+          <var>external</var> (bool) : Ne se réfère pas à une page de l'application <br>
+          <var>divider</var> (bool) : Séparateur <br>
+          <var>newtab</var> (bool) : Ouvre le lien dans un nouvel onglet <br><br>
+          <h6>Exemples :</h6>
+          <pre><code v-text="yamlExample"></code></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
 </template>

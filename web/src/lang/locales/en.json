@@ -29,7 +29,8 @@
         "logout": "Logout",
         "admin": "Settings",
         "edit": "Editor",
-        "search": "Search"
+        "search": "Filter tables",
+        "clearsearch": "Clear filter"
     },
     "profil": {
         "header": "My account",

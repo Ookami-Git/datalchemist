@@ -1,6 +1,6 @@
 <template>
-  <div style="height: 70vh; overflow: none;">
-    <Codemirror v-model:value="code" :options="cmOptionsJs" border height="100%"/>
+  <div style="height: 79vh; overflow: none;">
+    <Codemirror v-model:value="code" :options="cmOptionsJs" border height="100%" />
   </div>
 </template>
 

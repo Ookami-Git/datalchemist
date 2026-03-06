@@ -1,6 +1,6 @@
 <template>
-  <div style="height: 70vh; overflow: none;">
-    <Codemirror v-model:value="code" :options="cmOptions" border height="100%"/>
+  <div style="height: 79vh; overflow: none;">
+    <Codemirror v-model:value="code" :options="cmOptions" border height="100%" />
   </div>
 </template>
 
@@ -14,13 +14,13 @@ import 'codemirror/mode/jinja2/jinja2';
 const code = inject('codeHtml');
 const parameters = inject('parameters');
 
-CodeMirror.defineMode('jinja2-html', function(config) {
-  return CodeMirror.multiplexingMode (
+CodeMirror.defineMode('jinja2-html', function (config) {
+  return CodeMirror.multiplexingMode(
     CodeMirror.getMode(config, "htmlmixed"), {
-      open: /\{[%#{]/, close: /[%#}]\}/,
-      mode: CodeMirror.getMode(config, "jinja2"),
-      parseDelimiters: true
-    });
+    open: /\{[%#{]/, close: /[%#}]\}/,
+    mode: CodeMirror.getMode(config, "jinja2"),
+    parseDelimiters: true
+  });
 });
 
 const cmOptions = reactive({
