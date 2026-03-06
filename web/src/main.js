@@ -7,6 +7,7 @@ import { createI18n } from "vue-i18n";
 import messages from "./lang";
 import 'highlight.js/lib/common';
 import VueHighlightJS from "@highlightjs/vue-plugin";
+import 'flag-icons/css/flag-icons.min.css';
 
 // Import our custom CSS
 import './scss/styles.scss'

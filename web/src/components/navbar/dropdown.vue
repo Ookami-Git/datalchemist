@@ -36,6 +36,37 @@ function clearFixedFlyoutStyle() {
     fixedFlyoutStyle.value = {};
 }
 
+function closeDropdownOnModeChange() {
+    if (!toggleRef.value || !menuRef.value) {
+        return;
+    }
+
+    const isOpen = menuRef.value.classList.contains('show')
+        || toggleRef.value.classList.contains('show')
+        || toggleRef.value.getAttribute('aria-expanded') === 'true';
+
+    if (!isOpen) {
+        return;
+    }
+
+    // Use Bootstrap's native click toggle first to keep internal state in sync.
+    toggleRef.value.click();
+
+    // If events are missed during layout transition, force visual cleanup.
+    nextTick(() => {
+        if (!toggleRef.value || !menuRef.value || !menuRef.value.classList.contains('show')) {
+            clearFixedFlyoutStyle();
+            return;
+        }
+
+        toggleRef.value.classList.remove('show');
+        toggleRef.value.setAttribute('aria-expanded', 'false');
+        menuRef.value.classList.remove('show');
+        menuRef.value.removeAttribute('data-popper');
+        clearFixedFlyoutStyle();
+    });
+}
+
 function updateFixedFlyoutPosition() {
     if (!props.collapsed || !toggleRef.value || !menuRef.value || !menuRef.value.classList.contains('show')) {
         clearFixedFlyoutStyle();
@@ -87,6 +118,8 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+    closeDropdownOnModeChange();
+
     if (toggleRef.value) {
         toggleRef.value.removeEventListener('shown.bs.dropdown', handleDropdownShown);
         toggleRef.value.removeEventListener('hidden.bs.dropdown', handleDropdownHidden);
@@ -95,7 +128,11 @@ onBeforeUnmount(() => {
     window.removeEventListener('scroll', updateFixedFlyoutPosition, true);
 });
 
-watch(() => props.collapsed, (collapsed) => {
+watch(() => props.collapsed, (collapsed, previousCollapsed) => {
+    if (collapsed !== previousCollapsed) {
+        closeDropdownOnModeChange();
+    }
+
     if (!collapsed) {
         clearFixedFlyoutStyle();
         return;

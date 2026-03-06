@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, provide, watch, inject } from 'vue';
 import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
+import VueCookies from 'vue-cookies';
 import navbar from './components/navbar/navbar.vue'
 
 const route = useRoute();
@@ -13,6 +14,14 @@ const requestNoTransition = () => {
 const i18n = inject('i18n');
 const parameters = ref([]);
 const isSidebarCollapsed = ref(false);
+const sidebarCollapsedCookieName = 'sidebarCollapsed';
+
+const savedSidebarCollapsed = VueCookies.get(sidebarCollapsedCookieName);
+if (savedSidebarCollapsed === '1' || savedSidebarCollapsed === true || savedSidebarCollapsed === 'true') {
+  isSidebarCollapsed.value = true;
+} else if (savedSidebarCollapsed === '0' || savedSidebarCollapsed === false || savedSidebarCollapsed === 'false') {
+  isSidebarCollapsed.value = false;
+}
 const saveButton = ref({
   "show": false,
   "disabled": true,
@@ -110,6 +119,10 @@ provide('save', saveButton);
 provide('myUser', myUser);
 provide('skipNextRouteTransition', requestNoTransition);
 provide('isSidebarCollapsed', isSidebarCollapsed);
+
+watch(isSidebarCollapsed, (collapsed) => {
+  VueCookies.set(sidebarCollapsedCookieName, collapsed ? '1' : '0', '365d', '/');
+}, { immediate: true });
 
 watch(parameters, () => {
   updateBodyStyle()

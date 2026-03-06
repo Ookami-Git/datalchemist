@@ -36,9 +36,14 @@
         "header": "My account",
         "parameters": "Settings",
         "language": "Language",
+        "languageEnglish": "English",
+        "languageFrench": "French",
         "theme": "Theme",
+        "defaultPreview": "Default",
         "password": "New password",
         "passwordrepeat": "Confirm new password",
+        "passwordmismatch": "Passwords do not match",
+        "savesuccess": "Profile saved successfully",
         "save": "Save changes"
     },
     "admin": {

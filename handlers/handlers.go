@@ -282,25 +282,38 @@ func UserAdd(c *gin.Context) {
 
 func UserUpdate(c *gin.Context) {
 	var User models.Users
-	c.BindJSON(&User)
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		User.ID, err = token.ExtractTokenID(c)
-		checkErr(err, c)
-	} else {
-		User.ID = uint(id)
-		if User.ID == uint(id) {
-			if User.Password != "" {
-				hashedPassword, err := bcrypt.GenerateFromPassword([]byte(User.Password), 14)
-				checkErr(err, c)
-				User.Password = string(hashedPassword)
-			}
-			database.UserUpdate(User)
-			c.JSON(200, gin.H{"status": "OK"})
-		} else {
-			c.JSON(400, gin.H{"error": "invalid id"})
-		}
+	if err := c.BindJSON(&User); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
 	}
+
+	if rawID := c.Param("id"); rawID != "" {
+		id, err := strconv.Atoi(rawID)
+		if err != nil {
+			c.JSON(400, gin.H{"error": "invalid id"})
+			return
+		}
+		User.ID = uint(id)
+	} else {
+		uid, err := token.ExtractTokenID(c)
+		if err != nil {
+			c.JSON(401, gin.H{"error": "unauthorized"})
+			return
+		}
+		User.ID = uid
+	}
+
+	if User.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(User.Password), 14)
+		if err != nil {
+			checkErr(err, c)
+			return
+		}
+		User.Password = string(hashedPassword)
+	}
+
+	database.UserUpdate(User)
+	c.JSON(200, gin.H{"status": "OK"})
 }
 
 func UserDelete(c *gin.Context) {

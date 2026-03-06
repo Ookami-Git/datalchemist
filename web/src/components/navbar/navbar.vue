@@ -103,7 +103,7 @@ const toggleSidebar = () => {
           ? 'flex-column align-items-center gap-2'
           : 'align-items-center justify-content-center sidebar-header-expanded'
       ]">
-        <a href="#" class="d-flex align-items-center sidebar-logo-link">
+        <a href="#" class="d-inline-flex align-items-center sidebar-logo-link">
           <img src="/logo.png" alt="Logo" style="height: 40px;">
         </a>
         <button type="button"
@@ -258,8 +258,11 @@ const toggleSidebar = () => {
   position: relative;
 }
 
+.sidebar-logo-link {
+  flex: 0 0 auto;
+}
+
 .sidebar-header-expanded .sidebar-logo-link {
-  width: 100%;
   justify-content: center;
 }
 
