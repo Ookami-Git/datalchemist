@@ -232,6 +232,14 @@
             "text": "Creation"
         },
         "header": "Source",
+        "subtitle": "Configure source type, output format, and retrieval logic",
+        "loading": "Loading source...",
+        "loaderror": "Unable to load this source",
+        "retry": "Retry",
+        "config_title": "Configuration",
+        "config_help": "Define connector, output format, and related parameters",
+        "type_label": "Type",
+        "format": "Format",
         "database": {
             "connection": "Database connection string",
             "helper": "See the help on the right for more information about the connection string syntax.",

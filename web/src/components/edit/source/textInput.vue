@@ -14,30 +14,30 @@ import 'codemirror/mode/jinja2/jinja2'; // Mode Jinja2
 // theme
 import "codemirror/theme/material.css";
 
-CodeMirror.defineMode('jinja2-xml', function(config) {
-  return CodeMirror.multiplexingMode (
-    CodeMirror.getMode(config, "xml"), {
-      open: /\{[%#{]/, close: /[%#}]\}/,
-      mode: CodeMirror.getMode(config, "jinja2"),
-      parseDelimiters: true
+CodeMirror.defineMode('jinja2-xml', function (config) {
+    return CodeMirror.multiplexingMode(
+        CodeMirror.getMode(config, "xml"), {
+        open: /\{[%#{]/, close: /[%#}]\}/,
+        mode: CodeMirror.getMode(config, "jinja2"),
+        parseDelimiters: true
     });
 });
 
-CodeMirror.defineMode('jinja2-yml', function(config) {
-  return CodeMirror.multiplexingMode (
-    CodeMirror.getMode(config, "yaml"), {
-      open: /\{[%#{]/, close: /[%#}]\}/,
-      mode: CodeMirror.getMode(config, "jinja2"),
-      parseDelimiters: true
+CodeMirror.defineMode('jinja2-yml', function (config) {
+    return CodeMirror.multiplexingMode(
+        CodeMirror.getMode(config, "yaml"), {
+        open: /\{[%#{]/, close: /[%#}]\}/,
+        mode: CodeMirror.getMode(config, "jinja2"),
+        parseDelimiters: true
     });
 });
 
-CodeMirror.defineMode('jinja2-json', function(config) {
-  return CodeMirror.multiplexingMode (
-    CodeMirror.getMode(config, "application/json"), {
-      open: /\{[%#{]/, close: /[%#}]\}/,
-      mode: CodeMirror.getMode(config, "jinja2"),
-      parseDelimiters: true
+CodeMirror.defineMode('jinja2-json', function (config) {
+    return CodeMirror.multiplexingMode(
+        CodeMirror.getMode(config, "application/json"), {
+        open: /\{[%#{]/, close: /[%#}]\}/,
+        mode: CodeMirror.getMode(config, "jinja2"),
+        parseDelimiters: true
     });
 });
 
@@ -74,12 +74,13 @@ watch(() => source.value.type, () => {
 
 <template>
     <div class="mb-3">
-        <div id="TextHelp" class="form-text">{{ $t('editsource.text.helper') }} ( {{ source.type }} | <a href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank">Gonja</a> )</div>
-        <template v-if="parameter.name">
-            <div style="height: 50vh; overflow: none;">
-                <Codemirror v-model:value="source.query" :options="cmOptions" border height="100%"/>
+        <div id="TextHelp" class="form-text">{{ $t('editsource.text.helper') }} ( {{ source.type }} | <a
+                href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank">Gonja</a> )
+        </div>
+        <template v-if="parameter?.name">
+            <div class="source-editor-wrap source-editor-wrap-compact">
+                <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" />
             </div>
         </template>
     </div>
 </template>
-

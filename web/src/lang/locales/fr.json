@@ -232,6 +232,14 @@
             "text": "Création"
         },
         "header": "Source",
+        "subtitle": "Configurez le type de source, son format et sa logique de récupération",
+        "loading": "Chargement de la source...",
+        "loaderror": "Impossible de charger cette source",
+        "retry": "Réessayer",
+        "config_title": "Configuration",
+        "config_help": "Définissez le connecteur, le format de sortie et les paramètres associés",
+        "type_label": "Type",
+        "format": "Format",
         "database": {
             "connection": "Chaîne de connexion à la base de données",
             "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaîne de connexion.",

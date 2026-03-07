@@ -10,12 +10,12 @@ import 'codemirror/mode/jinja2/jinja2'; // Mode Jinja2
 // theme
 import "codemirror/theme/material.css";
 
-CodeMirror.defineMode('jinja2-sql', function(config) {
-  return CodeMirror.multiplexingMode (
-    CodeMirror.getMode(config, "sql"), {
-      open: /\{[%#{]/, close: /[%#}]\}/,
-      mode: CodeMirror.getMode(config, "jinja2"),
-      parseDelimiters: true
+CodeMirror.defineMode('jinja2-sql', function (config) {
+    return CodeMirror.multiplexingMode(
+        CodeMirror.getMode(config, "sql"), {
+        open: /\{[%#{]/, close: /[%#}]\}/,
+        mode: CodeMirror.getMode(config, "jinja2"),
+        parseDelimiters: true
     });
 });
 
@@ -29,8 +29,8 @@ const cmOptions = reactive({
     lineWrapping: true,
 })
 
-function change () {
-    
+function change() {
+
 }
 
 watch(parameter, () => {
@@ -51,9 +51,10 @@ watch(parameter, () => {
         <input type="text" class="form-control" id="InputFile" aria-describedby="FileHelp" v-model="source.path">
         <div id="FileHelp" class="form-text">{{ $t('editsource.database.helper') }}</div>
         <label for="Query" class="form-label">{{ $t('editsource.database.query') }}</label>
-        <template v-if="parameter.name">
-            <div style="height: 50vh; overflow: none;">
-                <Codemirror v-model:value="source.query" :options="cmOptions" border height="100%" placeholder="SQL code ..." @change="change" />
+        <template v-if="parameter?.name">
+            <div class="source-editor-wrap source-editor-wrap-database">
+                <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" placeholder="SQL code ..."
+                    @change="change" />
             </div>
         </template>
     </div>
