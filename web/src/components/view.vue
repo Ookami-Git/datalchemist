@@ -108,29 +108,85 @@ if (!props.viewStructure || !props.viewItems) {
 </template>
 
 <style>
+/* Modernized shapes for existing row and grid cards */
+.view-card {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 1rem;
+    background: var(--bs-body-bg);
+    box-shadow: 0 0.45rem 1.05rem rgba(12, 21, 36, 0.1);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.view-card-header {
+    border-bottom: 1px solid var(--bs-border-color);
+    background: var(--bs-tertiary-bg);
+    font-weight: 600;
+    line-height: 1.35;
+    padding: 0.72rem 0.95rem;
+}
+
+.view-card-body {
+    background: var(--bs-body-bg);
+    padding: 0.95rem;
+}
+
+.view-layout-row {
+    align-items: stretch;
+}
+
+.view-layout-col {
+    display: flex;
+    min-height: 0;
+}
+
+.view-layout-col>.view-card {
+    width: 100%;
+}
+
+.view-grid-shell {
+    background: transparent;
+}
+
+.view-grid-shell .grid-stack-item-content.view-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.view-grid-item-frame {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.view-grid-item-frame .view-card-body {
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+[data-bs-theme="dark"] .view-card {
+    box-shadow: 0 0.6rem 1.3rem rgba(0, 0, 0, 0.35);
+}
+
 /* Dark mode fix for DataTables rowgrouping */
 [data-bs-theme="dark"] .dtrg-group,
 [data-bs-theme="dark"] .dtrg-level-0,
 [data-bs-theme="dark"] .dtrg-level-1,
 [data-bs-theme="dark"] .dtrg-level-2 {
-    background-color: #23272b !important;
-    color: #fff !important;
+    background-color: var(--bs-tertiary-bg) !important;
+    color: var(--bs-body-color) !important;
 }
 
-/* .card-header {
-    position: sticky;
-    top: 0;
-    z-index: 10;
-    border-bottom: 1px solid var(--bs-border-color);
-} */
+@media (max-width: 991.98px) {
+    .view-card-header {
+        padding: 0.66rem 0.8rem;
+    }
 
-/* [data-bs-theme="dark"] .card-header {
-    background: var(--bs-dark);
+    .view-card-body {
+        padding: 0.75rem;
+    }
 }
-
-[data-bs-theme="light"] .card-header {
-    background: var(--bs-light);
-} */
 </style>
 
 <style>

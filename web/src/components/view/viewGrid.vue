@@ -1,6 +1,6 @@
 <script setup>
 import { inject, watch, onMounted, nextTick, provide } from 'vue';
-import { useRoute } from 'vue-router';;
+import { useRoute } from 'vue-router';
 import { GridStack } from 'gridstack';
 import 'gridstack/dist/gridstack.min.css';
 import placeHolder from './items/ItemPlaceHolder.vue';
@@ -77,14 +77,15 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="grid-stack">
+    <div class="grid-stack view-grid-shell">
         <div v-for="item in getGridItems(props.structure)" :key="item.id" class="grid-stack-item"
             :class="item.autoResize ? 'auto-resize-enabled' : 'auto-resize-disabled'" :gs-x="item.x" :gs-y="item.y"
             :gs-w="item.w" :gs-h="item.h" :gs-id="item.id" :id="item.id">
-            <div class="grid-stack-item-content card">
-                <div>
-                    <div v-if="item.title" class="card-header widget-card-header" v-html="item.title"></div>
-                    <div class="card-body">
+            <div class="grid-stack-item-content card view-card">
+                <div class="view-grid-item-frame">
+                    <div v-if="item.title" class="card-header widget-card-header view-card-header" v-html="item.title">
+                    </div>
+                    <div class="card-body view-card-body">
                         <Item v-if="dataNunjucks" :data="dataNunjucks"
                             :itemDescribe="props.viewItems[`i${item.itemid}`]" />
                         <div v-else>
@@ -96,9 +97,3 @@ onMounted(() => {
         </div>
     </div>
 </template>
-
-<style scoped>
-:deep(.grid-stack-item-content) {
-    background-color: var(--bs-tertiary-bg);
-}
-</style>
