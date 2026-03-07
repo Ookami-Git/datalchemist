@@ -167,14 +167,14 @@ onMounted(async () => {
                 </div>
             </header>
 
-            <article class="card admin-acl-panel shadow-sm">
+            <article class="card admin-acl-panel admin-acl-table-panel shadow-sm">
                 <div class="card-body p-0 d-flex flex-column">
                     <div class="admin-acl-panel-head px-3 px-lg-4 py-3">
                         <h5 class="admin-acl-panel-title mb-1">{{ $t('admin.acl.header') }}</h5>
                         <p class="small text-secondary mb-0">{{ $t('admin.acl.tablehint') }}</p>
                     </div>
 
-                    <div class="table-responsive">
+                    <div class="table-responsive admin-acl-table-wrap">
                         <table class="table align-middle mb-0 admin-acl-table">
                             <thead>
                                 <tr>

@@ -153,14 +153,14 @@ onMounted(() => {
                 </div>
 
                 <div class="col-12 col-xl-8">
-                    <article class="card admin-groups-panel shadow-sm h-100">
+                    <article class="card admin-groups-panel admin-groups-table-panel shadow-sm h-100">
                         <div class="card-body p-0 d-flex flex-column">
                             <div class="admin-groups-panel-head px-3 px-lg-4 py-3">
                                 <h5 class="admin-groups-panel-title mb-1">{{ $t('admin.groups.header') }}</h5>
                                 <p class="small text-secondary mb-0">{{ $t('admin.groups.tablehint') }}</p>
                             </div>
 
-                            <div class="table-responsive">
+                            <div class="table-responsive admin-groups-table-wrap">
                                 <table class="table align-middle mb-0 admin-groups-table">
                                     <thead>
                                         <tr>
@@ -220,7 +220,7 @@ onMounted(() => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
-                    }}</button>
+                        }}</button>
                     <button type="button" class="btn btn-danger" @click="RemoveGroup(GroupAction.id)"
                         data-bs-dismiss="modal">{{ $t('global.yes') }}</button>
                 </div>
@@ -247,7 +247,7 @@ onMounted(() => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
-                    }}</button>
+                        }}</button>
                     <button type="button" class="btn btn-primary" @click="UpdateGroup()" data-bs-dismiss="modal">{{
                         $t('global.apply') }}</button>
                 </div>

@@ -317,14 +317,14 @@ onMounted(() => {
                 </div>
 
                 <div class="col-12 col-xl-8">
-                    <article class="card admin-users-panel shadow-sm h-100">
+                    <article class="card admin-users-panel admin-users-table-panel shadow-sm h-100">
                         <div class="card-body p-0 d-flex flex-column">
                             <div class="admin-users-panel-head px-3 px-lg-4 py-3">
                                 <h5 class="admin-users-panel-title mb-1">{{ $t('admin.users.header') }}</h5>
                                 <p class="small text-secondary mb-0">{{ $t('admin.users.tablehint') }}</p>
                             </div>
 
-                            <div class="table-responsive">
+                            <div class="table-responsive admin-users-table-wrap">
                                 <table class="table align-middle mb-0 admin-users-table">
                                     <thead>
                                         <tr>
@@ -346,7 +346,7 @@ onMounted(() => {
                                                 <span class="badge rounded-pill"
                                                     :class="user.type === 'local' ? 'text-bg-primary' : 'text-bg-secondary'">
                                                     {{ user.type === 'local' ? $t('admin.users.local') :
-                                                    $t('admin.users.ldap') }}
+                                                        $t('admin.users.ldap') }}
                                                 </span>
                                             </td>
                                             <td>
@@ -425,7 +425,7 @@ onMounted(() => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
-                        }}</button>
+                    }}</button>
                     <button type="button" class="btn btn-primary" @click="UserUpdate()" data-bs-dismiss="modal">{{
                         $t('global.apply') }}</button>
                 </div>
@@ -448,7 +448,7 @@ onMounted(() => {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
-                        }}</button>
+                    }}</button>
                     <button type="button" class="btn btn-danger" @click="RemoveUser(UserAction.id)"
                         data-bs-dismiss="modal">{{ $t('global.yes') }}</button>
                 </div>
@@ -462,7 +462,7 @@ onMounted(() => {
             <div class="modal-content">
                 <div class="modal-header">
                     <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('global.username') }} : {{ UserAction.name
-                        }}
+                    }}
                     </h1>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
