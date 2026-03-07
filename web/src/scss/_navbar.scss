@@ -1,0 +1,199 @@
+/* Sidebar navbar styles */
+.sidebar-navbar {
+  --sidebar-navbar-bg-opacity: 0.7;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 1030;
+  background: rgba(var(--bs-body-bg-rgb), var(--sidebar-navbar-bg-opacity));
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 0;
+  width: var(--sidebar-width, 200px);
+  height: 100vh;
+  min-height: 100vh;
+  padding: 1rem 0.5rem;
+  overflow: visible;
+  transition:
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+[data-bs-theme='dark'] .sidebar-navbar {
+  --sidebar-navbar-bg-opacity: 0.76;
+}
+
+.sidebar-navbar.is-collapsed {
+  width: var(--sidebar-collapsed-width, 72px);
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+}
+
+.sidebar-navbar.is-collapsed .navbar-nav {
+  align-items: center;
+}
+
+.sidebar-navbar.is-collapsed .nav-link {
+  justify-content: center;
+}
+
+.sidebar-navbar.is-collapsed .dropdown {
+  width: 100%;
+  position: relative;
+}
+
+.sidebar-navbar .sidebar-shell {
+  min-height: 0;
+}
+
+.sidebar-navbar .sidebar-toggle {
+  width: 2rem !important;
+  height: 2rem;
+  padding: 0;
+  margin-bottom: 0;
+  border: 1px solid var(--bs-border-color-translucent);
+  background-color: transparent;
+  color: var(--bs-secondary-color);
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-navbar .sidebar-toggle:hover,
+.sidebar-navbar .sidebar-toggle:focus-visible {
+  background-color: var(--bs-tertiary-bg);
+  border-color: var(--bs-secondary-color);
+  color: var(--bs-body-color);
+}
+
+.sidebar-navbar .sidebar-header {
+  min-height: 40px;
+}
+
+.sidebar-navbar .sidebar-header-expanded {
+  position: relative;
+}
+
+.sidebar-navbar .sidebar-logo-link {
+  flex: 0 0 auto;
+}
+
+.sidebar-navbar .sidebar-header-expanded .sidebar-logo-link {
+  justify-content: center;
+}
+
+.sidebar-navbar .sidebar-header-expanded .sidebar-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.sidebar-navbar .sidebar-actions {
+  margin-top: 10px;
+  border-top: 1px solid var(--bs-border-color-translucent);
+}
+
+.sidebar-navbar .sidebar-action {
+  width: 88%;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: left;
+  transition:
+    width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    min-width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    height 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-navbar .sidebar-action i {
+  width: 1.1rem;
+  text-align: center;
+}
+
+.sidebar-navbar.is-collapsed .sidebar-action {
+  width: 2.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar-navbar .navbar-collapse {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  height: 100%;
+  min-height: 0;
+}
+
+.sidebar-navbar .navbar-nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 0.15rem;
+}
+
+.sidebar-navbar .sidebar-bottom {
+  flex: 0 0 auto;
+  margin-top: 0 !important;
+}
+
+.sidebar-navbar .navbar-nav .nav-item,
+.sidebar-navbar .navbar-nav .nav-link {
+  width: 100%;
+}
+
+.sidebar-navbar .navbar-nav .nav-link {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.sidebar-navbar .btn:not(.sidebar-toggle) {
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-navbar .sidebar-text-enter-active {
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.sidebar-navbar .sidebar-text-enter-from {
+  opacity: 0;
+  transform: translateX(-0.35rem);
+}
+
+@media (max-width: 991.98px) {
+  .sidebar-navbar {
+    width: 100%;
+    height: auto;
+    min-height: auto;
+    padding: 0.5rem;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: auto;
+  }
+
+  .sidebar-navbar.is-collapsed {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .sidebar-navbar .navbar-collapse {
+    height: auto;
+    min-height: auto;
+  }
+
+  .sidebar-navbar .navbar-nav {
+    overflow-y: visible;
+  }
+
+  .sidebar-navbar .nav-item.dropdown {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+  }
+}
