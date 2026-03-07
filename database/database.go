@@ -43,7 +43,6 @@ func Init() error {
 		{Name: "ldap_user", Value: ""},
 		{Name: "ldap_password", Value: ""},
 		{Name: "defaultview", Value: ""},
-		{Name: "export_csv_delimiter", Value: ","},
 		{Name: "secret_hash", Value: ""},
 		{Name: "secret_salt", Value: generator.String(32)},
 		{Name: "secret_salt_session", Value: generator.String(32)},

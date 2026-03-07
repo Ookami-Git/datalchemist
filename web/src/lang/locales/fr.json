@@ -50,6 +50,8 @@
         "header": "Paramètres",
         "global": {
             "header": "Général",
+            "pending": "Modifications en attente",
+            "synced": "Tout est sauvegardé",
             "name": "Nom",
             "theme": "Thème",
             "lang": "Langue",
@@ -59,7 +61,7 @@
             "ldap": {
                 "header": "Configurer authentification LDAP",
                 "enable": "Activer",
-                "skipverify": "Ignorer la validé du certificat",
+                "skipverify": "Ignorer la validité du certificat",
                 "server": "Serveur",
                 "port": "Port",
                 "basedn": "Base DN",
@@ -67,43 +69,95 @@
                 "user": "Utilisateur",
                 "password": "Mot de passe"
             },
-            "defaultview": "Accueil",
-            "export": {
-                "header": "Export Tableaux vers CSV",
-                "delimiter": "Séparateur CSV"
-            }
+            "defaultview": "Accueil"
         },
         "navbar": {
             "header": "Barre de navigation",
+            "subtitle": "Configurez la structure du menu et ses liens",
+            "status": {
+                "valid": "Le YAML du menu est valide",
+                "invalid": "Le YAML du menu contient des erreurs"
+            },
+            "editor": {
+                "title": "Éditeur YAML",
+                "help": "Modifiez le menu, validez-le, puis sauvegardez pour publier la navigation."
+            },
+            "guide": {
+                "title": "Référence rapide",
+                "resources": "Liens utiles",
+                "example": "Exemple"
+            },
+            "resources": {
+                "bootstrapIcons": "Bootstrap Icons",
+                "fontAwesome": "Font Awesome"
+            },
+            "rules": {
+                "name": "Libellé affiché dans la navigation",
+                "link": "Destination interne (/view/...) ou URL externe",
+                "icon": "Classe CSS d'icône (exemple: bi bi-grid)",
+                "subitems": "Liste d'entrées enfant (un seul niveau)",
+                "external": "Indique un lien externe à l'application",
+                "divider": "Ajoute un séparateur visuel",
+                "newtab": "Ouvre le lien dans un nouvel onglet"
+            },
             "error": {
-                "yaml":"Le code YAML comporte des erreurs de syntaxes",
+                "yaml":"Le code YAML comporte des erreurs de syntaxe",
                 "req-name":"La clé \"name\" est requise",
                 "req-boolean":"La valeur doit être un booléen (true/false)",
                 "req-array":"La valeur doit être un tableau YAML",
                 "req-string":"La valeur doit être de type texte",
-                "subitems":"L'imbrication de \"subitems\" n'est pas supporté",
-                "unknown-key":"La clé suivante n'est pas supporté"
+                "subitems":"L'imbrication de \"subitems\" n'est pas supportée",
+                "unknown-key":"La clé suivante n'est pas supportée"
             }
         },
         "users": {
             "header": "Utilisateurs",
+            "subtitle": "Gérez les comptes, le type d'authentification et les groupes",
+            "total": "Utilisateurs",
+            "tablehint": "Modifiez les profils, assignez les groupes et supprimez les comptes inutiles",
             "user": "Utilisateur",
             "type": "Type de connexion",
             "groups": "Groupes",
             "actions": "Actions",
             "adduser": "Ajouter l'utilisateur",
+            "usernameexists": "Ce nom d'utilisateur existe déjà",
+            "nogroup": "Aucun groupe sélectionné",
+            "local": "Local",
+            "ldap": "LDAP",
             "edituser": "Modifier l'utilisateur",
             "changegroups": "Modifier les groupes",
             "deleteuser": "Supprimer l'utilisateur",
-            "preview": "Previsualisation de l'utilisateur",
+            "preview": "Prévisualisation de l'utilisateur",
             "password":"Mot de passe",
-            "askdelete": "Etes vous sûr de vouloir supprimer l'utilisateur"
+            "askdelete": "Êtes-vous sûr de vouloir supprimer l'utilisateur"
         },
         "groups": {
-            "header": "Groupes"
+            "header": "Groupes",
+            "subtitle": "Administrez les groupes et leurs descriptions",
+            "total": "Groupes",
+            "tablehint": "Créez, modifiez ou supprimez les groupes disponibles",
+            "name": "Nom du groupe",
+            "description": "Description",
+            "addgroup": "Ajouter le groupe",
+            "editgroup": "Modifier le groupe",
+            "deletegroup": "Supprimer le groupe",
+            "nameexists": "Ce nom de groupe existe déjà",
+            "askdelete": "Êtes-vous sûr de vouloir supprimer le groupe"
         },
         "acl": {
-            "header": "Contrôle d'accès"
+            "header": "Contrôle d'accès",
+            "subtitle": "Définissez quelles vues sont publiques ou réservées à des groupes",
+            "total": "Vues",
+            "protectedcount": "Protégées",
+            "tablehint": "Activez la protection d'une vue puis choisissez les groupes autorisés",
+            "view": "Vue",
+            "status": "État",
+            "groupsallow": "Groupes autorisés",
+            "actions": "Actions",
+            "protected": "Protégée",
+            "public": "Publique",
+            "toggleprotection": "Activer ou désactiver la protection",
+            "allowgroups": "Autoriser des groupes"
         }
     },
     "edit": {
@@ -123,20 +177,20 @@
             "examples": "Exemples"
         },
         "bootstrap": {
-            "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité."
+            "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
         },
         "icons": {
             "header": "Icônes",
-            "description": "Utilisez les icones de Font Awesome ou Bootstrap pour afficher les objets. La documentation contiens de nombreux exemples pour chaque type de rendu souhaité."
+            "description": "Utilisez les icônes de Font Awesome ou Bootstrap pour afficher les objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
         },
         "datatable": {
-            "description": "DataTables permet d'ajouter facilement la recherche, le tri, l'export et la pagination à vos tableaux HTML. Pour utiliser le thème Bootstrap, ajoutez la classe 'table'. Référez-vous à la documentation pour des examples et plus d'informations."
+            "description": "DataTables permet d'ajouter facilement la recherche, le tri, l'export et la pagination à vos tableaux HTML. Pour utiliser le thème Bootstrap, ajoutez la classe 'table'. Référez-vous à la documentation pour des exemples et plus d'informations."
         },
         "mermaid": {
-            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez vous a la documentation pour plus d'informations."
+            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez-vous à la documentation pour plus d'informations."
         },
         "nunjucks": {
-            "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez vous a la documentation pour plus d'informations.",
+            "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez-vous à la documentation pour plus d'informations.",
             "customfilter": "Filtres additionnels",
             "date": {
                 "description": "Permet de manipuler le format des dates."
@@ -145,7 +199,7 @@
                 "description": "Permet de rechercher une valeur dans un tableau d'objets et remonte le premier objet qui correspond."
             },
             "fromjson": {
-                "description": "Permet de convertir une chaine de caractère JSON en objet."
+                "description": "Permet de convertir une chaîne de caractère JSON en objet."
             },
             "setattribute":{
                 "description": "Permet de modifier un attribut d'un objet."
@@ -168,8 +222,8 @@
         },
         "header": "Source",
         "database": {
-            "connection": "Chaine de connexion à la base de données",
-            "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaine de connexion.",
+            "connection": "Chaîne de connexion à la base de données",
+            "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaîne de connexion.",
             "query": "Requête SQL"
         },
         "file": {
@@ -178,7 +232,7 @@
         },
         "execute": {
             "path": "Commande ou script",
-            "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format séléctionné."
+            "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format sélectionné."
         },
         "url": {
             "skipverify": "Ignorer la validité du certificat SSL",
@@ -198,7 +252,7 @@
             "value": "Valeur"
         },
         "text": {
-            "helper": "Saisir l'objet dans le langage selectionné. La syntaxe JINJA est valable."
+            "helper": "Saisir l'objet dans le langage sélectionné. La syntaxe JINJA est valable."
         },
         "loop": "Boucle",
         "loopinfo": "Plus d'informations"

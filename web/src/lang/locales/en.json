@@ -50,6 +50,8 @@
         "header": "Settings",
         "global": {
             "header": "General",
+            "pending": "Pending changes",
+            "synced": "Everything is saved",
             "name": "Name",
             "theme": "Theme",
             "lang": "Language",
@@ -67,14 +69,37 @@
                 "user": "User",
                 "password": "Password"
             },
-            "defaultview": "Home",
-            "export": {
-                "header": "Export tables to CSV",
-                "delimiter": "CSV delimiter"
-            }
+            "defaultview": "Home"
         },
         "navbar": {
             "header": "Navbar",
+            "subtitle": "Configure menu structure and links",
+            "status": {
+                "valid": "Menu YAML is valid",
+                "invalid": "Menu YAML has errors"
+            },
+            "editor": {
+                "title": "YAML editor",
+                "help": "Update your menu, validate it, then save to publish navigation changes."
+            },
+            "guide": {
+                "title": "Quick reference",
+                "resources": "Useful links",
+                "example": "Example"
+            },
+            "resources": {
+                "bootstrapIcons": "Bootstrap Icons",
+                "fontAwesome": "Font Awesome"
+            },
+            "rules": {
+                "name": "Label displayed in navigation",
+                "link": "Internal destination (/view/...) or external URL",
+                "icon": "Icon CSS class (example: bi bi-grid)",
+                "subitems": "Child entries list (single nesting level)",
+                "external": "Marks a link as external to the app",
+                "divider": "Adds a visual separator",
+                "newtab": "Opens the link in a new tab"
+            },
             "error": {
                 "yaml":"The YAML code contains syntax errors",
                 "req-name":"The \"name\" key is required",
@@ -87,11 +112,18 @@
         },
         "users": {
             "header": "Users",
+            "subtitle": "Manage accounts, authentication type, and group membership",
+            "total": "Users",
+            "tablehint": "Edit profiles, assign groups, and remove unused accounts",
             "user": "User",
             "type": "Connection type",
             "groups": "Groups",
             "actions": "Actions",
             "adduser": "Add user",
+            "usernameexists": "This username already exists",
+            "nogroup": "No group selected",
+            "local": "Local",
+            "ldap": "LDAP",
             "edituser": "Edit user",
             "changegroups": "Change user groups",
             "deleteuser": "Delete user",
@@ -100,10 +132,32 @@
             "askdelete": "Are you sure you want to delete the user"
         },
         "groups": {
-            "header": "Groups"
+            "header": "Groups",
+            "subtitle": "Manage groups and their descriptions",
+            "total": "Groups",
+            "tablehint": "Create, edit, and remove available groups",
+            "name": "Group name",
+            "description": "Description",
+            "addgroup": "Add group",
+            "editgroup": "Edit group",
+            "deletegroup": "Delete group",
+            "nameexists": "This group name already exists",
+            "askdelete": "Are you sure you want to delete the group"
         },
         "acl": {
-            "header": "Access control"
+            "header": "Access control",
+            "subtitle": "Define which views are public or restricted to groups",
+            "total": "Views",
+            "protectedcount": "Protected",
+            "tablehint": "Enable protection on a view, then select allowed groups",
+            "view": "View",
+            "status": "Status",
+            "groupsallow": "Allowed groups",
+            "actions": "Actions",
+            "protected": "Protected",
+            "public": "Public",
+            "toggleprotection": "Toggle protection",
+            "allowgroups": "Allow groups"
         }
     },
     "edit": {

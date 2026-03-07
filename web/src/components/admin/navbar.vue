@@ -1,133 +1,116 @@
 <script setup>
-// Importing the CodeMirror component and necessary dependencies
 import Codemirror from "codemirror-editor-vue3";
-// Importing the CodeMirror placeholder plugin
 import "codemirror/addon/display/placeholder.js";
-// Importing the YAML language mode for CodeMirror
 import "codemirror/mode/yaml/yaml.js";
-// Importing the CodeMirror Material theme
 import "codemirror/theme/material.css";
-// Importing some Vue functions and hooks
 import { ref, inject, watch, reactive, onMounted } from "vue";
-import { useRoute } from 'vue-router';
-// Importing the YAML library
-import YAML from "yaml"
+import YAML from "yaml";
 import axios from 'axios';
 
-const route = useRoute();
 const apiUrl = inject('apiUrl');
 const save = inject('save');
-
-// Injecting the 'parameters' dependency from the parent
 const parameter = inject('parameters');
-// Declaring a reactive variable to store the YAML code for menu
 const code = ref(null);
-
-// Declaring reactive variables to handle errors and badge appearance
 const isError = ref(false)
-const tagclass = ref(true);
 const tagErrorMessage = ref("");
 const tagerror = ref("");
 
-// Function to handle indentation with the Tab key
 function betterTab(cm) {
   if (cm.somethingSelected()) {
-    // Indent the selection
     cm.indentSelection("add");
   } else {
-    // Insert spaces or a tab depending on the configuration
     cm.replaceSelection(cm.getOption("indentWithTabs") ? "\t" :
       Array(cm.getOption("indentUnit") + 1).join(" "), "end", "+input");
   }
 }
 
-// CodeMirror configuration options (reactive)
 const cmOptions = reactive({
-  mode: "yaml", // YAML language
-  theme: "default", // Default theme
-  extraKeys: { 'Tab': betterTab }, // Use our betterTab function for the Tab key
+  mode: "yaml",
+  theme: "default",
+  extraKeys: { 'Tab': betterTab },
   lineWrapping: true,
+  placeholder: "- name: Home\n  link: /view/home",
 })
 
-// Function called when the content of CodeMirror changes
 function change() {
-  // Validate the YAML menu
   isValidMenu(code.value)
 }
 
-// Function to validate a YAML menu item
+const yamlRules = [
+  { key: "name", type: "string", descriptionKey: "admin.navbar.rules.name" },
+  { key: "link", type: "string", descriptionKey: "admin.navbar.rules.link" },
+  { key: "icon", type: "string", descriptionKey: "admin.navbar.rules.icon" },
+  { key: "subitems", type: "array", descriptionKey: "admin.navbar.rules.subitems" },
+  { key: "external", type: "boolean", descriptionKey: "admin.navbar.rules.external" },
+  { key: "divider", type: "boolean", descriptionKey: "admin.navbar.rules.divider" },
+  { key: "newtab", type: "boolean", descriptionKey: "admin.navbar.rules.newtab" },
+];
+
+const resourceLinks = [
+  { href: "https://icons.getbootstrap.com/", icon: "bi bi-bootstrap", labelKey: "admin.navbar.resources.bootstrapIcons" },
+  { href: "https://fontawesome.com/search?o=r&m=free", icon: "fab fa-font-awesome", labelKey: "admin.navbar.resources.fontAwesome" },
+];
+
 function isValidMenuItem(item) {
   if (!item.name) {
-    // Handle the case where the name is missing
     tagErrorMessage.value = "admin.navbar.error.req-name"
-    tagerror.value = `<b>Code</b> : <br><pre>` + YAML.stringify(item) + "</pre>"
+    tagerror.value = YAML.stringify(item)
     return false;
   }
   for (const [key, value] of Object.entries(item)) {
-    // Display details in case of an error
-    tagerror.value = `<b>Key</b> : ${key}<br><b>Code</b> : <br><pre>` + YAML.stringify(item) + "</pre>"
+    tagerror.value = `Key: ${key}\n\n` + YAML.stringify(item)
     switch (key) {
       case "name":
         if (typeof value !== 'string') {
-          // Handle the case where the name is not a string
           tagErrorMessage.value = "admin.navbar.error.req-string"
           return false;
         }
         break;
       case "subitems":
-        if (value.some((subitem) => { return subitem.subitems })) {
-          // Handle the case where a submenu contains another submenu
-          tagErrorMessage.value = "admin.navbar.error.subitems"
-          return false;
-        }
         if (!Array.isArray(value)) {
-          // Handle the case where 'subitems' is not an array
           tagErrorMessage.value = "admin.navbar.error.req-array"
           return false;
         } else {
+          if (value.some((subitem) => { return subitem.subitems })) {
+            tagErrorMessage.value = "admin.navbar.error.subitems"
+            return false;
+          }
           if (value.some((subitem) => { return !(isValidMenuItem(subitem)) })) {
-            // Handle the case where a subitem of the submenu is not valid
             return false;
           }
         }
         break;
       case "link":
         if (typeof value !== 'string') {
-          // Handle the case where 'link' is not a string
           tagErrorMessage.value = "admin.navbar.error.req-string"
           return false;
         }
         break;
       case "icon":
         if (typeof value !== 'string') {
-          // Handle the case where 'icon' is not a string
           tagErrorMessage.value = "admin.navbar.error.req-string"
           return false;
         }
         break;
       case "newtab":
         if (typeof value !== 'boolean') {
-          // Handle the case where 'newtab' is not a boolean
           tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       case "external":
         if (typeof value !== 'boolean') {
-          // Handle the case where 'external' is not a boolean
           tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       case "divider":
         if (typeof value !== 'boolean') {
-          // Handle the case where 'divider' is not a boolean
           tagErrorMessage.value = "admin.navbar.error.req-boolean"
           return false;
         }
         break;
       default:
-        // Handle the case where the key is unknown
         tagErrorMessage.value = "admin.navbar.error.unknown-key"
         return false
     }
@@ -135,42 +118,44 @@ function isValidMenuItem(item) {
   return true
 }
 
-// Function to validate the YAML menu
 function isValidMenu(menu) {
   try {
     const menuobj = YAML.parse(menu);
+    if (menuobj === null || menuobj === undefined) {
+      parameter.value.menu = code.value
+      tagerror.value = ""
+      menutag(true)
+      return true
+    }
+
     if (Array.isArray(menuobj)) {
       if (menuobj.some((menuitem) => { return !(isValidMenuItem(menuitem)) })) {
-        // Handle the case where a menu item is not valid
         menutag(false)
       } else {
-        // If everything is valid, update the menu
         parameter.value.menu = code.value
+        tagerror.value = ""
         menutag(true)
       }
+    } else {
+      tagErrorMessage.value = "admin.navbar.error.req-array"
+      tagerror.value = YAML.stringify(menuobj)
+      menutag(false)
+      return false
     }
   } catch (error) {
-    // Handle errors related to YAML parsing
     tagErrorMessage.value = "admin.navbar.error.yaml"
-    tagerror.value = (error)
+    tagerror.value = error?.message || String(error)
     menutag(false)
     return false
   }
   return true
 }
 
-// Function to update the class and errors
 function menutag(valid) {
   isError.value = !valid
-  if (valid) {
-    tagclass.value = "badge text-bg-success"
-    false
-  } else {
-    tagclass.value = "badge text-bg-danger"
-  }
 }
 
-function SaveMenu() {
+function saveMenu() {
   axios.put(`${apiUrl}/parameter/menu`, {
     Name: 'menu',
     Value: `${code.value}`
@@ -185,27 +170,29 @@ function SaveMenu() {
     });
 }
 
-// Watcher to update the code and perform validations
 watch(parameter, () => {
+  if (!parameter?.value) {
+    return;
+  }
+
   localStorage.setItem('reloadparameters', true);
-  if (code.value === null && parameter.value.menu) {
-    code.value = parameter.value.menu
+  if (code.value === null) {
+    code.value = parameter.value.menu || ""
     isValidMenu(code.value)
   }
+
   switch (parameter.value.theme) {
     case "dark":
-      // Change CodeMirror theme to dark mode
       cmOptions.theme = "material"
       break;
     default:
-      // Revert to the default CodeMirror theme
       cmOptions.theme = "default"
       break;
   }
 }, { deep: true, immediate: true });
 
 onMounted(() => {
-  save.value.function = SaveMenu
+  save.value.function = saveMenu
   save.value.status.show()
   save.value.safe()
 })
@@ -219,7 +206,7 @@ watch(code, () => {
   }
 }, { deep: true });
 
-const yamlExample = `          
+const yamlExample = `
 - name: View 1
   link: /view/1
   icon: bi bi-pencil-square
@@ -239,39 +226,101 @@ const yamlExample = `
 </script>
 
 <template>
-  <div class="row">
-    <div class="col-md-8">
-      <template v-if="parameter.name">
-        <div style="height: 75vh; overflow: none;">
-          <Codemirror v-model:value="code" :options="cmOptions" border height="100%" @change="change" />
-        </div>
-      </template>
-    </div>
-    <div class="col-md-4">
-      <div class="card">
-        <div class="card-header">
-          <div v-if="isError" class="alert alert-danger" role="alert"
-            v-html="$t(tagErrorMessage) + '<br><br>' + tagerror">
+  <section class="admin-navbar-page container-fluid px-0 py-1 py-lg-2">
+    <div v-if="parameter?.name" class="d-flex flex-column gap-4">
+      <header class="card admin-navbar-hero shadow-sm">
+        <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+          <div class="admin-navbar-hero-icon">
+            <i class="bi bi-window-stack"></i>
           </div>
-          <div v-if="!isError" class="alert alert-success" role="alert">Le code YAML du menu est OK</div>
-        </div>
-        <div class="card-body">
 
-          <var>name</var> (string) : Nom affiché sur le lien<br>
-          <var>link</var> (string) : Destination du lien <br>
-          <var>icon</var> (string) : Classe CSS de l'icone (ex: bi bi-123 <a href="https://icons.getbootstrap.com/"
-            target="_blank"><i class="bi bi-bootstrap"></i></a> -
-          <a href="https://fontawesome.com/search?o=r&m=free" target="_blank"><i
-              class="fab fa-font-awesome"></i></a>)<br>
-          <var>subitems</var> (array) : Sous menu -- Sous menu imbriqué impossible<br>
-          <var>external</var> (bool) : Ne se réfère pas à une page de l'application <br>
-          <var>divider</var> (bool) : Séparateur <br>
-          <var>newtab</var> (bool) : Ouvre le lien dans un nouvel onglet <br><br>
-          <h6>Exemples :</h6>
-          <pre><code v-text="yamlExample"></code></pre>
+          <div class="flex-grow-1">
+            <p class="admin-navbar-kicker mb-1">{{ $t('admin.header') }}</p>
+            <h4 class="mb-1">{{ $t('admin.navbar.header') }}</h4>
+            <p class="mb-0 text-secondary">{{ $t('admin.navbar.subtitle') }}</p>
+          </div>
+
+          <span class="badge rounded-pill admin-navbar-state-chip"
+            :class="isError ? 'text-bg-danger' : 'text-bg-success'">
+            <i :class="isError ? 'bi bi-exclamation-circle-fill me-1' : 'bi bi-check-circle-fill me-1'"></i>
+            {{ isError ? $t('admin.navbar.status.invalid') : $t('admin.navbar.status.valid') }}
+          </span>
+        </div>
+      </header>
+
+      <div class="row g-3 g-xxl-4">
+        <div class="col-12 col-xl-8 col-xxl-9">
+          <article class="card admin-navbar-panel shadow-sm h-100">
+            <div class="card-body p-0 d-flex flex-column">
+              <div class="admin-navbar-panel-head px-3 px-lg-4 py-3">
+                <h5 class="admin-navbar-panel-title mb-1">{{ $t('admin.navbar.editor.title') }}</h5>
+                <p class="small text-secondary mb-0">{{ $t('admin.navbar.editor.help') }}</p>
+              </div>
+
+              <div class="admin-navbar-editor-wrap">
+                <Codemirror v-model:value="code" :options="cmOptions" height="100%" @change="change" />
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-12 col-xl-4 col-xxl-3">
+          <article class="card admin-navbar-panel shadow-sm h-100">
+            <div class="card-body p-3 p-lg-4 admin-navbar-guide-scroll">
+              <div v-if="isError" class="alert alert-danger admin-navbar-alert mb-3" role="alert" aria-live="assertive">
+                <div class="fw-semibold mb-1">
+                  <i class="bi bi-exclamation-octagon-fill me-1"></i>
+                  {{ $t('admin.navbar.status.invalid') }}
+                </div>
+                <div>{{ $t(tagErrorMessage) }}</div>
+                <pre v-if="tagerror" class="admin-navbar-error-preview mt-2 mb-0"
+                  tabindex="0"><code>{{ tagerror }}</code></pre>
+              </div>
+
+              <div v-else class="alert alert-success admin-navbar-alert mb-3" role="status" aria-live="polite">
+                <i class="bi bi-check-circle-fill me-1"></i>
+                {{ $t('admin.navbar.status.valid') }}
+              </div>
+
+              <h5 class="admin-navbar-panel-title mb-3">{{ $t('admin.navbar.guide.title') }}</h5>
+
+              <ul class="list-unstyled d-flex flex-column gap-2 mb-3">
+                <li v-for="rule in yamlRules" :key="rule.key" class="admin-navbar-rule">
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <code>{{ rule.key }}</code>
+                    <span class="badge text-bg-secondary-subtle text-secondary-emphasis">{{ rule.type }}</span>
+                  </div>
+                  <p class="small text-secondary mb-0">{{ $t(rule.descriptionKey) }}</p>
+                </li>
+              </ul>
+
+              <h6 class="admin-navbar-panel-title mb-2">{{ $t('admin.navbar.guide.resources') }}</h6>
+              <div class="d-flex flex-wrap gap-2 mb-3">
+                <a v-for="resource in resourceLinks" :key="resource.labelKey" :href="resource.href"
+                  class="admin-navbar-resource-link" target="_blank" rel="noreferrer">
+                  <i :class="resource.icon"></i>
+                  <span>{{ $t(resource.labelKey) }}</span>
+                </a>
+              </div>
+
+              <h6 class="admin-navbar-panel-title mb-2">{{ $t('admin.navbar.guide.example') }}</h6>
+              <pre class="admin-navbar-example mb-0" tabindex="0"
+                aria-label="YAML example"><code v-text="yamlExample"></code></pre>
+            </div>
+          </article>
         </div>
       </div>
     </div>
-  </div>
-  <br>
+
+    <div v-else class="card admin-navbar-panel shadow-sm">
+      <div class="card-body p-4">
+        <div class="placeholder-glow">
+          <span class="placeholder col-6 mb-3"></span>
+          <span class="placeholder col-12 mb-2"></span>
+          <span class="placeholder col-10 mb-2"></span>
+          <span class="placeholder col-8"></span>
+        </div>
+      </div>
+    </div>
+  </section>
 </template>
