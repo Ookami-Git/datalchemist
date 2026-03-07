@@ -1,6 +1,6 @@
 <template>
-  <div style="height: 79vh; overflow: none;">
-    <Codemirror v-model:value="code" :options="cmOptionsJs" border height="100%" />
+  <div class="item-editor-wrap">
+    <Codemirror v-model:value="code" :options="cmOptionsJs" height="100%" />
   </div>
 </template>
 
@@ -28,3 +28,9 @@ watch(parameters, () => {
   cmOptionsJs.theme = parameters.value.theme === "dark" ? "material" : "default";
 }, { deep: true, immediate: true });
 </script>
+
+<style scoped>
+.item-editor-wrap {
+  height: var(--edit-item-editor-height, clamp(420px, 64vh, 840px));
+}
+</style>

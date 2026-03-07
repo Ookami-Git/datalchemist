@@ -1,5 +1,5 @@
 <script setup>
-import { ref, inject } from 'vue';
+import { computed, ref, inject } from 'vue';
 import axios from 'axios';
 import { RouterLink } from 'vue-router';
 
@@ -22,6 +22,20 @@ const ToDelete = ref({
 
 // Ajout de la variable d'état pour l'erreur API
 const apiError = ref(null)
+
+const getCollectionSize = (collection) => Object.values(collection || {}).length;
+
+const sourcesCount = computed(() => getCollectionSize(sources.value));
+const itemsCount = computed(() => getCollectionSize(items.value));
+const viewsCount = computed(() => getCollectionSize(views.value));
+const secretsCount = computed(() => getCollectionSize(secrets.value));
+const totalEntries = computed(
+  () => sourcesCount.value + itemsCount.value + viewsCount.value + secretsCount.value
+);
+
+const showSecretsPanel = computed(() =>
+  !!parameter?.enableSecret || secretsCount.value > 0
+);
 
 const types = [
   {
@@ -157,7 +171,7 @@ function UpdateSecret() {
   })
     .then(function () {
       fetchSecrets()
-      EditSecret.value = { id: null, name: null, value: null }
+      EditSecret.value = { id: null, name: null, secret: null }
     })
     .catch(function (error) {
       apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
@@ -186,166 +200,250 @@ fetchSecrets()
     </div>
   </div>
 
-  <div class="row">
-    <div class="col" v-if="secrets || parameter.enableSecret">
-      <div class="card">
-        <h5 class="card-header text-center">
-          {{ $t('edit.secrets', 'Secrets') }}
-          <button v-if="parameter.enableSecret" type="button" class="btn btn-success btn-sm" :title="$t('edit.add')"
-            data-bs-toggle="modal" data-bs-target="#addsecret"><i class="bi bi-plus-lg"></i></button>
-          <button v-else type="button" class="btn btn-secondary btn-sm" :title="$t('edit.add')" disabled><i
-              class="bi bi-plus-lg"></i></button>
-        </h5>
-        <div class="card-body">
-          <div class="scrollable-table-container">
-            <table class="table table-hover" v-if="secrets">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">{{ $t('edit.name') }}</th>
-                  <th scope="col" class="text-end">{{ $t('edit.actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, index) in secrets" :key="row.id">
-                  <th scope="row">{{ row.id }}</th>
-                  <td scope="row">{{ row.name }}</td>
-                  <td scope="row" class="text-end">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Modifier')"
-                        @click="EditSecret.id = row.id; EditSecret.name = row.name; EditSecret.value = null"
-                        data-bs-toggle="modal" data-bs-target="#editsecret"><i class="bi bi-pencil-square"></i></button>
-                      <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                        @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret"><i
-                          class="bi bi-trash3"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+  <section class="admin-edit-page container-fluid px-0 py-1 py-lg-2">
+    <div class="d-flex flex-column gap-3 gap-xxl-4">
+      <header class="card admin-edit-hero shadow-sm">
+        <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center gap-3">
+          <div class="admin-edit-hero-icon">
+            <i class="bi bi-vector-pen"></i>
           </div>
+          <div class="flex-grow-1">
+            <p class="admin-edit-kicker mb-1">{{ $t('menu.edit') }}</p>
+            <h4 class="mb-1">{{ $t('menu.edit') }}</h4>
+            <p class="mb-0 text-secondary">{{ $t('edit.subtitle') }}</p>
+          </div>
+          <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
+            <span class="badge rounded-pill admin-edit-state-chip text-bg-info">
+              <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+              {{ $t('edit.total') }}: {{ totalEntries }}
+            </span>
+            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.sources') }}: {{
+              sourcesCount }}</span>
+            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.items') }}: {{ itemsCount
+            }}</span>
+            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.views') }}: {{ viewsCount
+            }}</span>
+            <span v-if="showSecretsPanel" class="badge rounded-pill admin-edit-state-chip text-bg-secondary">{{
+              $t('edit.secrets') }}: {{ secretsCount }}</span>
+          </div>
+        </div>
+      </header>
+
+      <div
+        :class="['row', 'g-3', 'g-xxl-4', showSecretsPanel ? 'row-cols-1 row-cols-lg-2 row-cols-xxl-4' : 'row-cols-1 row-cols-md-2 row-cols-xxl-3']">
+        <div class="col" v-if="showSecretsPanel">
+          <article class="card admin-edit-panel shadow-sm">
+            <div class="card-body p-0 d-flex flex-column">
+              <div
+                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.secrets', 'Secrets') }}</h5>
+                <button v-if="parameter.enableSecret" type="button" class="btn btn-success btn-sm"
+                  :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addsecret">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+                <button v-else type="button" class="btn btn-secondary btn-sm" :title="$t('edit.add')" disabled>
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+
+              <div class="table-responsive admin-edit-table-wrap">
+                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="secrets">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="col-2">ID</th>
+                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
+                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="table-group-divider">
+                    <tr v-if="secretsCount === 0">
+                      <td colspan="3" class="text-center text-secondary py-4">-</td>
+                    </tr>
+                    <tr v-for="row in secrets" :key="row.id">
+                      <th scope="row">{{ row.id }}</th>
+                      <td>{{ row.name }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Modifier')"
+                            @click="EditSecret.id = row.id; EditSecret.name = row.name; EditSecret.secret = null"
+                            data-bs-toggle="modal" data-bs-target="#editsecret">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
+                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret">
+                            <i class="bi bi-trash3"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col">
+          <article class="card admin-edit-panel shadow-sm">
+            <div class="card-body p-0 d-flex flex-column">
+              <div
+                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.sources') }}</h5>
+                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
+                  data-bs-target="#addsource">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+
+              <div class="table-responsive admin-edit-table-wrap">
+                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="sources">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="col-2">ID</th>
+                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
+                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="table-group-divider">
+                    <tr v-if="sourcesCount === 0">
+                      <td colspan="3" class="text-center text-secondary py-4">-</td>
+                    </tr>
+                    <tr v-for="row in sources" :key="row.id">
+                      <th scope="row">{{ row.id }}</th>
+                      <td>{{ row.name }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
+                            @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <a type="button" class="btn btn-outline-primary btn-sm"
+                            :title="$t('global.preview', 'Aperçu')" :href="`${apiUrl}/data/source/${row.id}`"
+                            target="_blank">
+                            <i class="bi bi-eye-fill"></i>
+                          </a>
+                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
+                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
+                            <i class="bi bi-trash3"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col">
+          <article class="card admin-edit-panel shadow-sm">
+            <div class="card-body p-0 d-flex flex-column">
+              <div
+                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.items') }}</h5>
+                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
+                  data-bs-target="#additem">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+
+              <div class="table-responsive admin-edit-table-wrap">
+                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="items">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="col-2">ID</th>
+                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
+                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="table-group-divider">
+                    <tr v-if="itemsCount === 0">
+                      <td colspan="3" class="text-center text-secondary py-4">-</td>
+                    </tr>
+                    <tr v-for="row in items" :key="row.id">
+                      <th scope="row">{{ row.id }}</th>
+                      <td>{{ row.name }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
+                            @click="$router.push({ name: 'edititem', params: { itemid: row.id } })">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <RouterLink type="button" class="btn btn-outline-primary"
+                            :title="$t('global.preview', 'Voir')" :to="{ name: 'item', params: { itemid: row.id } }"
+                            target="_blank">
+                            <i class="bi bi-eye-fill"></i>
+                          </RouterLink>
+                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
+                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem">
+                            <i class="bi bi-trash3"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="col">
+          <article class="card admin-edit-panel shadow-sm">
+            <div class="card-body p-0 d-flex flex-column">
+              <div
+                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.views') }}</h5>
+                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
+                  data-bs-target="#addview">
+                  <i class="bi bi-plus-lg"></i>
+                </button>
+              </div>
+
+              <div class="table-responsive admin-edit-table-wrap">
+                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="views">
+                  <thead>
+                    <tr>
+                      <th scope="col" class="col-2">ID</th>
+                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
+                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="table-group-divider">
+                    <tr v-if="viewsCount === 0">
+                      <td colspan="3" class="text-center text-secondary py-4">-</td>
+                    </tr>
+                    <tr v-for="row in views" :key="row.id">
+                      <th scope="row">{{ row.id }}</th>
+                      <td>{{ row.name }}</td>
+                      <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
+                            @click="$router.push({ name: 'editview', params: { viewid: row.id } })">
+                            <i class="bi bi-pencil-square"></i>
+                          </button>
+                          <RouterLink type="button" class="btn btn-outline-primary"
+                            :title="$t('global.preview', 'Voir')" :to="{ name: 'view', params: { viewid: row.id } }"
+                            target="_blank">
+                            <i class="bi bi-eye-fill"></i>
+                          </RouterLink>
+                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
+                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview">
+                            <i class="bi bi-trash3"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </article>
         </div>
       </div>
     </div>
-    <div class="col">
-      <div class="card">
-        <h5 class="card-header text-center">{{ $t('edit.sources') }} <button type="button"
-            class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addsource"><i
-              class="bi bi-plus-lg"></i></button></h5>
-        <div class="card-body">
-          <div class="scrollable-table-container">
-            <table class="table table-hover" v-if="sources">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">{{ $t('edit.name') }}</th>
-                  <th scope="col" class="text-end">{{ $t('edit.actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, index) in sources">
-                  <th scope="row">{{ row.id }}</th>
-                  <td scope="row">{{ row.name }}</td>
-                  <td scope="row" class="text-end">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                        @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })"><i
-                          class="bi bi-pencil-square"></i></button>
-                      <a type="button" class="btn btn-outline-primary btn-sm" :title="$t('global.preview', 'Aperçu')"
-                        :href="`${apiUrl}/data/source/${row.id}`" target="_blank"><i class="bi bi-eye-fill"></i></a>
-                      <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                        @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource"><i
-                          class="bi bi-trash3"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card">
-        <h5 class="card-header text-center">{{ $t('edit.items') }} <button type="button" class="btn btn-success btn-sm"
-            :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#additem"><i
-              class="bi bi-plus-lg"></i></button></h5>
-        <div class="card-body">
-          <div class="scrollable-table-container">
-            <table class="table table-hover" v-if="items">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">{{ $t('edit.name') }}</th>
-                  <th scope="col" class="text-end">{{ $t('edit.actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, index) in items">
-                  <th scope="row">{{ row.id }}</th>
-                  <td scope="row">{{ row.name }}</td>
-                  <td scope="row" class="text-end">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                        @click="$router.push({ name: 'edititem', params: { itemid: row.id } })"><i
-                          class="bi bi-pencil-square"></i></button>
-                      <RouterLink type="button" class="btn btn-outline-primary" :title="$t('global.preview', 'Voir')"
-                        :to="{ name: 'item', params: { itemid: row.id } }" target="_blank"><i
-                          class="bi bi-eye-fill"></i>
-                      </RouterLink>
-                      <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                        @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem"><i
-                          class="bi bi-trash3"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card">
-        <h5 class="card-header text-center">{{ $t('edit.views') }} <button type="button" class="btn btn-success btn-sm"
-            :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addview"><i
-              class="bi bi-plus-lg"></i></button></h5>
-        <div class="card-body">
-          <div class="scrollable-table-container">
-            <table class="table table-hover" v-if="views">
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">{{ $t('edit.name') }}</th>
-                  <th scope="col" class="text-end">{{ $t('edit.actions') }}</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, index) in views">
-                  <th scope="row">{{ row.id }}</th>
-                  <td scope="row">{{ row.name }}</td>
-                  <td scope="row" class="text-end">
-                    <div class="btn-group btn-group-sm" role="group">
-                      <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                        @click="$router.push({ name: 'editview', params: { viewid: row.id } })"><i
-                          class="bi bi-pencil-square"></i></button>
-                      <RouterLink type="button" class="btn btn-outline-primary" :title="$t('global.preview', 'Voir')"
-                        :to="{ name: 'view', params: { viewid: row.id } }" target="_blank"><i
-                          class="bi bi-eye-fill"></i>
-                      </RouterLink>
-                      <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                        @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview"><i
-                          class="bi bi-trash3"></i></button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  </section>
 
   <!-- Model for ADD -->
   <div v-for="(type, index) in types" class="modal fade" :id="'add' + type.type" tabindex="-1"
@@ -437,10 +535,3 @@ fetchSecrets()
     </div>
   </div>
 </template>
-
-<style scoped>
-.scrollable-table-container {
-  max-height: 85vh;
-  overflow-y: auto;
-}
-</style>

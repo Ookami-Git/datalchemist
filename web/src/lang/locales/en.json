@@ -10,6 +10,8 @@
         "groups": "Groups",
         "add": "Add",
         "remove": "Remove",
+        "copy": "Copy",
+        "copied": "Copied",
         "edit": "Edit",
         "preview": "Preview",
         "error": {
@@ -166,15 +168,24 @@
         "views": "Views",
         "name": "Name",
         "actions": "Actions",
+        "subtitle": "Manage sources, items, views, and secrets from one unified workspace",
+        "total": "Entries",
         "add": "Add",
         "secrets": "Secrets",
         "secret_value": "Secret value"
     },
     "edititem": {
         "header": "Item",
+        "subtitle": "Edit HTML template, JavaScript script, and linked sources for this item",
+        "loading": "Loading item...",
+        "loaderror": "Unable to load this item",
+        "retry": "Retry",
+        "preview": "Preview",
         "global": {
             "syntax": "Syntax",
-            "examples": "Examples"
+            "examples": "Examples",
+            "documentation": "Integrated documentation",
+            "docsbytype": "Each section contains its own dedicated documentation"
         },
         "bootstrap": {
             "description": "Use Bootstrap classes in your HTML code to unify and customize the visual rendering of your items. The documentation contains many examples for each desired rendering."

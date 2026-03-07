@@ -1,38 +1,38 @@
 <script setup>
-  // Nunjucks date examples
-  const codeDateSyntax = `{{ var_date | date('outputformat','inputformat') }}`
-  const codeDateExample1 = `{{ "2022-01-10" | date("DD MMM YYYY") }}\n=> 10 jan 2022`
-  const today = new Date().toISOString().slice(0, 10)
-  const codeDateExample2 = `{{ now | date('YYYY-MM-DD') }}\n=> ${today} ("now" is undefined var, result is today)`
-  const codeDateExample3 = `{{ "01/12/2022" | date('YYYY-MM-DD','DD/MM/YYYY') }}\n=> 2022-12-01`
+// Nunjucks date examples
+const codeDateSyntax = `{{ var_date | date('outputformat','inputformat') }}`
+const codeDateExample1 = `{{ "2022-01-10" | date("DD MMM YYYY") }}\n=> 10 jan 2022`
+const today = new Date().toISOString().slice(0, 10)
+const codeDateExample2 = `{{ now | date('YYYY-MM-DD') }}\n=> ${today} ("now" is undefined var, result is today)`
+const codeDateExample3 = `{{ "01/12/2022" | date('YYYY-MM-DD','DD/MM/YYYY') }}\n=> 2022-12-01`
 
-  // Nunjucks find
-  const codeFindSyntax = `{{ var_array | find('key.path', 'value') }}`
+// Nunjucks find
+const codeFindSyntax = `{{ var_array | find('key.path', 'value') }}`
 
-  // Nunjucks fromjson
-  const codeFromJsonSyntax = `{{ var_jsonstring | fromjson }}`
+// Nunjucks fromjson
+const codeFromJsonSyntax = `{{ var_jsonstring | fromjson }}`
 
-  // Nunjucks setAttribute
-  const codeSetAttrSyntax = `{{ var_object | setAttribute('key.path', 'value') }}`
-  const codeSetAttrExample1 = `{{ {"key1": "value1"} | setAttribute('key2', 'new key/value') }}\n=> {"key1": "value1", "key2": "new value"}`
-  const codeSetAttrExample2 = `{{ {"key.with.dot": "value1", "key2": "value2"} | setAttribute('key\\\\.with\\\\.dot', 'new value') }}\n=> {"key.with.dot": "new value", "key2": "value2"}`
-  const codeSetAttrExample3 = `{{ { "key1": {"level1":"value1"} } | setAttribute('key1.level1', {"level2":"new value"}) }}\n=> {"key1":{"level1":{"level2":"new value"}}}`
+// Nunjucks setAttribute
+const codeSetAttrSyntax = `{{ var_object | setAttribute('key.path', 'value') }}`
+const codeSetAttrExample1 = `{{ {"key1": "value1"} | setAttribute('key2', 'new key/value') }}\n=> {"key1": "value1", "key2": "new value"}`
+const codeSetAttrExample2 = `{{ {"key.with.dot": "value1", "key2": "value2"} | setAttribute('key\\\\.with\\\\.dot', 'new value') }}\n=> {"key.with.dot": "new value", "key2": "value2"}`
+const codeSetAttrExample3 = `{{ { "key1": {"level1":"value1"} } | setAttribute('key1.level1', {"level2":"new value"}) }}\n=> {"key1":{"level1":{"level2":"new value"}}}`
 
-  // Nunjucks split
-  const codeSplitSyntax = `{{ var_string | split('separator') }}`
-  const codeSplitExample1 = `{{ "a,b,c" | split(',') }}\n=> ["a", "b", "c"]`
-  const codeSplitExample2 = `{{ "one two three" | split(' ') }}\n=> ["one", "two", "three"]`
+// Nunjucks split
+const codeSplitSyntax = `{{ var_string | split('separator') }}`
+const codeSplitExample1 = `{{ "a,b,c" | split(',') }}\n=> ["a", "b", "c"]`
+const codeSplitExample2 = `{{ "one two three" | split(' ') }}\n=> ["one", "two", "three"]`
 
-  // Icons
-  const codeBootstrapIcon = `<i class="bi bi-[icon-name]"></i>`
-  const codeFontawesomeIcon = `<i class="fa fa-[icon-name]"></i>`
+// Icons
+const codeBootstrapIcon = `<i class="bi bi-[icon-name]"></i>`
+const codeFontawesomeIcon = `<i class="fa fa-[icon-name]"></i>`
 
-  // Datatable
-  const codeDatatableHtml = `<table id="uniquetableid" class="table datatable">...</table>`
-  const codeDatatableJs = `new DataTable('#uniquetableid', { dom: 'Bfrtip', buttons: ['copy' , 'csv', 'excel'] });`
+// Datatable
+const codeDatatableHtml = `<table id="uniquetableid" class="table datatable">...</table>`
+const codeDatatableJs = `new DataTable('#uniquetableid', { dom: 'Bfrtip', buttons: ['copy' , 'csv', 'excel'] });`
 
-  // Mermaid
-  const codeMermaid = `<pre class="mermaid"></pre>`
+// Mermaid
+const codeMermaid = `<pre class="mermaid"></pre>`
 </script>
 
 <style>
@@ -40,150 +40,194 @@
 </style>
 
 <template>
-  <div class="card">
-    <div class="card-body">
-      <!-- BOOTSTRAP -->
-      <a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/" target="_blank">Bootstrap</a> (html/css) <a data-bs-toggle="collapse" href="#collapseBootstrap"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseBootstrap">
-        <div class="card card-body">
-          {{ $t('edititem.bootstrap.description') }}
+  <div class="card edit-item-helper-card">
+    <div class="card-header d-flex flex-column align-items-start gap-1">
+      <span class="fw-semibold">
+        <i class="bi bi-lightbulb-fill me-1"></i>{{ $t('edititem.global.documentation') }}
+      </span>
+      <span class="small text-secondary">{{ $t('edititem.global.docsbytype') }}</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="accordion accordion-flush" id="item-helpers-accordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-bootstrap-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-bootstrap" aria-expanded="false" aria-controls="item-helper-bootstrap">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">Bootstrap</span>
+                <span class="badge text-bg-secondary">HTML/CSS</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-bootstrap" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-bootstrap-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              {{ $t('edititem.bootstrap.description') }}
+              <div class="mt-2">
+                <a href="https://getbootstrap.com/docs/5.3/getting-started/introduction/"
+                  target="_blank">https://getbootstrap.com/docs/5.3/getting-started/introduction/</a>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <br>
-      <!-- ICONS -->
-      <span class="text-capitalize">{{ $t('edititem.icons.header') }}</span> (html/css) <a data-bs-toggle="collapse" href="#collapseIcons"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseIcons">
-        <div class="card card-body">
-          {{ $t('edititem.icons.description') }}  <br>
-          <span class="text-capitalize">{{ $t('edititem.global.syntax') }} :</span> 
-            <ul>
-              <li>
-                Bootstrap : 
-                <highlightjs language="html" :code="codeBootstrapIcon" />
-              </li>
-              <li>
-                Fontawesome : 
-                <highlightjs language="html" :code="codeFontawesomeIcon" />
-              </li>
-            </ul>
-          {{ $t('edititem.icons.header') }} :
-            <ul>
-              <li><a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap</a></li>
-              <li><a href="https://fontawesome.com/search?o=r&m=free" target="_blank">Fontawesome</a></li>
-            </ul>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-icons-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-icons" aria-expanded="false" aria-controls="item-helper-icons">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">{{ $t('edititem.icons.header') }}</span>
+                <span class="badge text-bg-secondary">HTML/CSS</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-icons" class="accordion-collapse collapse" aria-labelledby="item-helper-icons-heading"
+            data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.icons.description') }}</p>
+              <p class="fw-semibold mb-2">{{ $t('edititem.global.syntax') }}</p>
+              <div class="mb-2">Bootstrap</div>
+              <highlightjs language="html" :code="codeBootstrapIcon" />
+              <div class="mt-2 mb-2">Fontawesome</div>
+              <highlightjs language="html" :code="codeFontawesomeIcon" />
+              <ul class="mt-3 mb-0">
+                <li><a href="https://icons.getbootstrap.com/" target="_blank">Bootstrap Icons</a></li>
+                <li><a href="https://fontawesome.com/search?o=r&m=free" target="_blank">Font Awesome</a></li>
+              </ul>
+            </div>
+          </div>
         </div>
-      </div>
-      <br>
-      <!-- Datatable -->
-      <a href="https://datatables.net/examples/index" target="_blank">DataTables</a> (html/js) <a data-bs-toggle="collapse" href="#collapseDatatable"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseDatatable">
-        <div class="card card-body">
-          {{ $t('edititem.datatable.description') }}<br>
-          {{ $t('edititem.global.syntax') }} : <br><br>
-          <ul>
-            <li>
-              HTML :<br>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-datatables-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-datatables" aria-expanded="false" aria-controls="item-helper-datatables">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">DataTables</span>
+                <span class="badge text-bg-secondary">HTML/JS</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-datatables" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-datatables-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.datatable.description') }}</p>
+              <div class="fw-semibold mb-2">HTML</div>
               <highlightjs language="html" :code="codeDatatableHtml" />
-            </li>
-            <li>
-              Javascript :<br>
+              <div class="fw-semibold mt-2 mb-2">JavaScript</div>
               <highlightjs language="javascript" :code="codeDatatableJs" />
-            </li>
-          </ul>
+              <div class="mt-2">
+                <a href="https://datatables.net/examples/index"
+                  target="_blank">https://datatables.net/examples/index</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-mermaid-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-mermaid" aria-expanded="false" aria-controls="item-helper-mermaid">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">Mermaid</span>
+                <span class="badge text-bg-secondary">Graphs</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-mermaid" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-mermaid-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.mermaid.description') }}</p>
+              <highlightjs language="html" :code="codeMermaid" />
+              <div class="mt-2">
+                <a href="https://mermaid.js.org/intro/" target="_blank">https://mermaid.js.org/intro/</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-nunjucks-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-nunjucks" aria-expanded="false" aria-controls="item-helper-nunjucks">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">Nunjucks</span>
+                <span class="badge text-bg-secondary">Template</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-nunjucks" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-nunjucks-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.nunjucks.description') }}</p>
+              <div class="mb-3">
+                <a href="https://mozilla.github.io/nunjucks/templating.html" target="_blank">
+                  https://mozilla.github.io/nunjucks/templating.html
+                </a>
+              </div>
+              <p class="fw-semibold mb-2">{{ $t('edititem.nunjucks.customfilter') }}</p>
+
+              <div class="mb-3">
+                <div><code>date</code> - {{ $t('edititem.nunjucks.date.description') }}</div>
+                <div class="small text-secondary mb-1">{{ $t('edititem.global.syntax') }}: <a
+                    href="https://momentjs.com/docs/#/displaying/format/" target="_blank">MomentJS format</a></div>
+                <highlightjs language="nunjucks" :code="codeDateSyntax" />
+                <div class="mt-2 small text-secondary">{{ $t('edititem.global.examples') }}</div>
+                <highlightjs language="nunjucks" :code="codeDateExample1" />
+                <highlightjs language="nunjucks" :code="codeDateExample2" />
+                <highlightjs language="nunjucks" :code="codeDateExample3" />
+              </div>
+
+              <div class="mb-3">
+                <div><code>find</code> - {{ $t('edititem.nunjucks.find.description') }}</div>
+                <highlightjs language="nunjucks" :code="codeFindSyntax" />
+              </div>
+
+              <div class="mb-3">
+                <div><code>fromjson</code> - {{ $t('edititem.nunjucks.fromjson.description') }}</div>
+                <highlightjs language="nunjucks" :code="codeFromJsonSyntax" />
+              </div>
+
+              <div class="mb-3">
+                <div><code>setAttribute</code> - {{ $t('edititem.nunjucks.setattribute.description') }}</div>
+                <highlightjs language="nunjucks" :code="codeSetAttrSyntax" />
+                <div class="mt-2 small text-secondary">{{ $t('edititem.global.examples') }}</div>
+                <highlightjs language="nunjucks" :code="codeSetAttrExample1" />
+                <highlightjs language="nunjucks" :code="codeSetAttrExample2" />
+                <highlightjs language="nunjucks" :code="codeSetAttrExample3" />
+              </div>
+
+              <div>
+                <div><code>split</code> - {{ $t('edititem.nunjucks.split.description') }}</div>
+                <highlightjs language="nunjucks" :code="codeSplitSyntax" />
+                <div class="mt-2 small text-secondary">{{ $t('edititem.global.examples') }}</div>
+                <highlightjs language="nunjucks" :code="codeSplitExample1" />
+                <highlightjs language="nunjucks" :code="codeSplitExample2" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-javascript-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-javascript" aria-expanded="false" aria-controls="item-helper-javascript">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">JavaScript</span>
+                <span class="badge text-bg-secondary">JS</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-javascript" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-javascript-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.javascript.description') }}</p>
+              <a href="https://www.w3schools.com/js/default.asp"
+                target="_blank">https://www.w3schools.com/js/default.asp</a>
+            </div>
+          </div>
         </div>
       </div>
-      <br>
-      <!-- MERMAID -->
-      <a href="https://mermaid.js.org/intro/" target="_blank">Mermaid</a> (Graphs) <a data-bs-toggle="collapse" href="#collapseMermaid"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseMermaid">
-        <div class="card card-body">
-          {{ $t('edititem.mermaid.description') }}<br>
-          {{ $t('edititem.global.syntax') }} : 
-          <highlightjs language="html" :code="codeMermaid" />
-        </div>
-      </div>
-      <br>
-      <!-- NUNJUCKS -->
-      <a href="https://mozilla.github.io/nunjucks/fr/templating.html" target="_blank">Nunjucks</a> (Template) <a data-bs-toggle="collapse" href="#collapseNunjucks"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseNunjucks">
-        <div class="card card-body">
-          {{ $t('edititem.nunjucks.description') }}<br>
-          {{ $t('edititem.nunjucks.customfilter') }} : <br>
-          <ul>
-            <li>
-              <code>date</code> : {{ $t('edititem.nunjucks.date.description') }}<br>
-              {{ $t('edititem.global.syntax') }} format : <a href="https://momentjs.com/docs/#/displaying/format/" target="_blank">Momentjs format</a><br>
-              {{ $t('edititem.global.syntax') }} : 
-              <highlightjs language="nunjucks" :code="codeDateSyntax" />
-              <br>
-              {{ $t('edititem.global.examples') }} : 
-              <ul>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeDateExample1" />
-                </li>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeDateExample2" />
-                </li>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeDateExample3" />
-                </li>
-              </ul>
-            </li>
-            <li>
-              <code>find</code> : {{ $t('edititem.nunjucks.find.description') }}<br>
-              {{ $t('edititem.global.syntax') }} : 
-              <highlightjs language="nunjucks" :code="codeFindSyntax" />
-            </li>
-            <li>
-              <code>fromjson</code> : {{ $t('edititem.nunjucks.fromjson.description') }}<br>
-              {{ $t('edititem.global.syntax') }} : 
-              <highlightjs language="nunjucks" :code="codeFromJsonSyntax" />
-            </li>
-            <li>
-              <code>setAttribute</code> : {{ $t('edititem.nunjucks.setattribute.description') }}<br>
-              {{ $t('edititem.global.syntax') }} : 
-              <highlightjs language="nunjucks" :code="codeSetAttrSyntax" />
-              <br>
-              {{ $t('edititem.global.examples') }} : 
-              <ul>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeSetAttrExample1" />
-                </li>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeSetAttrExample2" />
-                </li>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeSetAttrExample3" />
-                </li>
-              </ul>
-            </li>
-            <li>
-              <code>split</code> : {{ $t('edititem.nunjucks.split.description') }}<br>
-              {{ $t('edititem.global.syntax') }} : 
-              <highlightjs language="nunjucks" :code="codeSplitSyntax" />
-              <br>
-              {{ $t('edititem.global.examples') }} :
-              <ul>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeSplitExample1" />
-                </li>
-                <li>
-                  <highlightjs language="nunjucks" :code="codeSplitExample2" />
-                </li>
-              </ul>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <br>
-      <!-- Javascript -->
-      <a href="https://www.w3schools.com/js/default.asp" target="_blank">Javascript</a> (js) <a data-bs-toggle="collapse" href="#collapseJavascript"><i class="bi bi-caret-down-square-fill"></i></a>
-      <div class="collapse" id="collapseJavascript">
-        <div class="card card-body">
-          {{ $t('edititem.javascript.description') }}
-        </div>
-      </div>
-      <br>
     </div>
   </div>
 </template>

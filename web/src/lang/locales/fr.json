@@ -10,6 +10,8 @@
         "groups": "Groupes",
         "add": "Ajouter",
         "remove": "Supprimer",
+        "copy": "Copier",
+        "copied": "Copié",
         "edit": "Modifier",
         "preview": "Aperçu",
         "error": {
@@ -166,15 +168,24 @@
         "views": "Vues",
         "name": "Nom",
         "actions": "Actions",
+        "subtitle": "Gérez les sources, objets, vues et secrets depuis un espace unique",
+        "total": "Entrées",
         "add": "Ajouter",
         "secrets": "Secrets",
         "secret_value": "Valeur du secret"
     },
     "edititem": {
         "header": "Objet",
+        "subtitle": "Modifiez le template HTML, le script JavaScript et les sources associées à cet objet",
+        "loading": "Chargement de l'objet...",
+        "loaderror": "Impossible de charger cet objet",
+        "retry": "Réessayer",
+        "preview": "Aperçu",
         "global": {
             "syntax": "Syntaxe",
-            "examples": "Exemples"
+            "examples": "Exemples",
+            "documentation": "Documentation intégrée",
+            "docsbytype": "Une documentation dédiée est disponible dans chaque section"
         },
         "bootstrap": {
             "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
