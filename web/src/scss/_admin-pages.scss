@@ -1557,6 +1557,24 @@
   background: var(--bs-tertiary-bg);
   border-color: var(--bs-border-color);
   color: var(--bs-secondary-color);
+
+  .admin-edit-view-page {
+    --edit-view-workspace-min-height: clamp(280px, 54vh, 460px);
+  }
+
+  .admin-edit-view-page .admin-edit-view-hero-icon {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 0.95rem;
+  }
+
+  .admin-edit-view-page .admin-edit-view-title-wrap h5 {
+    font-size: 1.2rem;
+  }
+
+  .admin-edit-view-page .admin-edit-view-mode-group {
+    width: 100%;
+  }
   font-weight: 600;
 }
 
@@ -1741,6 +1759,193 @@
 
 [data-bs-theme='light'] .admin-edit-source-page .admin-edit-source-panel,
 [data-bs-theme='light'] .admin-edit-source-page .admin-edit-source-side .card {
+  border-color: #d4dce9;
+  background: #ffffff;
+}
+
+/* Shared edit view page styles */
+.admin-edit-view-page {
+  max-width: 100%;
+  --edit-view-workspace-min-height: clamp(420px, 62vh, 860px);
+}
+
+.admin-edit-view-page .admin-edit-view-hero,
+.admin-edit-view-page .admin-edit-view-panel {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  box-shadow: 0 0.55rem 1.35rem rgba(0, 0, 0, 0.13);
+}
+
+.admin-edit-view-page .admin-edit-view-hero {
+  background: linear-gradient(118deg, #ffe7d7 0%, #fff3ea 58%, #ffe9dc 100%);
+  overflow: hidden;
+  position: relative;
+}
+
+.admin-edit-view-page .admin-edit-view-hero::after {
+  content: '';
+  position: absolute;
+  right: -4rem;
+  top: -5rem;
+  width: 11rem;
+  height: 11rem;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(224, 118, 53, 0.3) 0%, rgba(224, 118, 53, 0) 70%);
+}
+
+.admin-edit-view-page .admin-edit-view-hero-icon {
+  width: 2.55rem;
+  height: 2.55rem;
+  border-radius: 0.85rem;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 1rem;
+  background: linear-gradient(145deg, #d9772f, #f2a155);
+  box-shadow: 0 0.55rem 1.3rem rgba(217, 119, 47, 0.34);
+}
+
+.admin-edit-view-page .admin-edit-view-title-wrap h5 {
+  font-size: 1.35rem;
+}
+
+.admin-edit-view-page .admin-edit-view-kicker {
+  font-size: 0.67rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--bs-secondary-color);
+}
+
+.admin-edit-view-page .admin-edit-view-state-chip {
+  border: 1px solid var(--bs-border-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.admin-edit-view-page .admin-edit-view-name-input .input-group-text,
+.admin-edit-view-page .admin-edit-view-mode-group .input-group-text {
+  background: var(--bs-tertiary-bg);
+  border-color: var(--bs-border-color);
+  color: var(--bs-secondary-color);
+}
+
+.admin-edit-view-page .admin-edit-view-mode-group {
+  width: auto;
+  min-width: 12rem;
+}
+
+.admin-edit-view-page .admin-edit-view-panel {
+  background: var(--bs-body-bg);
+}
+
+.admin-edit-view-page .admin-edit-view-editor-panel {
+  overflow: hidden;
+}
+
+.admin-edit-view-page .admin-edit-view-panel .card-body {
+  min-height: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--bs-body-color-rgb), 0.02) 0%,
+    rgba(var(--bs-body-color-rgb), 0) 65%
+  );
+}
+
+.admin-edit-view-page .admin-edit-view-panel-head {
+  border-bottom: 1px solid var(--bs-border-color);
+  background: rgba(var(--bs-body-color-rgb), 0.02);
+  border-top-left-radius: inherit;
+  border-top-right-radius: inherit;
+}
+
+.admin-edit-view-page .admin-edit-view-panel-title {
+  font-weight: 700;
+}
+
+.admin-edit-view-page .admin-edit-view-workspace {
+  min-height: var(--edit-view-workspace-min-height);
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .card {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.85rem;
+  box-shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .grid-stack {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.8rem;
+  min-height: clamp(320px, 50vh, 620px);
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .grid-stack-item-content {
+  border-radius: 0.8rem;
+  overflow: hidden;
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .resize-handle {
+  background-color: rgba(var(--bs-body-color-rgb), 0.25);
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .resize-handle:hover {
+  background-color: rgba(var(--bs-primary-rgb), 0.65);
+}
+
+.admin-edit-view-page .admin-edit-view-workspace .highlight-delete-row.highlight-visible,
+.admin-edit-view-page .admin-edit-view-workspace .highlight-delete-item.highlight-visible {
+  border-color: rgba(var(--bs-danger-rgb), 0.6);
+}
+
+.admin-edit-view-page .json-modal {
+  background-color: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.65rem;
+  overflow-x: auto;
+  border: 1px solid var(--bs-border-color);
+  margin: 0;
+  max-height: min(65vh, 560px);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-hero {
+  border-color: #374155;
+  background: linear-gradient(118deg, #3b2618 0%, #443022 58%, #4c351f 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-panel,
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-workspace .card {
+  border-color: #374155;
+  background: #202833;
+  box-shadow: 0 0.85rem 1.85rem rgba(0, 0, 0, 0.32);
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-panel .card-body {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0) 65%);
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-panel-head {
+  border-bottom-color: #374155;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .admin-edit-view-workspace .grid-stack {
+  border-color: #374155;
+  background: #1b2330;
+}
+
+[data-bs-theme='dark'] .admin-edit-view-page .json-modal {
+  border-color: #3d475c;
+  background: #1a222e;
+  color: #d8e3f8;
+}
+
+[data-bs-theme='light'] .admin-edit-view-page .admin-edit-view-panel,
+[data-bs-theme='light'] .admin-edit-view-page .admin-edit-view-workspace .card {
   border-color: #d4dce9;
   background: #ffffff;
 }
