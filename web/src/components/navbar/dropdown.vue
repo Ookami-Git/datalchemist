@@ -147,7 +147,8 @@ watch(() => props.collapsed, (collapsed, previousCollapsed) => {
     <li :class="['nav-item', 'dropdown', { dropend: props.collapsed, 'dropdown-inline': !props.collapsed }]">
         <a class='nav-link dropdown-toggle d-flex align-items-center gap-2' ref="toggleRef"
             :class="{ 'justify-content-center': props.collapsed }" href='#' role='button' data-bs-toggle='dropdown'
-            :data-bs-display="props.collapsed ? null : 'static'" aria-expanded='false'><i :class="menuIcon"></i>
+            :data-bs-display="props.collapsed ? null : 'static'" aria-expanded='false'
+            :title="props.collapsed ? menuitem.name : null" :aria-label="menuitem.name"><i :class="menuIcon"></i>
             <transition name="sidebar-text">
                 <span v-if="!props.collapsed" class="menu-label">{{
                     menuitem.name }}</span>

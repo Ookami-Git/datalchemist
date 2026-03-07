@@ -50,14 +50,16 @@ if (props.menuitem.newtab) {
     </li>
   </template>
   <li class='nav-item' v-else-if="props.menuitem.external"><a class='nav-link d-flex align-items-center gap-2'
-      :class="{ 'justify-content-center': props.collapsed }" :href="link" :target="target"><i :class="menuIcon"></i>
+      :class="{ 'justify-content-center': props.collapsed }" :href="link" :target="target"
+      :title="props.collapsed ? props.menuitem.name : null" :aria-label="props.menuitem.name"><i :class="menuIcon"></i>
       <transition name="sidebar-text">
         <span v-if="!props.collapsed" class="menu-label">{{ props.menuitem.name }}</span>
       </transition>
     </a></li>
   <li class='nav-item' v-else-if="link">
     <RouterLink active-class="active" class='nav-link d-flex align-items-center gap-2'
-      :class="{ 'justify-content-center': props.collapsed }" :to="link" :target="target"><i :class="menuIcon"></i>
+      :class="{ 'justify-content-center': props.collapsed }" :to="link" :target="target"
+      :title="props.collapsed ? props.menuitem.name : null" :aria-label="props.menuitem.name"><i :class="menuIcon"></i>
       <transition name="sidebar-text">
         <span v-if="!props.collapsed" class="menu-label">{{ props.menuitem.name }}</span>
       </transition>

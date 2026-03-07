@@ -138,7 +138,8 @@ const toggleSidebar = () => {
             <NavbarFilter :collapsed="!showSidebarText" />
             <button v-if="save.show" type="button"
               :class="[`btn btn-${save.color}`, 'sidebar-action d-flex align-items-center gap-2', { 'justify-content-center': !showSidebarText }]"
-              @click="save.function" :disabled="save.disabled">
+              @click="save.function" :disabled="save.disabled" :title="!showSidebarText ? $t('save.label') : null"
+              :aria-label="$t('save.label')">
               <i class="bi bi-floppy-fill"></i>
               <transition name="sidebar-text">
                 <span v-if="showSidebarText">{{ $t('save.label') }}</span>
