@@ -99,18 +99,28 @@ const fetchUser = () => {
 };
 
 const updateBodyStyle = () => {
-  // Mettez à jour bodyStyle avec les nouvelles valeurs
-  // Applique les styles dynamiques au <body> du document principal
-  document.body.style.backgroundColor = parameters.value['bg_color_' + parameters.value.theme] || '';
-  const gradient = `linear-gradient(to right, ${parameters.value['bg_color_' + parameters.value.theme] || ''}, ${parameters.value['bg_color2_' + parameters.value.theme] || ''})`;
-  document.body.style.background = gradient;
-  document.body.style.minHeight = '100vh';
+  const backgroundA = parameters.value['bg_color_' + parameters.value.theme] || '';
+  const backgroundB = parameters.value['bg_color2_' + parameters.value.theme] || backgroundA;
+  const gradient = `linear-gradient(to right, ${backgroundA}, ${backgroundB})`;
+
+  // Apply dynamic background on app container instead of document body canvas.
+  appBackgroundStyle.value = {
+    backgroundColor: backgroundA,
+    background: gradient,
+    minHeight: '100vh'
+  };
+
+  // Reset global body/html background to avoid route-to-route visual bleed.
+  document.body.style.background = '';
+  document.body.style.backgroundColor = '';
+  document.body.style.minHeight = '';
+  document.documentElement.style.background = '';
 };
 
-const bodyStyle = ref({
+const appBackgroundStyle = ref({
   'background-color': '',
   'background': '',
-  'height': '100%'
+  'min-height': '100vh'
 });
 
 provide('parameters', parameters);
@@ -159,7 +169,7 @@ watch(route, () => {
 </script>
 
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :style="appBackgroundStyle">
     <navbar></navbar>
     <main
       :class="['app-content', 'container-fluid', { 'with-sidebar': parameters.auth, 'is-collapsed': parameters.auth && isSidebarCollapsed }]">

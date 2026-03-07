@@ -4,14 +4,16 @@ import item from './item.vue'
 import dropdown from './dropdown.vue';
 import NavbarFilter from './filter.vue';
 import YAML from 'yaml';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 const route = useRoute();
+const router = useRouter();
 
 const parameter = inject('parameters');
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+const requestNoTransition = inject('skipNextRouteTransition', null);
 const isSidebarCollapsed = inject('isSidebarCollapsed', ref(false));
 const showSidebarText = ref(!isSidebarCollapsed.value);
 
@@ -69,10 +71,17 @@ onBeforeUnmount(() => {
 
 const logout = async () => {
   try {
-    // Appel à l'API de déconnexion
     await axios.get(`${apiUrl}/auth/logout`);
-    // Rafraîchissement de la page pour rediriger vers la page de connexion
-    location.reload();
+
+    // Refresh app parameters on next route and avoid visual flash from full reload.
+    localStorage.setItem('reloadparameters', true);
+    localStorage.removeItem('redirectPath');
+
+    if (typeof requestNoTransition === 'function') {
+      requestNoTransition();
+    }
+
+    await router.replace({ name: 'login' });
   } catch (error) {
     console.error('Logout failed:', error);
   }
