@@ -40,6 +40,10 @@ const fetchError = ref(null);
 const itemRoot = ref(null);
 let renderCycle = 0;
 
+function canRenderTemplateWithData() {
+  return Boolean(props.data && props.itemDescribe?.template?.trim());
+}
+
 function cleanupDataTables() {
   if (!itemRoot.value) return;
 
@@ -55,7 +59,7 @@ function cleanupDataTables() {
         const settings = this.settings?.()[0];
         if (!settings || settings.bDestroying) return;
 
-        this.destroy(true);
+        this.destroy(false);
       });
     }
   } catch {
@@ -69,7 +73,7 @@ function cleanupDataTables() {
       const dtApi = jQuery(table).DataTable();
       const settings = dtApi.settings?.()[0];
       if (!settings || settings.bDestroying) return;
-      dtApi.destroy(true);
+      dtApi.destroy(false);
     } catch {
       // Ignore teardown race conditions from DataTables plugins during route transitions.
     }
@@ -115,6 +119,33 @@ function scheduleResizeWidgetPasses() {
   }, 50);
 }
 
+function normalizeDynamicFieldAttributes() {
+  if (!itemRoot.value) return;
+
+  const dynamicFields = itemRoot.value.querySelectorAll('input, textarea, select');
+  dynamicFields.forEach((field, index) => {
+    // Browser autofill overlays can fail on null metadata for dynamically injected fields.
+    if (!field.hasAttribute('autocomplete')) {
+      field.setAttribute('autocomplete', 'off');
+    }
+
+    if (!field.hasAttribute('name')) {
+      const fallbackName = field.id ? field.id : `dc-dynamic-field-${index}`;
+      field.setAttribute('name', fallbackName);
+    }
+  });
+}
+
+function scheduleDynamicFieldNormalizationPasses() {
+  normalizeDynamicFieldAttributes();
+  setTimeout(() => {
+    normalizeDynamicFieldAttributes();
+  }, 0);
+  setTimeout(() => {
+    normalizeDynamicFieldAttributes();
+  }, 50);
+}
+
 function hasSearchInputInItemRoot() {
   if (!itemRoot.value) {
     return false;
@@ -122,7 +153,6 @@ function hasSearchInputInItemRoot() {
 
   const found = !!itemRoot.value.querySelector('input[type="search"], .dataTables_filter input');
   if (found) {
-    console.log(found);
     globalSearch.value = true;
   }
   return found;
@@ -147,10 +177,16 @@ watch(
     renderedItem.value = null;
 
     const itemid = props.itemDescribe?.itemid || route.params.itemid;
+    const canRenderDataTemplate = canRenderTemplateWithData();
 
     try {
       await renderItem();
       if (canceled || currentCycle !== renderCycle) return;
+
+      if (!canRenderDataTemplate) {
+        if (globalSearch) globalSearch.value = false;
+        return;
+      }
 
       // --- DataTables: Langue ---
       setDataTablesLanguage(parameters.value.lang);
@@ -159,7 +195,7 @@ watch(
       if (canceled || currentCycle !== renderCycle) return;
 
       // --- JS dynamique ---
-      if (props.itemDescribe?.javascript) {
+      if (props.itemDescribe?.javascript?.trim()) {
         runDynamicJs(
           nunjucksEnv.renderString(props.itemDescribe.javascript, props.data),
           { jQuery, DataTable, itemData: props.data, itemid, jszip, pdfmake, pdfFonts }
@@ -174,6 +210,7 @@ watch(
       if (canceled || currentCycle !== renderCycle) return;
 
       scheduleResizeWidgetPasses();
+      scheduleDynamicFieldNormalizationPasses();
       hasSearchInputInItemRoot();
     } catch (error) {
       hasLoadError.value = true;
