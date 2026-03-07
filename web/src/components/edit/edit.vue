@@ -217,12 +217,14 @@ fetchSecrets()
               <i class="bi bi-grid-3x3-gap-fill me-1"></i>
               {{ $t('edit.total') }}: {{ totalEntries }}
             </span>
-            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.sources') }}: {{
+            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-source">{{ $t('edit.sources') }}: {{
               sourcesCount }}</span>
-            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.items') }}: {{ itemsCount
-            }}</span>
-            <span class="badge rounded-pill admin-edit-state-chip text-bg-primary">{{ $t('edit.views') }}: {{ viewsCount
-            }}</span>
+            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-item">{{ $t('edit.items') }}: {{
+              itemsCount
+              }}</span>
+            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-view">{{ $t('edit.views') }}: {{
+              viewsCount
+              }}</span>
             <span v-if="showSecretsPanel" class="badge rounded-pill admin-edit-state-chip text-bg-secondary">{{
               $t('edit.secrets') }}: {{ secretsCount }}</span>
           </div>
@@ -232,7 +234,7 @@ fetchSecrets()
       <div
         :class="['row', 'g-3', 'g-xxl-4', showSecretsPanel ? 'row-cols-1 row-cols-lg-2 row-cols-xxl-4' : 'row-cols-1 row-cols-md-2 row-cols-xxl-3']">
         <div class="col" v-if="showSecretsPanel">
-          <article class="card admin-edit-panel shadow-sm">
+          <article class="card admin-edit-panel admin-edit-panel-secrets shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
               <div
                 class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
@@ -284,11 +286,11 @@ fetchSecrets()
         </div>
 
         <div class="col">
-          <article class="card admin-edit-panel shadow-sm">
+          <article class="card admin-edit-panel admin-edit-panel-source shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
               <div
-                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.sources') }}</h5>
+                class="admin-edit-panel-head admin-edit-panel-head-source px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title admin-edit-panel-title-source mb-0">{{ $t('edit.sources') }}</h5>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#addsource">
                   <i class="bi bi-plus-lg"></i>
@@ -337,11 +339,11 @@ fetchSecrets()
         </div>
 
         <div class="col">
-          <article class="card admin-edit-panel shadow-sm">
+          <article class="card admin-edit-panel admin-edit-panel-item shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
               <div
-                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.items') }}</h5>
+                class="admin-edit-panel-head admin-edit-panel-head-item px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title admin-edit-panel-title-item mb-0">{{ $t('edit.items') }}</h5>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#additem">
                   <i class="bi bi-plus-lg"></i>
@@ -390,11 +392,11 @@ fetchSecrets()
         </div>
 
         <div class="col">
-          <article class="card admin-edit-panel shadow-sm">
+          <article class="card admin-edit-panel admin-edit-panel-view shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
               <div
-                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.views') }}</h5>
+                class="admin-edit-panel-head admin-edit-panel-head-view px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
+                <h5 class="admin-edit-panel-title admin-edit-panel-title-view mb-0">{{ $t('edit.views') }}</h5>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#addview">
                   <i class="bi bi-plus-lg"></i>
