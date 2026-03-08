@@ -28,9 +28,16 @@ const jsonEdit = ref('');
 
 const cloneData = (value) => JSON.parse(JSON.stringify(value ?? null));
 
-const itemsCount = computed(() =>
-  Array.isArray(parameters.value?.items) ? parameters.value.items.length : 0
-);
+const itemsCount = computed(() => {
+  const items = parameters.value?.items;
+
+  if (!Array.isArray(items)) {
+    return 0;
+  }
+
+  // In row mode, `items` is an array of rows (arrays). In grid mode, each entry is one widget.
+  return items.reduce((total, entry) => total + (Array.isArray(entry) ? entry.length : 1), 0);
+});
 
 const modeLabelKey = computed(() =>
   viewMode.value === 2 ? 'editview.mode_grid' : 'editview.mode_row'
@@ -200,7 +207,8 @@ onMounted(async () => {
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
               <RouterLink v-if="viewInfo" type="button" class="btn btn-outline-info btn-sm"
-                :title="`View ${viewInfo.id}`" :to="{ name: 'view', params: { viewid: viewInfo.id } }" target="_blank">
+                :title="$t('global.preview_saved_hint')" :to="{ name: 'view', params: { viewid: viewInfo.id } }"
+                target="_blank">
                 <i class="bi bi-eye-fill me-1"></i>{{ $t('global.preview') }}
               </RouterLink>
               <button type="button" class="btn btn-outline-primary btn-sm" @click="openJsonModal">

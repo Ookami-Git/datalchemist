@@ -1,5 +1,5 @@
 <script setup>
-import { watch, ref, inject, onBeforeUnmount } from 'vue';
+import { watch, ref, inject, onMounted, onBeforeUnmount } from 'vue';
 import item from './item.vue'
 import dropdown from './dropdown.vue';
 import NavbarFilter from './filter.vue';
@@ -22,6 +22,36 @@ const menuKey = ref(0);
 const menuYaml = ref(null)
 const sidebarTextRevealDelayMs = 220;
 let sidebarTextTimer = null;
+
+// Force collapse on small screens
+const smallScreenBreakpoint = '(max-width: 991.98px)';
+const forceCollapsed = ref(false);
+let savedCollapsedState = false;
+let mediaQuery = null;
+
+function onScreenChange(e) {
+  if (e.matches) {
+    // Screen became small: save current state, force collapse
+    savedCollapsedState = isSidebarCollapsed.value;
+    forceCollapsed.value = true;
+    isSidebarCollapsed.value = true;
+  } else {
+    // Screen became large: restore previous state
+    forceCollapsed.value = false;
+    isSidebarCollapsed.value = savedCollapsedState;
+  }
+}
+
+onMounted(() => {
+  mediaQuery = window.matchMedia(smallScreenBreakpoint);
+  // Initial check
+  if (mediaQuery.matches) {
+    savedCollapsedState = isSidebarCollapsed.value;
+    forceCollapsed.value = true;
+    isSidebarCollapsed.value = true;
+  }
+  mediaQuery.addEventListener('change', onScreenChange);
+});
 
 // Mettre a jour le menu si sa definition change
 watch(parameter, () => {
@@ -67,6 +97,9 @@ watch(isSidebarCollapsed, (collapsed) => {
 
 onBeforeUnmount(() => {
   clearSidebarTextTimer();
+  if (mediaQuery) {
+    mediaQuery.removeEventListener('change', onScreenChange);
+  }
 });
 
 const logout = async () => {
@@ -88,6 +121,7 @@ const logout = async () => {
 };
 
 const toggleSidebar = () => {
+  if (forceCollapsed.value) return;
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
 };
 
@@ -95,7 +129,7 @@ const toggleSidebar = () => {
 
 <template>
   <nav v-if="parameter.auth"
-    :class="['navbar', 'navbar-expand-lg', 'sidebar-navbar', { 'is-collapsed': isSidebarCollapsed }]" :key="menuKey">
+    :class="['navbar', 'navbar-expand', 'sidebar-navbar', { 'is-collapsed': isSidebarCollapsed }]" :key="menuKey">
     <div class="sidebar-shell container-fluid px-0 d-flex flex-column align-items-stretch h-100">
       <div :class="[
         'sidebar-header mb-3 d-flex',
@@ -106,8 +140,8 @@ const toggleSidebar = () => {
         <a href="#" class="d-inline-flex align-items-center sidebar-logo-link">
           <img src="/logo.png" alt="Logo" style="height: 40px;">
         </a>
-        <button type="button"
-          class="btn btn-sm d-none d-lg-inline-flex align-items-center justify-content-center sidebar-toggle"
+        <button v-if="!forceCollapsed" type="button"
+          class="btn btn-sm d-inline-flex align-items-center justify-content-center sidebar-toggle"
           @click="toggleSidebar" :aria-label="isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
           <i :class="isSidebarCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left'"></i>
         </button>
@@ -115,11 +149,7 @@ const toggleSidebar = () => {
       <transition name="sidebar-text">
         <div v-if="showSidebarText" class="navbar-brand d-block w-100 text-center">{{ parameter.name }}</div>
       </transition>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-      </button>
-      <div class="collapse navbar-collapse align-items-stretch" id="navbarSupportedContent">
+      <div class="navbar-collapse align-items-stretch" id="navbarSupportedContent">
         <ul class="navbar-nav flex-column w-100 mb-3">
           <template v-for="(menuitem, index) in menu">
             <template v-if="menuitem.subitems">

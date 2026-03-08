@@ -37,6 +37,8 @@ const showSecretsPanel = computed(() =>
   !!parameter?.enableSecret || secretsCount.value > 0
 );
 
+const canManageSecrets = computed(() => !!parameter?.enableSecret);
+
 const types = [
   {
     "type": "view",
@@ -165,6 +167,11 @@ const fetchSecrets = async () => {
 };
 
 function UpdateSecret() {
+  if (!canManageSecrets.value) {
+    apiError.value = "Secret editing is disabled when secret creation is disabled.";
+    return;
+  }
+
   axios.put(`${apiUrl}/secret/${EditSecret.value.id}`, {
     name: EditSecret.value.name,
     secret: EditSecret.value.secret
@@ -177,6 +184,16 @@ function UpdateSecret() {
       apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
       console.log(error)
     })
+}
+
+function BeginEditSecret(secretRow) {
+  if (!canManageSecrets.value) {
+    return;
+  }
+
+  EditSecret.value.id = secretRow.id;
+  EditSecret.value.name = secretRow.name;
+  EditSecret.value.secret = null;
 }
 
 fetchSources()
@@ -221,10 +238,10 @@ fetchSecrets()
               sourcesCount }}</span>
             <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-item">{{ $t('edit.items') }}: {{
               itemsCount
-              }}</span>
+            }}</span>
             <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-view">{{ $t('edit.views') }}: {{
               viewsCount
-              }}</span>
+            }}</span>
             <span v-if="showSecretsPanel" class="badge rounded-pill admin-edit-state-chip text-bg-secondary">{{
               $t('edit.secrets') }}: {{ secretsCount }}</span>
           </div>
@@ -239,8 +256,8 @@ fetchSecrets()
               <div
                 class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
                 <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.secrets', 'Secrets') }}</h5>
-                <button v-if="parameter.enableSecret" type="button" class="btn btn-success btn-sm"
-                  :title="$t('edit.add')" data-bs-toggle="modal" data-bs-target="#addsecret">
+                <button v-if="canManageSecrets" type="button" class="btn btn-success btn-sm" :title="$t('edit.add')"
+                  data-bs-toggle="modal" data-bs-target="#addsecret">
                   <i class="bi bi-plus-lg"></i>
                 </button>
                 <button v-else type="button" class="btn btn-secondary btn-sm" :title="$t('edit.add')" disabled>
@@ -266,9 +283,11 @@ fetchSecrets()
                       <td>{{ row.name }}</td>
                       <td class="text-end">
                         <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Modifier')"
-                            @click="EditSecret.id = row.id; EditSecret.name = row.name; EditSecret.secret = null"
-                            data-bs-toggle="modal" data-bs-target="#editsecret">
+                          <button type="button" class="btn btn-outline-primary"
+                            :title="canManageSecrets ? $t('global.edit', 'Modifier') : $t('edit.secrets_edit_disabled')"
+                            :disabled="!canManageSecrets" @click="BeginEditSecret(row)"
+                            :data-bs-toggle="canManageSecrets ? 'modal' : null"
+                            :data-bs-target="canManageSecrets ? '#editsecret' : null">
                             <i class="bi bi-pencil-square"></i>
                           </button>
                           <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
@@ -530,8 +549,9 @@ fetchSecrets()
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
-          <button type="button" class="btn btn-primary" @click="UpdateSecret" data-bs-dismiss="modal">{{
-            $t('global.edit', 'Modifier') }}</button>
+          <button type="button" class="btn btn-primary" :disabled="!canManageSecrets" @click="UpdateSecret"
+            data-bs-dismiss="modal">{{
+              $t('global.edit', 'Modifier') }}</button>
         </div>
       </div>
     </div>

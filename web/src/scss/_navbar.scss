@@ -165,35 +165,4 @@
   transform: translateX(-0.35rem);
 }
 
-@media (max-width: 991.98px) {
-  .sidebar-navbar {
-    width: 100%;
-    height: auto;
-    min-height: auto;
-    padding: 0.5rem;
-    position: sticky;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: auto;
-  }
 
-  .sidebar-navbar.is-collapsed {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-  }
-
-  .sidebar-navbar .navbar-collapse {
-    height: auto;
-    min-height: auto;
-  }
-
-  .sidebar-navbar .navbar-nav {
-    overflow-y: visible;
-  }
-
-  .sidebar-navbar .nav-item.dropdown {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-  }
-}

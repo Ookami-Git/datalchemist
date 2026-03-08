@@ -178,8 +178,10 @@ onBeforeUnmount(() => {
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
               <button type="button" class="btn btn-outline-info btn-sm" @click="openPreview"
-                :title="$t('edititem.preview')" :disabled="!ItemInfo">
+                :title="$t('edititem.preview_local_hint')" :disabled="!ItemInfo">
                 <i class="bi bi-eye me-1"></i>{{ $t('edititem.preview') }}
+                <i class="bi bi-pencil-square ms-1 opacity-75" aria-hidden="true"></i>
+                <span class="visually-hidden">{{ $t('edititem.preview_local_hint') }}</span>
               </button>
             </div>
 

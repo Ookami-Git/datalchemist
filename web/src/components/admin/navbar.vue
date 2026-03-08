@@ -265,7 +265,7 @@ const yamlExample = `
         </div>
 
         <div class="col-12 col-xl-4 col-xxl-3">
-          <article class="card admin-navbar-panel shadow-sm h-100">
+          <article class="card admin-navbar-panel shadow-sm">
             <div class="card-body p-3 p-lg-4 admin-navbar-guide-scroll">
               <div v-if="isError" class="alert alert-danger admin-navbar-alert mb-3" role="alert" aria-live="assertive">
                 <div class="fw-semibold mb-1">

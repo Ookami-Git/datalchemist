@@ -14,6 +14,7 @@
         "copied": "Copied",
         "edit": "Edit",
         "preview": "Preview",
+        "preview_saved_hint": "Preview of the saved version",
         "error": {
             "unknown": "Unknown error",
             "fetch_sources": "Error while fetching sources",
@@ -168,10 +169,11 @@
         "views": "Views",
         "name": "Name",
         "actions": "Actions",
-        "subtitle": "Manage sources, items, views, and secrets from one unified workspace",
+        "subtitle": "Manage sources, items, views, and secrets",
         "total": "Entries",
         "add": "Add",
         "secrets": "Secrets",
+        "secrets_edit_disabled": "Secret editing is disabled",
         "secret_value": "Secret value"
     },
     "edititem": {
@@ -181,6 +183,8 @@
         "loaderror": "Unable to load this item",
         "retry": "Retry",
         "preview": "Preview",
+        "preview_local": "Local preview",
+        "preview_local_hint": "Includes unsaved changes",
         "global": {
             "syntax": "Syntax",
             "examples": "Examples",
@@ -238,6 +242,7 @@
         "retry": "Retry",
         "config_title": "Configuration",
         "config_help": "Define connector, output format, and related parameters",
+        "secrets_hint": "Secrets are available in source templates (backend processing):",
         "type_label": "Type",
         "format": "Format",
         "database": {

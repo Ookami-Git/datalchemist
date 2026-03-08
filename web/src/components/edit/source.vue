@@ -13,6 +13,7 @@ const typeSource = "source";
 
 const route = useRoute();
 const apiUrl = inject('apiUrl');
+const parameters = inject('parameters', null);
 
 const cloneData = (value) => JSON.parse(JSON.stringify(value ?? null));
 
@@ -200,7 +201,7 @@ onMounted(async () => {
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
               <a v-if="SourceInfo" type="button" class="btn btn-outline-info btn-sm"
-                :title="`${$t('editsource.header')} ${SourceInfo.id}`" :href="`${apiUrl}/data/source/${SourceInfo.id}`"
+                :title="$t('global.preview_saved_hint')" :href="`${apiUrl}/data/source/${SourceInfo.id}`"
                 target="_blank">
                 <i class="bi bi-eye-fill me-1"></i>{{ $t('global.preview') }}
               </a>
@@ -243,6 +244,10 @@ onMounted(async () => {
               <div class="admin-edit-source-panel-head px-3 px-lg-4 py-3">
                 <h5 class="admin-edit-source-panel-title mb-1">{{ $t('editsource.config_title') }}</h5>
                 <p class="small text-secondary mb-0">{{ $t('editsource.config_help') }}</p>
+                <p v-if="parameters?.enableSecret" class="small text-secondary mb-0 mt-1">
+                  <i class="bi bi-shield-lock me-1" aria-hidden="true"></i>{{ $t('editsource.secrets_hint') }}
+                  <code class="ms-1" v-pre>{{ secret.my_secret | secret }}</code>
+                </p>
               </div>
 
               <div class="p-3 p-lg-4 d-flex flex-column gap-3" v-if="showSourceEditor">

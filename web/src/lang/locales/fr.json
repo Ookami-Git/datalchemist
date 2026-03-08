@@ -14,6 +14,7 @@
         "copied": "Copié",
         "edit": "Modifier",
         "preview": "Aperçu",
+        "preview_saved_hint": "Aperçu de la version sauvegardée",
         "error": {
             "unknown": "Erreur inconnue",
             "fetch_sources": "Erreur lors de la récupération des sources",
@@ -168,10 +169,11 @@
         "views": "Vues",
         "name": "Nom",
         "actions": "Actions",
-        "subtitle": "Gérez les sources, objets, vues et secrets depuis un espace unique",
+        "subtitle": "Gérez les sources, objets, vues et secrets",
         "total": "Entrées",
         "add": "Ajouter",
         "secrets": "Secrets",
+        "secrets_edit_disabled": "Edition des secrets desactivee",
         "secret_value": "Valeur du secret"
     },
     "edititem": {
@@ -181,6 +183,8 @@
         "loaderror": "Impossible de charger cet objet",
         "retry": "Réessayer",
         "preview": "Aperçu",
+        "preview_local": "Aperçu local",
+        "preview_local_hint": "Inclut les modifications non sauvegardées",
         "global": {
             "syntax": "Syntaxe",
             "examples": "Exemples",
@@ -238,6 +242,7 @@
         "retry": "Réessayer",
         "config_title": "Configuration",
         "config_help": "Définissez le connecteur, le format de sortie et les paramètres associés",
+        "secrets_hint": "Secrets disponibles dans les templates de source (traitement backend) :",
         "type_label": "Type",
         "format": "Format",
         "database": {
