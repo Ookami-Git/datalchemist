@@ -1266,6 +1266,254 @@
   background: rgba(var(--bs-body-bg-rgb), 0.94);
 }
 
+/* Shared edit modals */
+.admin-edit-add-modal .modal-dialog {
+  max-width: 32rem;
+}
+
+.admin-edit-secret-create-modal .modal-dialog {
+  max-width: 34rem;
+}
+
+.admin-edit-edit-secret-modal .modal-dialog {
+  max-width: 34rem;
+}
+
+.admin-edit-delete-modal .modal-dialog {
+  max-width: 32rem;
+}
+
+.admin-edit-modern-modal .modal-content {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: var(--bs-body-bg);
+  box-shadow: 0 1.2rem 2.4rem rgba(15, 23, 42, 0.24);
+}
+
+.admin-edit-modern-modal .modal-header {
+  border-bottom: 1px solid var(--bs-border-color);
+  padding: 0.95rem 1rem 0.9rem;
+  align-items: flex-start;
+}
+
+.admin-edit-modern-modal .modal-body {
+  padding: 1rem;
+}
+
+.admin-edit-modern-modal .modal-footer {
+  border-top: 1px solid var(--bs-border-color);
+  padding: 0.85rem 1rem 1rem;
+  gap: 0.5rem;
+}
+
+.admin-edit-modal-header-soft {
+  background: linear-gradient(180deg, rgba(30, 136, 229, 0.09) 0%, rgba(var(--bs-body-bg-rgb), 0.95) 100%);
+}
+
+.admin-edit-modal-header-danger {
+  background: linear-gradient(180deg, rgba(220, 53, 69, 0.11) 0%, rgba(var(--bs-body-bg-rgb), 0.95) 100%);
+}
+
+.admin-edit-modal-header-add-source {
+  background: linear-gradient(180deg, rgba(28, 159, 114, 0.12) 0%, rgba(var(--bs-body-bg-rgb), 0.95) 100%);
+}
+
+.admin-edit-modal-header-add-item {
+  background: linear-gradient(180deg, rgba(13, 110, 253, 0.1) 0%, rgba(var(--bs-body-bg-rgb), 0.95) 100%);
+}
+
+.admin-edit-modal-header-add-view {
+  background: linear-gradient(180deg, rgba(214, 165, 34, 0.14) 0%, rgba(var(--bs-body-bg-rgb), 0.95) 100%);
+}
+
+.admin-edit-modal-title-wrap {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.admin-edit-modal-title-wrap .modal-title {
+  line-height: 1.18;
+}
+
+.admin-edit-modal-subtitle {
+  font-size: 0.82rem;
+  color: var(--bs-secondary-color);
+  margin-top: 0.2rem;
+}
+
+.admin-edit-modal-icon {
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 0.65rem;
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+  font-size: 0.9rem;
+  flex: 0 0 auto;
+}
+
+.admin-edit-modal-icon-secret {
+  background: linear-gradient(140deg, #1f7db8, #2d9f8d);
+  box-shadow: 0 0.4rem 0.9rem rgba(31, 125, 184, 0.28);
+}
+
+.admin-edit-modal-icon-danger {
+  background: linear-gradient(140deg, #cc3f3f, #de7753);
+  box-shadow: 0 0.4rem 0.9rem rgba(204, 63, 63, 0.3);
+}
+
+.admin-edit-modal-icon-source {
+  background: linear-gradient(140deg, #198062, #3fa37c);
+  box-shadow: 0 0.4rem 0.9rem rgba(25, 128, 98, 0.28);
+}
+
+.admin-edit-modal-icon-item {
+  background: linear-gradient(140deg, #2d6bc4, #5a8ad6);
+  box-shadow: 0 0.4rem 0.9rem rgba(45, 107, 196, 0.28);
+}
+
+.admin-edit-modal-icon-view {
+  background: linear-gradient(140deg, #b18b2d, #cfac51);
+  box-shadow: 0 0.4rem 0.9rem rgba(177, 139, 45, 0.28);
+}
+
+.admin-edit-add-note {
+  border: 1px solid rgba(var(--bs-body-color-rgb), 0.12);
+  background: rgba(var(--bs-body-color-rgb), 0.06);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--bs-body-color);
+  font-size: 0.9rem;
+}
+
+.admin-edit-secret-note {
+  border: 1px solid rgba(30, 136, 229, 0.2);
+  background: rgba(30, 136, 229, 0.07);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  color: #265f9b;
+  font-size: 0.9rem;
+}
+
+.admin-edit-modal-primary {
+  min-width: 7.25rem;
+}
+
+.admin-edit-delete-warning {
+  border: 1px solid rgba(220, 53, 69, 0.25);
+  background: rgba(220, 53, 69, 0.08);
+  border-radius: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  color: #9f2f3b;
+  font-size: 0.9rem;
+}
+
+.admin-edit-delete-summary {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.8rem;
+  padding: 0.7rem 0.8rem;
+  background: rgba(var(--bs-body-color-rgb), 0.03);
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-edit-delete-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.admin-edit-delete-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--bs-secondary-color);
+}
+
+.admin-edit-delete-value {
+  font-weight: 600;
+  text-align: right;
+}
+
+.admin-edit-delete-value code {
+  font-size: 0.8rem;
+}
+
+.admin-edit-delete-btn {
+  min-width: 7.25rem;
+}
+
+[data-bs-theme='dark'] .admin-edit-modern-modal .modal-content {
+  border-color: #3d4558;
+  box-shadow: 0 1.4rem 2.8rem rgba(0, 0, 0, 0.45);
+}
+
+[data-bs-theme='dark'] .admin-edit-modal-header-soft {
+  background: linear-gradient(180deg, rgba(34, 148, 245, 0.16) 0%, rgba(var(--bs-body-bg-rgb), 0.92) 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-modal-header-danger {
+  background: linear-gradient(180deg, rgba(214, 76, 76, 0.2) 0%, rgba(var(--bs-body-bg-rgb), 0.92) 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-modal-header-add-source {
+  background: linear-gradient(180deg, rgba(28, 159, 114, 0.2) 0%, rgba(var(--bs-body-bg-rgb), 0.92) 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-modal-header-add-item {
+  background: linear-gradient(180deg, rgba(13, 110, 253, 0.2) 0%, rgba(var(--bs-body-bg-rgb), 0.92) 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-modal-header-add-view {
+  background: linear-gradient(180deg, rgba(214, 165, 34, 0.24) 0%, rgba(var(--bs-body-bg-rgb), 0.92) 100%);
+}
+
+[data-bs-theme='dark'] .admin-edit-secret-note {
+  border-color: rgba(34, 148, 245, 0.3);
+  background: rgba(34, 148, 245, 0.14);
+  color: #93caff;
+}
+
+[data-bs-theme='dark'] .admin-edit-add-note {
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.07);
+  color: #d8e2f2;
+}
+
+[data-bs-theme='dark'] .admin-edit-delete-warning {
+  border-color: rgba(255, 129, 129, 0.35);
+  background: rgba(214, 76, 76, 0.17);
+  color: #ffc0c0;
+}
+
+[data-bs-theme='dark'] .admin-edit-delete-summary {
+  border-color: #3d4558;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+@media (max-width: 575.98px) {
+  .admin-edit-modern-modal .modal-header,
+  .admin-edit-modern-modal .modal-body,
+  .admin-edit-modern-modal .modal-footer {
+    padding-left: 0.85rem;
+    padding-right: 0.85rem;
+  }
+
+  .admin-edit-delete-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+
+  .admin-edit-delete-value {
+    text-align: left;
+  }
+}
+
 /* Shared edit item page styles */
 .admin-edit-item-page {
   max-width: 100%;

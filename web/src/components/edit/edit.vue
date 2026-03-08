@@ -60,6 +60,60 @@ const types = [
   },
 ]
 
+function getAddModalHeaderClass(type) {
+  switch (type) {
+    case 'source':
+      return 'admin-edit-modal-header-add-source';
+    case 'item':
+      return 'admin-edit-modal-header-add-item';
+    case 'view':
+      return 'admin-edit-modal-header-add-view';
+    case 'secret':
+      return 'admin-edit-modal-header-soft';
+    default:
+      return '';
+  }
+}
+
+function getAddModalSubtitleKey(type) {
+  switch (type) {
+    case 'source':
+      return 'edit.source_hint';
+    case 'item':
+      return 'edit.item_hint';
+    case 'view':
+      return 'edit.view_hint';
+    default:
+      return 'edit.subtitle';
+  }
+}
+
+function getAddModalIcon(type) {
+  switch (type) {
+    case 'source':
+      return 'bi bi-plug-fill';
+    case 'item':
+      return 'bi bi-box-seam-fill';
+    case 'view':
+      return 'bi bi-grid-1x2-fill';
+    default:
+      return 'bi bi-plus-lg';
+  }
+}
+
+function getAddModalIconClass(type) {
+  switch (type) {
+    case 'source':
+      return 'admin-edit-modal-icon-source';
+    case 'item':
+      return 'admin-edit-modal-icon-item';
+    case 'view':
+      return 'admin-edit-modal-icon-view';
+    default:
+      return '';
+  }
+}
+
 function AddToDA(type) {
   if (type === 'secret') {
     axios.post(`${apiUrl}/secret`, {
@@ -486,90 +540,166 @@ fetchSecrets()
   </section>
 
   <!-- Model for ADD -->
-  <div v-for="(type, index) in types" class="modal fade" :id="'add' + type.type" tabindex="-1"
-    aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+  <div v-for="(type, index) in types" :key="'add-' + type.type"
+    :class="['modal', 'fade', 'admin-edit-modern-modal', 'admin-edit-add-modal', { 'admin-edit-secret-create-modal': type.type === 'secret' }]"
+    :id="'add' + type.type" tabindex="-1" :aria-labelledby="'addModalLabel-' + type.type" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('edit.add') }} : {{ type.name }}</h1>
+        <div class="modal-header" :class="getAddModalHeaderClass(type.type)">
+          <template v-if="type.type === 'secret'">
+            <div class="admin-edit-modal-title-wrap">
+              <span class="admin-edit-modal-icon admin-edit-modal-icon-secret" aria-hidden="true">
+                <i class="bi bi-shield-lock-fill"></i>
+              </span>
+              <div>
+                <h1 class="modal-title fs-5 mb-0" :id="'addModalLabel-' + type.type">{{
+                  $t('edit.modal_add_secret_title')
+                }}</h1>
+                <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
+              </div>
+            </div>
+          </template>
+          <div v-else class="admin-edit-modal-title-wrap">
+            <span class="admin-edit-modal-icon" :class="getAddModalIconClass(type.type)" aria-hidden="true">
+              <i :class="getAddModalIcon(type.type)"></i>
+            </span>
+            <div>
+              <h1 class="modal-title fs-5 mb-0" :id="'addModalLabel-' + type.type">{{ $t('edit.add') }} : {{
+                type.name
+              }}</h1>
+              <p class="admin-edit-modal-subtitle mb-0">{{ $t(getAddModalSubtitleKey(type.type)) }}</p>
+            </div>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label for="InputName" class="form-label">{{ $t('edit.name') }}</label>
-            <input type="text" class="form-control" id="InputName" v-model="NewName">
-          </div>
-          <div v-if="type.type === 'secret'" class="mb-3">
-            <label for="InputSecretValue" class="form-label">{{ $t('edit.secret_value', 'Valeur du secret') }}</label>
-            <input type="password" class="form-control" id="InputSecretValue" v-model="NewSecretValue">
-          </div>
+          <template v-if="type.type === 'secret'">
+            <p class="admin-edit-secret-note mb-3">
+              <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_add_secret_note') }}
+            </p>
+            <div class="mb-3">
+              <label :for="'InputSecretName-' + type.type" class="form-label">{{ $t('edit.name') }}</label>
+              <input type="text" class="form-control" :id="'InputSecretName-' + type.type" v-model="NewName"
+                autocomplete="off">
+              <div class="form-text">{{ $t('edit.modal_add_secret_name_help') }}</div>
+            </div>
+            <div class="mb-0">
+              <label :for="'InputSecretValue-' + type.type" class="form-label">{{ $t('edit.secret_value') }}</label>
+              <input type="password" class="form-control" :id="'InputSecretValue-' + type.type" v-model="NewSecretValue"
+                autocomplete="new-password">
+              <div class="form-text">{{ $t('edit.modal_add_secret_value_help') }}</div>
+            </div>
+          </template>
+          <template v-else>
+            <p class="admin-edit-add-note mb-3">
+              <i class="bi bi-stars me-2" aria-hidden="true"></i>{{ $t('edit.modal_add_generic_note') }}
+            </p>
+            <div class="mb-0">
+              <label :for="'InputName-' + type.type" class="form-label">{{ $t('edit.name') }}</label>
+              <input type="text" class="form-control" :id="'InputName-' + type.type" v-model="NewName"
+                autocomplete="off">
+              <div class="form-text">{{ $t('edit.modal_add_generic_name_help') }}</div>
+            </div>
+          </template>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
-          <button type="button" class="btn btn-primary" @click="AddToDA(type.type)" data-bs-dismiss="modal">{{
-            $t('edit.add') }}</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+          }}</button>
+          <button type="button" class="btn"
+            :class="type.type === 'secret' ? 'btn-primary admin-edit-modal-primary' : 'btn-primary'"
+            @click="AddToDA(type.type)" data-bs-dismiss="modal">{{
+              $t('edit.add') }}</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Model for DELETE -->
-  <div v-for="(type, index) in types" class="modal fade" :id="'delete' + type.type" tabindex="-1"
-    aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+  <div v-for="(type, index) in types" :key="'delete-' + type.type"
+    class="modal fade admin-edit-modern-modal admin-edit-delete-modal" :id="'delete' + type.type" tabindex="-1"
+    :aria-labelledby="'deleteModalLabel-' + type.type" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('global.remove') }} : {{ type.name }} </h1>
+        <div class="modal-header admin-edit-modal-header-danger">
+          <div class="admin-edit-modal-title-wrap">
+            <span class="admin-edit-modal-icon admin-edit-modal-icon-danger" aria-hidden="true">
+              <i class="bi bi-trash3-fill"></i>
+            </span>
+            <div>
+              <h1 class="modal-title fs-5 mb-0" :id="'deleteModalLabel-' + type.type">{{ $t('global.remove') }} : {{
+                type.name }}</h1>
+              <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.modal_delete_subtitle') }}</p>
+            </div>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body">
-          <table class="table table-striped bg-primaray">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>{{ $t('edit.name') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>{{ ToDelete.id }}</td>
-                <td>{{ ToDelete.name }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <p class="admin-edit-delete-warning mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_delete_warning')
+            }}
+          </p>
+          <div class="admin-edit-delete-summary">
+            <div class="admin-edit-delete-row">
+              <span class="admin-edit-delete-label">{{ $t('edit.modal_delete_type') }}</span>
+              <span class="admin-edit-delete-value">{{ type.name }}</span>
+            </div>
+            <div class="admin-edit-delete-row">
+              <span class="admin-edit-delete-label">ID</span>
+              <span class="admin-edit-delete-value"><code>{{ ToDelete.id || '-' }}</code></span>
+            </div>
+            <div class="admin-edit-delete-row">
+              <span class="admin-edit-delete-label">{{ $t('edit.name') }}</span>
+              <span class="admin-edit-delete-value">{{ ToDelete.name || '-' }}</span>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
-          <button type="button" class="btn btn-danger" @click="DeleteFromDA(type.type, ToDelete.id)"
-            data-bs-dismiss="modal">{{ $t('global.remove') }}</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+          }}</button>
+          <button type="button" class="btn btn-danger admin-edit-delete-btn"
+            @click="DeleteFromDA(type.type, ToDelete.id)" data-bs-dismiss="modal">{{ $t('global.remove') }}</button>
         </div>
       </div>
     </div>
   </div>
 
   <!-- Model for EDIT -->
-  <div class="modal fade" id="editsecret" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+  <div class="modal fade admin-edit-modern-modal admin-edit-edit-secret-modal" id="editsecret" tabindex="-1"
+    aria-labelledby="editSecretModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <div class="modal-header">
-          <h1 class="modal-title fs-5" id="exampleModalLabel">{{ $t('global.edit', 'Modifier') }} {{ $t('edit.secrets',
-            'le secret') }}</h1>
+        <div class="modal-header admin-edit-modal-header-soft">
+          <div class="admin-edit-modal-title-wrap">
+            <span class="admin-edit-modal-icon admin-edit-modal-icon-secret" aria-hidden="true">
+              <i class="bi bi-pencil-square"></i>
+            </span>
+            <div>
+              <h1 class="modal-title fs-5 mb-0" id="editSecretModalLabel">{{ $t('edit.modal_edit_secret_title') }}</h1>
+              <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
+            </div>
+          </div>
           <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body">
+          <p class="admin-edit-secret-note mb-3">
+            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_edit_secret_note') }}
+          </p>
           <div class="mb-3">
             <label for="EditSecretName" class="form-label">{{ $t('edit.name') }}</label>
             <input type="text" class="form-control" id="EditSecretName" v-model="EditSecret.name">
+            <div class="form-text">{{ $t('edit.modal_edit_secret_name_help') }}</div>
           </div>
-          <div class="mb-3">
-            <label for="EditSecretValue" class="form-label">{{ $t('edit.secret_value', 'Valeur du secret') }}</label>
+          <div class="mb-0">
+            <label for="EditSecretValue" class="form-label">{{ $t('edit.secret_value') }}</label>
             <input type="password" class="form-control" id="EditSecretValue" v-model="EditSecret.secret">
+            <div class="form-text">{{ $t('edit.modal_edit_secret_value_help') }}</div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ $t('global.cancel') }}</button>
-          <button type="button" class="btn btn-primary" :disabled="!canManageSecrets" @click="UpdateSecret"
-            data-bs-dismiss="modal">{{
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+          }}</button>
+          <button type="button" class="btn btn-primary admin-edit-modal-primary" :disabled="!canManageSecrets"
+            @click="UpdateSecret" data-bs-dismiss="modal">{{
               $t('global.edit', 'Modifier') }}</button>
         </div>
       </div>
