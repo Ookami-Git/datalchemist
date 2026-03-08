@@ -173,7 +173,13 @@
         "total": "Entries",
         "add": "Add",
         "secrets": "Secrets",
+        "source_hint": "Define data connectors (API, files, databases)",
+        "item_hint": "Build objects from sources",
+        "view_hint": "Assemble objects for final rendering",
+        "secrets_sources_hint": "Used in source templates (backend)",
         "secrets_edit_disabled": "Secret editing is disabled",
+        "secrets_state_enabled": "Secrets enabled",
+        "secrets_state_disabled": "Secrets disabled",
         "secret_value": "Secret value"
     },
     "edititem": {

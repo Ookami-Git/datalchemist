@@ -173,7 +173,13 @@
         "total": "Entrées",
         "add": "Ajouter",
         "secrets": "Secrets",
-        "secrets_edit_disabled": "Edition des secrets desactivee",
+        "source_hint": "Définit les connecteurs de données (API, fichiers, BDD)",
+        "item_hint": "Construit les objets à partir des sources",
+        "view_hint": "Assemble les objets pour l'affichage final",
+        "secrets_sources_hint": "Utilisés dans les templates de sources (backend)",
+        "secrets_edit_disabled": "Édition des secrets désactivée",
+        "secrets_state_enabled": "Secrets activés",
+        "secrets_state_disabled": "Secrets désactivés",
         "secret_value": "Valeur du secret"
     },
     "edititem": {

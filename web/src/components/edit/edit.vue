@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, inject } from 'vue';
+import { computed, ref, inject, unref } from 'vue';
 import axios from 'axios';
 import { RouterLink } from 'vue-router';
 
@@ -10,6 +10,8 @@ const secrets = ref(null)
 
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
+
+const resolvedParameters = computed(() => unref(parameter) || {});
 
 const NewName = ref(null)
 const NewSecretValue = ref(null)
@@ -34,10 +36,10 @@ const totalEntries = computed(
 );
 
 const showSecretsPanel = computed(() =>
-  !!parameter?.enableSecret || secretsCount.value > 0
+  !!resolvedParameters.value.enableSecret || secretsCount.value > 0
 );
 
-const canManageSecrets = computed(() => !!parameter?.enableSecret);
+const canManageSecrets = computed(() => !!resolvedParameters.value.enableSecret);
 
 const types = [
   {
@@ -234,6 +236,11 @@ fetchSecrets()
               <i class="bi bi-grid-3x3-gap-fill me-1"></i>
               {{ $t('edit.total') }}: {{ totalEntries }}
             </span>
+            <span class="badge rounded-pill admin-edit-state-chip"
+              :class="canManageSecrets ? 'text-bg-success' : 'text-bg-warning'">
+              <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
+              {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+            </span>
             <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-source">{{ $t('edit.sources') }}: {{
               sourcesCount }}</span>
             <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-item">{{ $t('edit.items') }}: {{
@@ -255,7 +262,10 @@ fetchSecrets()
             <div class="card-body p-0 d-flex flex-column">
               <div
                 class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.secrets', 'Secrets') }}</h5>
+                <div>
+                  <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.secrets', 'Secrets') }}</h5>
+                  <p class="small text-secondary mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
+                </div>
                 <button v-if="canManageSecrets" type="button" class="btn btn-success btn-sm" :title="$t('edit.add')"
                   data-bs-toggle="modal" data-bs-target="#addsecret">
                   <i class="bi bi-plus-lg"></i>
@@ -309,7 +319,10 @@ fetchSecrets()
             <div class="card-body p-0 d-flex flex-column">
               <div
                 class="admin-edit-panel-head admin-edit-panel-head-source px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title admin-edit-panel-title-source mb-0">{{ $t('edit.sources') }}</h5>
+                <div>
+                  <h5 class="admin-edit-panel-title admin-edit-panel-title-source mb-0">{{ $t('edit.sources') }}</h5>
+                  <p class="small text-secondary mb-0">{{ $t('edit.source_hint') }}</p>
+                </div>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#addsource">
                   <i class="bi bi-plus-lg"></i>
@@ -362,7 +375,10 @@ fetchSecrets()
             <div class="card-body p-0 d-flex flex-column">
               <div
                 class="admin-edit-panel-head admin-edit-panel-head-item px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title admin-edit-panel-title-item mb-0">{{ $t('edit.items') }}</h5>
+                <div>
+                  <h5 class="admin-edit-panel-title admin-edit-panel-title-item mb-0">{{ $t('edit.items') }}</h5>
+                  <p class="small text-secondary mb-0">{{ $t('edit.item_hint') }}</p>
+                </div>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#additem">
                   <i class="bi bi-plus-lg"></i>
@@ -415,7 +431,10 @@ fetchSecrets()
             <div class="card-body p-0 d-flex flex-column">
               <div
                 class="admin-edit-panel-head admin-edit-panel-head-view px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <h5 class="admin-edit-panel-title admin-edit-panel-title-view mb-0">{{ $t('edit.views') }}</h5>
+                <div>
+                  <h5 class="admin-edit-panel-title admin-edit-panel-title-view mb-0">{{ $t('edit.views') }}</h5>
+                  <p class="small text-secondary mb-0">{{ $t('edit.view_hint') }}</p>
+                </div>
                 <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
                   data-bs-target="#addview">
                   <i class="bi bi-plus-lg"></i>
