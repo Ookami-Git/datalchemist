@@ -166,7 +166,9 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </div>
-        <loading v-else />
+        <div v-else class="view-loading-page-center">
+            <loading />
+        </div>
     </div>
 </template>
 
@@ -193,6 +195,13 @@ onBeforeUnmount(() => {
 
 [data-bs-theme="light"] .card-header {
     background: var(--bs-light);
+}
+
+.view-loading-page-center {
+    min-height: calc(100vh - 10rem);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 </style>
 
