@@ -8,6 +8,8 @@ import groups from './groups.vue'
 import navbar from './navbar.vue'
 
 const parameters = inject('parameters');
+const i18n = inject('i18n');
+const save = inject('save');
 const skipNextRouteTransition = inject('skipNextRouteTransition', null);
 const route = useRoute();
 
@@ -43,6 +45,43 @@ const releaseDate = computed(() => {
     }
     return rawDate.split('T')[0];
 });
+
+const hasUnsavedChanges = () => Boolean(save?.value?.show && !save?.value?.disabled);
+
+const isAdminPageSwitch = (to, from) =>
+    to?.name === 'admin' &&
+    from?.name === 'admin' &&
+    to?.params?.page !== from?.params?.page;
+
+const canLeaveAdminTab = (to, from) => {
+    if (!isAdminPageSwitch(to, from) || !hasUnsavedChanges()) {
+        return true;
+    }
+
+    const message = i18n?.global?.t('save.nosave') || 'Do you really want to leave without saving changes ?';
+    return window.confirm(message);
+};
+
+function handleAdminTabClick(event, page, navigate) {
+    // Let RouterLink/browser handle middle-click and modifier-key navigation.
+    if (event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) {
+        return;
+    }
+
+    if (route.params.page === page) {
+        event.preventDefault();
+        return;
+    }
+
+    const targetRoute = { name: 'admin', params: { page } };
+    if (!canLeaveAdminTab(targetRoute, route)) {
+        event.preventDefault();
+        return;
+    }
+
+    goNoTransition();
+    navigate(event);
+}
 </script>
 
 <template>
@@ -58,11 +97,13 @@ const releaseDate = computed(() => {
                                 <nav aria-label="Admin navigation">
                                     <ul class="nav flex-column gap-1">
                                         <li v-for="item in navigationItems" :key="item.page" class="nav-item">
-                                            <RouterLink class="admin-nav-link"
-                                                :to="{ name: 'admin', params: { page: item.page } }"
-                                                active-class="active" @click="goNoTransition">
-                                                <i :class="item.icon"></i>
-                                                <span>{{ $t(item.labelKey) }}</span>
+                                            <RouterLink :to="{ name: 'admin', params: { page: item.page } }" custom
+                                                v-slot="{ href, navigate, isActive }">
+                                                <a :href="href" class="admin-nav-link" :class="{ active: isActive }"
+                                                    @click="handleAdminTabClick($event, item.page, navigate)">
+                                                    <i :class="item.icon"></i>
+                                                    <span>{{ $t(item.labelKey) }}</span>
+                                                </a>
                                             </RouterLink>
                                         </li>
                                     </ul>
