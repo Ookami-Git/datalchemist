@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, provide, watch, inject } from 'vue';
+import { ref, onBeforeUnmount, onMounted, provide, watch, inject } from 'vue';
 import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import VueCookies from 'vue-cookies';
 import navbar from './components/navbar/navbar.vue'
@@ -9,6 +9,43 @@ const skipNextRouteTransition = ref(false);
 
 const requestNoTransition = () => {
   skipNextRouteTransition.value = true;
+};
+
+const showUnsavedModal = ref(false);
+let pendingUnsavedDecision = null;
+let resolvePendingUnsavedDecision = null;
+
+const closeUnsavedModal = (canLeavePage) => {
+  showUnsavedModal.value = false;
+
+  if (!resolvePendingUnsavedDecision) {
+    return;
+  }
+
+  resolvePendingUnsavedDecision(canLeavePage);
+  resolvePendingUnsavedDecision = null;
+  pendingUnsavedDecision = null;
+};
+
+const askUnsavedConfirmation = () => {
+  if (pendingUnsavedDecision) {
+    return pendingUnsavedDecision;
+  }
+
+  showUnsavedModal.value = true;
+  pendingUnsavedDecision = new Promise((resolve) => {
+    resolvePendingUnsavedDecision = resolve;
+  });
+
+  return pendingUnsavedDecision;
+};
+
+const confirmUnsavedNavigation = () => {
+  closeUnsavedModal(true);
+};
+
+const cancelUnsavedNavigation = () => {
+  closeUnsavedModal(false);
 };
 
 const i18n = inject('i18n');
@@ -31,14 +68,14 @@ const saveButton = ref({
     onBeforeRouteUpdate(this.saveGuard);
     onBeforeRouteLeave(this.saveGuard);
   },
-  "saveGuard": function () {
+  "confirmLeave": function () {
     if (saveButton.value.show && !saveButton.value.disabled) {
-      const answer = window.confirm(
-        i18n.global.t('save.nosave')
-      )
-      // cancel the navigation and stay on the same page
-      return answer
+      return askUnsavedConfirmation();
     }
+    return true;
+  },
+  "saveGuard": function () {
+    return saveButton.value.confirmLeave();
   },
   "status": {
     "saveable": function () {
@@ -134,6 +171,10 @@ watch(isSidebarCollapsed, (collapsed) => {
   VueCookies.set(sidebarCollapsedCookieName, collapsed ? '1' : '0', '365d', '/');
 }, { immediate: true });
 
+watch(showUnsavedModal, (visible) => {
+  document.body.classList.toggle('modal-open', visible);
+});
+
 watch(parameters, () => {
   updateBodyStyle()
   i18n.global.locale.value = parameters.value.lang;
@@ -166,6 +207,16 @@ watch(route, () => {
     });
   }
 });
+
+onBeforeUnmount(() => {
+  document.body.classList.remove('modal-open');
+
+  if (resolvePendingUnsavedDecision) {
+    resolvePendingUnsavedDecision(false);
+    resolvePendingUnsavedDecision = null;
+    pendingUnsavedDecision = null;
+  }
+});
 </script>
 
 <template>
@@ -184,6 +235,35 @@ watch(route, () => {
         </div>
       </RouterView>
     </main>
+
+    <div v-if="showUnsavedModal" class="modal fade show d-block unsaved-save-modal" tabindex="-1" role="dialog"
+      aria-modal="true" @click.self="cancelUnsavedNavigation">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content shadow-lg border-0">
+          <div class="modal-header border-0">
+            <h5 class="modal-title">
+              <i class="bi bi-exclamation-triangle-fill unsaved-save-icon" aria-hidden="true"></i>
+              <span>{{ $t('save.modalTitle') }}</span>
+            </h5>
+            <button type="button" class="btn-close" aria-label="Close" @click="cancelUnsavedNavigation"></button>
+          </div>
+
+          <div class="modal-body">
+            <p class="mb-0">{{ $t('save.nosave') }}</p>
+          </div>
+
+          <div class="modal-footer border-0 pt-0">
+            <button type="button" class="btn btn-outline-secondary" @click="cancelUnsavedNavigation">
+              {{ $t('save.stay') }}
+            </button>
+            <button type="button" class="btn btn-unsaved-leave" @click="confirmUnsavedNavigation">
+              {{ $t('save.leave') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showUnsavedModal" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -218,6 +298,62 @@ watch(route, () => {
     width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
     max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: margin-left, width, max-width;
+}
+
+.unsaved-save-modal .modal-content {
+  border-radius: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--bs-border-color);
+}
+
+.unsaved-save-modal .modal-header {
+  background: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.9rem 1rem;
+}
+
+.unsaved-save-modal .modal-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+.unsaved-save-modal .btn-close {
+  margin: 0 0 0 auto;
+}
+
+.unsaved-save-modal .modal-body {
+  background: var(--bs-body-bg);
+}
+
+.unsaved-save-modal .modal-footer {
+  gap: 0.5rem;
+}
+
+.unsaved-save-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--bs-orange);
+}
+
+.btn-unsaved-leave {
+  background-color: var(--bs-orange);
+  border-color: var(--bs-orange);
+  color: #fff;
+}
+
+.btn-unsaved-leave:hover,
+.btn-unsaved-leave:focus,
+.btn-unsaved-leave:active {
+  background-color: #dd6f14;
+  border-color: #dd6f14;
+  color: #fff;
 }
 
 @media (max-width: 991.98px) {

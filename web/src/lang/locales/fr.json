@@ -309,6 +309,9 @@
     },
     "save": {
         "label": "Sauvegarder",
-        "nosave": "Voulez-vous vraiment quitter sans sauvegarder les modifications ?"
+        "nosave": "Voulez-vous vraiment quitter sans sauvegarder les modifications ?",
+        "modalTitle": "Modifications non sauvegardées",
+        "stay": "Rester sur la page",
+        "leave": "Quitter sans sauvegarder"
     }
 }

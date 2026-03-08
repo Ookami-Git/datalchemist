@@ -309,7 +309,10 @@
     },
     "save": {
         "label": "Save",
-        "nosave": "Do you really want to leave without saving changes ?"
+        "nosave": "Do you really want to leave without saving changes ?",
+        "modalTitle": "Unsaved changes",
+        "stay": "Stay on this page",
+        "leave": "Leave without saving"
     }
 }
 

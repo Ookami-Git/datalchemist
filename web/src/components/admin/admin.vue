@@ -8,7 +8,6 @@ import groups from './groups.vue'
 import navbar from './navbar.vue'
 
 const parameters = inject('parameters');
-const i18n = inject('i18n');
 const save = inject('save');
 const skipNextRouteTransition = inject('skipNextRouteTransition', null);
 const route = useRoute();
@@ -53,16 +52,19 @@ const isAdminPageSwitch = (to, from) =>
     from?.name === 'admin' &&
     to?.params?.page !== from?.params?.page;
 
-const canLeaveAdminTab = (to, from) => {
+const canLeaveAdminTab = async (to, from) => {
     if (!isAdminPageSwitch(to, from) || !hasUnsavedChanges()) {
         return true;
     }
 
-    const message = i18n?.global?.t('save.nosave') || 'Do you really want to leave without saving changes ?';
-    return window.confirm(message);
+    if (!save?.value?.confirmLeave) {
+        return true;
+    }
+
+    return await save.value.confirmLeave();
 };
 
-function handleAdminTabClick(event, page, navigate) {
+async function handleAdminTabClick(event, page, navigate) {
     // Let RouterLink/browser handle middle-click and modifier-key navigation.
     if (event.button !== 0 || event.metaKey || event.altKey || event.ctrlKey || event.shiftKey) {
         return;
@@ -74,7 +76,7 @@ function handleAdminTabClick(event, page, navigate) {
     }
 
     const targetRoute = { name: 'admin', params: { page } };
-    if (!canLeaveAdminTab(targetRoute, route)) {
+    if (!(await canLeaveAdminTab(targetRoute, route))) {
         event.preventDefault();
         return;
     }
