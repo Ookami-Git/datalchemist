@@ -31,11 +31,62 @@ const initialState = ref({
 
 const isLoading = ref(false);
 const loadError = ref('');
+const previewModalBodyClass = 'item-preview-modal-open';
 
 // Preview modal
 const showPreview = ref(false);
-function openPreview() { showPreview.value = true; }
+const previewQueryInput = ref('');
+const previewQueryParams = ref({});
+const previewReloadToken = ref(0);
+
+function parsePreviewQuery(input) {
+  const raw = `${input || ''}`.trim();
+  if (!raw) {
+    return {};
+  }
+
+  const normalized = raw.startsWith('?') ? raw.slice(1) : raw;
+  const searchParams = new URLSearchParams(normalized);
+  const parsed = {};
+
+  for (const [key, value] of searchParams.entries()) {
+    if (!key) {
+      continue;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+      const current = parsed[key];
+      parsed[key] = Array.isArray(current) ? [...current, value] : [current, value];
+    } else {
+      parsed[key] = value;
+    }
+  }
+
+  return parsed;
+}
+
+function applyPreviewQueryFromInput() {
+  previewQueryParams.value = parsePreviewQuery(previewQueryInput.value);
+}
+
+function openPreview() {
+  applyPreviewQueryFromInput();
+  previewReloadToken.value += 1;
+  showPreview.value = true;
+}
+
 function closePreview() { showPreview.value = false; }
+
+function reloadPreview() {
+  applyPreviewQueryFromInput();
+  previewReloadToken.value += 1;
+}
+
+function handlePreviewKeydown(event) {
+  if (event.key === 'Escape' && showPreview.value) {
+    closePreview();
+  }
+}
 const code = ref("<!-- HTML Code -->");
 const codeJs = ref("// Javascript Code");
 
@@ -43,10 +94,12 @@ provide('codeHtml', code);
 provide('codeJs', codeJs);
 
 const previewItem = computed(() => ({
-  title: `Preview - ${ItemInfo.value?.name || ''}`,
   template: code.value,
   javascript: codeJs.value
 }));
+
+const previewQuerySignature = computed(() => JSON.stringify(previewQueryParams.value || {}));
+const previewRenderKey = computed(() => `${previewReloadToken.value}:${previewQuerySignature.value}`);
 
 const hasPendingChanges = computed(() => {
   if (!ItemInfo.value) {
@@ -135,6 +188,10 @@ const refreshCodeMirror = () => {
 const tabButtons = ref([]);
 const onTabShown = () => refreshCodeMirror();
 
+watch(showPreview, (isOpen) => {
+  document.body.classList.toggle(previewModalBodyClass, isOpen);
+});
+
 onMounted(async () => {
   await fetchItem();
   save.value.function = updateItem
@@ -143,6 +200,7 @@ onMounted(async () => {
   tabButtons.value.forEach((tab) => {
     tab.addEventListener('shown.bs.tab', onTabShown);
   });
+  window.addEventListener('keydown', handlePreviewKeydown);
   refreshCodeMirror();
 })
 
@@ -150,6 +208,9 @@ onBeforeUnmount(() => {
   tabButtons.value.forEach((tab) => {
     tab.removeEventListener('shown.bs.tab', onTabShown);
   });
+
+  window.removeEventListener('keydown', handlePreviewKeydown);
+  document.body.classList.remove(previewModalBodyClass);
 });
 </script>
 
@@ -262,16 +323,54 @@ onBeforeUnmount(() => {
   </section>
 
   <!-- Modal Preview -->
-  <div class="modal fade" tabindex="-1" :class="{ show: showPreview }"
-    :style="{ display: showPreview ? 'block' : 'none', background: 'rgba(0,0,0,0.3)' }" @click.self="closePreview">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">{{ $t('edititem.preview') }}</h5>
+  <div class="modal fade admin-edit-item-preview-modal" tabindex="-1" role="dialog" aria-modal="true"
+    :aria-hidden="!showPreview" aria-labelledby="item-preview-modal-title" :class="{ show: showPreview }"
+    :style="{ display: showPreview ? 'block' : 'none' }" @click.self="closePreview">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable modal-dialog-centered admin-edit-item-preview-dialog">
+      <div class="modal-content admin-edit-item-preview-content">
+        <div class="modal-header admin-edit-item-preview-header">
+          <div class="admin-edit-item-preview-title-row">
+            <span class="admin-edit-item-preview-badge" aria-hidden="true">
+              <i class="bi bi-eye-fill"></i>
+            </span>
+            <h5 id="item-preview-modal-title" class="modal-title">
+              {{ $t('edititem.preview') }}
+              <span v-if="ItemInfo?.name" class="admin-edit-item-preview-item-name">- {{ ItemInfo.name }}</span>
+            </h5>
+          </div>
+
+          <div class="admin-edit-item-preview-tools">
+            <label for="preview-query-input" class="admin-edit-item-preview-query-label">{{
+              $t('edititem.preview_query_label') }}</label>
+            <div class="input-group input-group-sm admin-edit-item-preview-query-group">
+              <span class="input-group-text" aria-hidden="true">?</span>
+              <input id="preview-query-input" v-model="previewQueryInput" type="text" class="form-control"
+                :placeholder="$t('edititem.preview_query_placeholder')" autocomplete="off" spellcheck="false"
+                @keydown.enter.prevent="reloadPreview">
+              <button type="button" class="btn btn-outline-secondary" @click="reloadPreview">
+                <i class="bi bi-arrow-clockwise me-1"></i>{{ $t('edititem.preview_reload') }}
+              </button>
+            </div>
+          </div>
+
           <button type="button" class="btn-close" @click="closePreview"></button>
         </div>
-        <div class="modal-body">
-          <Preview v-if="showPreview && ItemInfo" :itemid="itemid" :mode="'edit'" :item="previewItem" />
+
+        <div class="modal-body admin-edit-item-preview-body">
+          <div class="admin-edit-item-preview-canvas">
+            <Preview v-if="showPreview && ItemInfo" :key="previewRenderKey" :itemid="itemid" :mode="'edit'"
+              :item="previewItem" :preview-query="previewQueryParams" :refresh-token="previewReloadToken" />
+          </div>
+        </div>
+
+        <div class="modal-footer admin-edit-item-preview-footer">
+          <small class="text-secondary admin-edit-item-preview-footer-hint">{{ $t('edititem.preview_local_hint')
+          }}</small>
+          <button type="button" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-2"
+            @click="closePreview">
+            <span>{{ $t('global.close') }}</span>
+            <kbd class="admin-edit-item-preview-esc">Esc</kbd>
+          </button>
         </div>
       </div>
     </div>

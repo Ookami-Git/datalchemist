@@ -185,6 +185,9 @@
         "preview": "Aperçu",
         "preview_local": "Aperçu local",
         "preview_local_hint": "Inclut les modifications non sauvegardées",
+        "preview_query_label": "Variables GET",
+        "preview_query_placeholder": "var=value&lang=fr",
+        "preview_reload": "Recharger",
         "global": {
             "syntax": "Syntaxe",
             "examples": "Exemples",

@@ -18,6 +18,14 @@ const props = defineProps({
     itemid: {
         type: [String, Number],
         default: null,
+    },
+    previewQuery: {
+        type: Object,
+        default: () => ({}),
+    },
+    refreshToken: {
+        type: Number,
+        default: 0,
     }
 });
 
@@ -32,6 +40,8 @@ const apiUrl = inject('apiUrl');
 
 
 async function fetchRealData(itemid) {
+    const requestConfig = { params: props.previewQuery || {} };
+
     try {
         if (props.mode === 'edit' && props.item) {
             // Utilise l'item fourni (en cours d'édition)
@@ -42,7 +52,7 @@ async function fetchRealData(itemid) {
                         {
                             itemid: props.item.id || itemid || 1,
                             size: 12,
-                            title: props.item.title || "Item Preview",
+                            title: props.item.title,
                         }
                     ]
                 ]
@@ -54,7 +64,7 @@ async function fetchRealData(itemid) {
             let data = {};
             if (props.item.id || itemid) {
                 try {
-                    const dataRes = await axios.get(`${apiUrl}/data/item/${props.item.id || itemid}`);
+                    const dataRes = await axios.get(`${apiUrl}/data/item/${props.item.id || itemid}`, requestConfig);
                     data = dataRes.data;
                 } catch { }
             }
@@ -64,7 +74,7 @@ async function fetchRealData(itemid) {
         }
         // Sinon, mode normal (saved)
         const itemRes = await axios.get(`${apiUrl}/item/${itemid}`);
-        const dataRes = await axios.get(`${apiUrl}/data/item/${itemid}`);
+        const dataRes = await axios.get(`${apiUrl}/data/item/${itemid}`, requestConfig);
 
         viewStructure.value = {
             version: 1,
@@ -73,7 +83,7 @@ async function fetchRealData(itemid) {
                     {
                         itemid: itemid,
                         size: 12,
-                        title: itemRes.data?.title || "Item Preview",
+                        title: itemRes.data?.title,
                     }
                 ]
             ]
@@ -103,7 +113,7 @@ onMounted(() => {
     }
 });
 
-watch(() => [props.mode, props.itemid, props.item, route.params.id, route.params.itemid], () => {
+watch(() => [props.mode, props.itemid, props.item, props.refreshToken, JSON.stringify(props.previewQuery || {}), route.params.id, route.params.itemid], () => {
     const id = props.itemid || route.params.id || route.params.itemid;
     if (id) {
         fetchRealData(id);

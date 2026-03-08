@@ -185,6 +185,9 @@
         "preview": "Preview",
         "preview_local": "Local preview",
         "preview_local_hint": "Includes unsaved changes",
+        "preview_query_label": "GET variables",
+        "preview_query_placeholder": "var=value&lang=en",
+        "preview_reload": "Reload",
         "global": {
             "syntax": "Syntax",
             "examples": "Examples",
