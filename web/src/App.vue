@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onBeforeUnmount, onMounted, provide, watch, inject } from 'vue';
+import { ref, onBeforeUnmount, onMounted, provide, watch, inject, getCurrentInstance } from 'vue';
 import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import VueCookies from 'vue-cookies';
 import navbar from './components/navbar/navbar.vue'
@@ -65,8 +65,13 @@ const saveButton = ref({
   "function": null,
   "color": '',
   "safe": function () {
-    onBeforeRouteUpdate(this.saveGuard);
-    onBeforeRouteLeave(this.saveGuard);
+    // These composables must run while a component setup instance is active.
+    if (!getCurrentInstance()) {
+      return;
+    }
+
+    onBeforeRouteUpdate(saveButton.value.saveGuard);
+    onBeforeRouteLeave(saveButton.value.saveGuard);
   },
   "confirmLeave": function () {
     if (saveButton.value.show && !saveButton.value.disabled) {

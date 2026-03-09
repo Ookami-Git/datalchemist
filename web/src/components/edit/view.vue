@@ -166,7 +166,6 @@ const loadViewEditor = async () => {
 
   if (!loadError.value) {
     setInitialState();
-    if (save && save.value && save.value.safe) save.value.safe();
     save.value.status.show();
   }
 

@@ -15,6 +15,8 @@ const isError = ref(false)
 const tagErrorMessage = ref("");
 const tagerror = ref("");
 
+save.value.safe()
+
 function betterTab(cm) {
   if (cm.somethingSelected()) {
     cm.indentSelection("add");
@@ -194,7 +196,6 @@ watch(parameter, () => {
 onMounted(() => {
   save.value.function = saveMenu
   save.value.status.show()
-  save.value.safe()
 })
 
 watch(code, () => {
