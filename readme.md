@@ -1,68 +1,109 @@
-# Datalchemist
-Datalchemist is an open-source project that aims to make it easy to extract, transform, and present data from various sources such as databases, files, or URLs.
+﻿# Datalchemist
+
+Datalchemist is an open-source data orchestration platform that makes it easy to collect, transform, and display data from databases, files, URLs, and text sources.
+
 ![datalchemist](Datalchemist.png)
-## Screenshot
-![datalchemistScreenshot](screenshot.jpg)
-## Installation
-### Build
-#### Requirement for build
-- [npm](https://nodejs.org/en/download)
-- [go](https://go.dev/dl/)
-#### Commands for build
+
+## 🚀 Project Overview
+
+- Backend: Go (API + SQLite storage)
+- Frontend: Vue.js + Bootstrap 5
+- Data source connectors: URL, file, database, text, and script (script is flagged as risky and can be disabled)
+- Templating: Gonja (Jinja-compatible) + NunJucks
+- User management and authentication (default admin/admin)
+- Optional encrypted secrets management
+- YAML-based navigation menu for customizable dashboards
+
+## 📁 Repository Structure
+
+- `main.go` - app startup
+- `controllers/`, `handlers/`, `routes/` - HTTP and business logic
+- `database/` - SQLite connection and schema
+- `models/` - domain models
+- `middlewares/`, `token/`, `utils/`, `secrets/` - helper modules
+- `web/` - Vue frontend static app
+
+## 🛠️ Prerequisites
+
+- Go 1.20+
+- Node.js 16+/npm 8+
+
+## 🧱 Build Instructions
+
 ```bash
 git clone https://github.com/Ookami-Git/datalchemist.git
 cd datalchemist/web
 npm install
 npm run build
 cd ..
-go build
+go build -o datalchemist .
 ```
-### Compilated
-Download last version from releases and run it.
-## Options
-- Listen : Configure listen host and port, default value is 0.0.0.0:8080
-- Database : Configure SQLITE database path, default value is datalchsmist.sqlite in the same directory as application
-- Session : Configure time before session expiration in minutes, default value is 3600
-- Secret Key : Passphrase used by the app to encrypt your secrets. Secrets are only available if you use a secret key. If you give a wrong secret key after having set this parameter one time, the app will not start.
-- Secret Migration : Old passphrase when you want to change the secret. Put the new passphrase in the secretkey parameter. The app will not start when you use secret migration; remove this option after migration.
-  ```shell
-  ./datalchemist --secretkey "MyNewSecretKey" --secretmigration "MyOldSecretKey"
-    Secrets migration: 2 success, 0 failed, 0 already use new passphrase
-  ./datalchemist --secretkey "MyNewSecretKey" #Now app started
-  ```
-### Parameters
-You can use app parameters
-```shell
-  -d, --database  string
-  -l, --listen    string
-  -s, --session   int
-  -k, --secretkey string
-  -m, --secretmigration string
+
+## ▶️ Run the Application
+
+```bash
+./datalchemist
 ```
-### Configuration file
-You can create configuration file named .datalchemist in yaml syntaxe in the same directory as application or $HOME
+
+Open `http://localhost:8080`
+
+Default login:
+- username: `admin`
+- password: `admin`
+
+> Change default credentials after first login.
+
+## ⚙️ Configuration
+
+### Command-line options
+
+- `-d`, `--database`  string (default `datalchsmist.sqlite`)
+- `-l`, `--listen`    string (default `:8080`)
+- `-s`, `--session`   int (seconds, default `3600`)
+- `-k`, `--secretkey` string
+- `-m`, `--secretmigration` string
+
+### Config file
+
+Place `.datalchemist` in the app folder or `$HOME`:
+
 ```yaml
-listen:   ":8080"
+listen: ":8080"
 database: "datalchsmist.sqlite"
-session:  3600
+session: 3600
 secretkey: "YourSecretKey"
 ```
-### Env vars
-You can usr env vars
-```shell
+
+### Environment variables
+
+```bash
 export DA_LISTEN=":8080"
 export DA_DATABASE="datalchsmist.sqlite"
 export DA_SESSION=3600
 export DA_SECRETKEY="YourSecretKey"
 ```
-## Getting Started
-### Startup
-```shell
-./datalchemist &
+
+## 🔐 Secrets Management
+
+- Secrets are encrypted only when `--secretkey` is provided.
+- Use `--secretmigration` to rotate the secret:
+
+```bash
+./datalchemist --secretkey "MyNewSecretKey" --secretmigration "MyOldSecretKey"
+./datalchemist --secretkey "MyNewSecretKey"
 ```
-Go to http://localhost:8080 with ```admin``` username and ```admin``` password.
-## YAML Navigation Menu
-Create your menu (navbar) with YAML syntax
+
+- Create secrets through the UI.
+- Refer to secrets in sources:
+
+```jinja
+{{ secret.secretname | secret }}
+```
+
+- Secrets cannot be used directly in object definitions from the frontend.
+
+## 🧭 YAML Navigation Menu
+
 ```yaml
 - name: Accueil
   link: /view/accueil
@@ -81,70 +122,69 @@ Create your menu (navbar) with YAML syntax
   newtab: true
   external: true
 ```
-/!\ Multiples level submenu does **not work**
-## Sources
-For source Datalchemist use [GONJA](https://pkg.go.dev/github.com/noirbizarre/gonja) for templating. The syntaxe is [jinja](https://jinja.palletsprojects.com/en/) compatible.
 
-When you use loop, you can use ```{{ item }}``` var for each iteration of loop.
-### Secrets
-The secrets in Datalchemist are managed in a secure way to ensure the confidentiality of sensitive information. To use secrets, follow the steps below:
-1. **Enable secrets**:
-   - To use secrets, you must launch the application with the `secretkey` parameter (`--secretkey "value"`, `-k "value"`, `export DA_SECRETKEY=value` at extrvar or `secretkey: value` in config file)
+> Multi-level submenu does not work.
 
-2. **Creating secrets**:
-   - Secrets must be created and managed through the Datalchemist user interface. This allows you to define secure values that will be stored encrypted.
+## 📡 Data Sources and Variables
 
-3. **Using secrets in sources**:
-   - To use a secret in your sources, you can reference it using the following syntax: `{{ secret.secretname | secret }}`.
-   - This syntax allows you to decrypt the secret named `secretname` and use its decrypted value in your templates.
+- Source templating with Gonja (Jinja-compatible)
+- `sid.s<sourceId>.<var>` for source variables by ID
+- `sn.<sourceName>.<var>` for source variables by name
+- GET variables:
+  - `{{ get.foo }}` returns array (if multiple values)
+  - `{{ get.foo[0] }}` returns first value
 
-4. **Decryption on the backend**:
-   - Note that the password or decrypted value of the secret is never directly exposed in the frontend application. Therefore, secrets can only be used in sources, not objects.
+Example:
 
-## Items
-### Variables
-Use nunjucks syntax for vars : https://mozilla.github.io/nunjucks/templating.html
-Var usage :
-- With sources
->Source name : **srcFoo**  
-Source id : **1**  
-Var : *foo* = "hello world"  
-{{ sid.s**ID**.*foo* }} => {{ sid.s**1**.*foo* }} => "hello world"  
-{{ sn.**NAME**.*foo* }} => {{ sn.**srcFoo**.*foo* }} => "hello world"
+```jinja
+{{ sid.s1.foo }}
+{{ sn.srcFoo.foo }}
+{{ get.foo[0] }}
+```
 
-- With GET vars
->http://datalchemisthost:8080/.../test?foo=foo&foo=bar&bar=foo  
-{{ get.*GetVarName* }} => {{ get.*foo* }} => ["foo","bar"]  
-{{ get.*GetVarName* }} => {{ get.*foo[0]* }} => "foo"  
-{{ get.*GetVarName* }} => {{ get.*foo[1]* }} => "bar"  
-{{ get.*GetVarName* }} => {{ get.*bar[0]* }} => "foo"
+## 🎨 Frontend
 
-### HTML / CSS
-Use bootstrap 5 with icons for html/css : https://getbootstrap.com/docs/5.3/getting-started/introduction/
+- Built with Vue 3.
+- Key components:
+  - `home`, `login`, `profil`, `view`
+  - `admin` section: `acl`, `users`, `groups`, `global`
+  - `edit` section: source, item, view builders
+- Styles in `web/src/scss` and reusable Vue components for grid/row/item display.
 
-### Graphs
-Use mermaid for graphs : https://mermaid.js.org/intro/
-Require this HTML code :
+## 📈 Graphs
+
+Mermaid rendering supported in views:
+
 ```html
-<pre  class="mermaid">
-	// YOUR MERMAID CODE
+<pre class="mermaid">
+graph TD;
+  A-->B;
 </pre>
 ```
-### Example with vars / html.CSS / Graphs
-## Views
-TODO
 
-## TODO / Idées
-- [X] Source -> URL -> Permettre d'utiliser ou non un proxy (release 0.2.2)
-- [X] Source -> URL -> Permettre d'utiliser un user/password (release 0.2.2)
-- [ ] Source -> script -> Execute un script et récupère le output -> JSON/XML/YAML --> Codé mais jugé trop dangereux
-- [X] Source -> text -> Ecrire manuellement la source -> JSON/XML/YAML (release 0.7.0)
-- [ ] Vue -> Permettre de désactiver le padding
-- [ ] Vue -> Permettre a tous les objets d'avoir la même taille ( https://getbootstrap.com/docs/5.3/components/card/#grid-cards )
-- [ ] Vue -> Permettre de choisir la couleur du header
-- [X] Parametres -> Afficher le numero de version (release 0.3.0)
-- [ ] Parametres -> Export / Import des Sources / Objets / Vues
-- [ ] Parametres -> Changer le logo (upload -> base64 -> stocké dans la BDD)
-- [ ] Parametres -> LDAP -> Option (bool) pour ajouter automatiquement un utilisateur lors de sa première connexion
-- [X] Objet -> Prévisualier
-- [ ] Objet -> Tableau à pages
+## 🧾 Issues & Roadmap
+
+- [X] URL source with proxy + user/password (release 0.2.2)
+- [X] Text source JSON/XML/YAML (release 0.7.0)
+- [X] Version display in settings (release 0.3.0)
+- [X] Object preview
+- [ ] Script source JSON/XML/YAML (security review required)
+- [ ] View options: padding toggle, uniform object size, header color
+- [ ] Export/Import of sources/objects/views
+- [ ] Custom logo upload (Base64, DB-stored)
+- [ ] LDAP create user on first login (configurable)
+- [ ] Paginated table object
+
+## 🧪 Development Notes
+
+- Frontend: `cd web && npm run dev`
+- Backend: `go build` and relaunch service
+- Database: `datalchsmist.sqlite` in app working directory
+
+## 🤝 Contribution
+
+1. Fork repository
+2. Create feature branch
+3. Open pull request with description + tests
+
+Merci de contribuer à Datalchemist !
