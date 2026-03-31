@@ -1,0 +1,14 @@
+{
+    admin off
+    auto_https off
+}
+
+:80 {
+    # API → backend Go
+    handle /api* {
+        reverse_proxy devcontainer:8080
+    }
+
+    # Tout le reste → Vite
+    reverse_proxy devcontainer:5173
+}

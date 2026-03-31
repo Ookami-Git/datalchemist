@@ -1,0 +1,34 @@
+services:
+  devcontainer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspace:cached
+      - go-cache:/home/vscode/go
+      - go-pkg:/home/vscode/go/pkg
+    environment:
+      - GOPATH=/home/vscode/go
+    stdin_open: true
+    tty: true
+    command: bash /workspace/.devcontainer/start.sh
+    networks:
+      - devnet
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    networks:
+      - devnet
+    depends_on:
+      - devcontainer
+
+networks:
+  devnet:
+
+volumes:
+  go-cache:
+  go-pkg:

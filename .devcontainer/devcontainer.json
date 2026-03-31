@@ -1,0 +1,28 @@
+{
+  "name": "Go + Vue Dev",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "devcontainer",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "vscode",
+  "forwardPorts": [80, 8080, 5173],
+  "portsAttributes": {
+    "80": { "label": "Caddy (app)", "onAutoForward": "openBrowser" },
+    "8080": { "label": "Go backend" },
+    "5173": { "label": "Vite frontend" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "golang.go",
+        "vue.volar",
+        "esbenp.prettier-vscode",
+        "bradlc.vscode-tailwindcss",
+        "github.copilot",
+        "github.copilot-chat"
+      ],
+      "settings": {
+        "go.toolsManagement.autoUpdate": true
+      }
+    }
+  }
+}
