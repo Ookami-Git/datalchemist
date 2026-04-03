@@ -49,7 +49,7 @@ changelog:
 
 dockers_v2:
   - images:
-      - "docker.io/{{ .Env.DOCKERHUB_USERNAME }}/datalchemist"
+      - "docker.io/{{ .Env.DOCKER_USERNAME }}/datalchemist"
     tags:
       - "{{ .Tag }}"
       - latest
