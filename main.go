@@ -106,8 +106,15 @@ func main() {
 	// Configuration du routeur Gin
 	r := gin.Default()
 
-	// Servir les fichiers statiques depuis le répertoire "static"
-	r.Use(static.Serve("/", static.EmbedFolder(staticFiles, "web/dist")))
+	// 1. On tente de charger le dossier
+	embedFS, err := static.EmbedFolder(staticFiles, "web/dist")
+	if err != nil {
+		// Si ça rate, l'application s'arrête proprement avec un message clair
+		log.Fatalf("Error with EmbedFolder web/dist: %v", err)
+	}
+
+	// 2. Si tout va bien, on sert les fichiers
+	r.Use(static.Serve("/", embedFS))
 
 	// Configurer les routes
 	routes.SetupRoutes(r)
