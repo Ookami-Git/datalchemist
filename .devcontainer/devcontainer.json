@@ -10,6 +10,7 @@
     "8080": { "label": "Go backend" },
     "5173": { "label": "Vite frontend" }
   },
+  "postCreateCommand": "git config --global --add safe.directory '*'",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -18,7 +19,11 @@
         "esbenp.prettier-vscode",
         "bradlc.vscode-tailwindcss",
         "github.copilot",
-        "github.copilot-chat"
+        "github.copilot-chat",
+        "yzhang.markdown-all-in-one",
+        "DavidAnson.vscode-markdownlint",
+        "qwtel.sqlite-viewer",
+        "github.vscode-github-actions"
       ],
       "settings": {
         "go.toolsManagement.autoUpdate": true

@@ -11,12 +11,12 @@ Ce devcontainer encapsule tout votre workflow de développement dans Docker avec
 │                                                 │
 ├─────────────────────────────────────────────────┤
 │          DevContainer                           │
-│  ┌──────────────────┐  ┌──────────────────┐    │
-│  │   Backend (Go)   │  │ Frontend (Vite)  │    │
-│  │   Port: 8080     │  │  Port: 5173      │    │
-│  │  air (live reload│  │  npm run dev     │    │
-│  │  + logs visibles)│  │  + logs visibles │    │
-│  └──────────────────┘  └──────────────────┘    │
+│   ┌──────────────────┐  ┌──────────────────┐    │
+│   │   Backend (Go)   │  │ Frontend (Vite)  │    │
+│   │   Port: 8080     │  │  Port: 5173      │    │
+│   │  air (live reload│  │  npm run dev     │    │
+│   │  + logs visibles)│  │  + logs visibles │    │
+│   └──────────────────┘  └──────────────────┘    │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
@@ -56,6 +56,7 @@ docker-compose up --build
 | `start.sh`           | Script de démarrage (air + vite en background) |
 | `Caddyfile`          | Configuration reverse proxy                    |
 | `.air.toml`          | Config hot reload Go                           |
+| `devcontainer.json`  | Extensions: Go, Vue, Markdown                  |
 
 ### Ports exposés:
 
@@ -128,6 +129,14 @@ curl http://localhost/api/parameters
 
 ## ⚙️ Customization
 
+### Extension SQLite (visualisation .db)
+
+L’extension `alexcvzz.vscode-sqlite` est installée dans le devcontainer.
+
+- Ouvrir un fichier SQLite (ex : `database.sqlite`) depuis l’explorateur
+- Cliquez sur la base (sqLite Explorer) pour voir tables et données
+- Exécutez les requêtes SQL dans l’éditeur intégré
+
 ### Modifier les commandes de démarrage:
 
 Éditez `.devcontainer/start.sh`:
@@ -152,6 +161,61 @@ environment:
   - GIN_MODE=debug
   - NODE_ENV=development
 ```
+
+### Variables d'environnement nécessaires pour gorealser (devcontainer)
+
+Ajoutez ces variables dans votre shell ou dans votre configuration de conteneur.
+
+Linux / macOS (bash/zsh):
+
+```bash
+export GIT_TOKEN="votre_token_git"
+export DOCKER_USERNAME="votre_utilisateur_docker"
+export DOCKER_PASSWORD="votre_mot_de_passe_ou_token_docker"
+```
+
+Windows PowerShell (session actuelle):
+
+```powershell
+$env:GIT_TOKEN = "votre_token_git"
+$env:DOCKER_USERNAME = "votre_utilisateur_docker"
+$env:DOCKER_PASSWORD = "votre_mot_de_passe_ou_token_docker"
+```
+
+Windows PowerShell (permanent pour l'utilisateur):
+
+```powershell
+[Environment]::SetEnvironmentVariable("GIT_TOKEN", "votre_token_git", "User")
+[Environment]::SetEnvironmentVariable("DOCKER_USERNAME", "votre_utilisateur_docker", "User")
+[Environment]::SetEnvironmentVariable("DOCKER_PASSWORD", "votre_mot_de_passe_ou_token_docker", "User")
+```
+
+Windows cmd.exe:
+
+```cmd
+set GIT_TOKEN=votre_token_git
+set DOCKER_USERNAME=votre_utilisateur_docker
+set DOCKER_PASSWORD=votre_mot_de_passe_ou_token_docker
+```
+
+Linux / macOS (bash/zsh, session actuelle):
+
+```bash
+export GIT_TOKEN="votre_token_git"
+export DOCKER_USERNAME="votre_utilisateur_docker"
+export DOCKER_PASSWORD="votre_mot_de_passe_ou_token_docker"
+```
+
+Linux / macOS (permanent, ajouter dans ~/.bashrc ou ~/.zshrc):
+
+```bash
+echo 'export GIT_TOKEN="votre_token_git"' >> ~/.bashrc
+echo 'export DOCKER_USERNAME="votre_utilisateur_docker"' >> ~/.bashrc
+echo 'export DOCKER_PASSWORD="votre_mot_de_passe_ou_token_docker"' >> ~/.bashrc
+# puis relancer le shell: source ~/.bashrc
+```
+
+> Astuce: dans `devcontainer.json`, utilisez `remoteEnv` ou `containerEnv` pour passer ces valeurs automatiquement au démarrage.
 
 ### Modifier la config Air:
 
