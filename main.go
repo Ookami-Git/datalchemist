@@ -36,7 +36,7 @@ func main() {
 	// Définir les flags
 	pflag.StringP("listen", "l", viper.GetString("listen"), "Listening address")
 	pflag.StringP("database", "d", viper.GetString("database"), "Path to the database")
-	pflag.IntP("session", "s", viper.GetInt("session"), "Time before session expiration in minutes")
+	pflag.IntP("session", "s", viper.GetInt("session"), "Time before session expiration in seconds")
 	pflag.StringP("secretkey", "k", viper.GetString("secretkey"), "Key used to encrypt/decrypt the secret stored in the database")
 	pflag.StringP("secretmigration", "m", viper.GetString("secretmigration"), "Use this option to migrate secrets. Put the old key here and the new one in secret-key.")
 	pflag.Parse()

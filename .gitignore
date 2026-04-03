@@ -29,6 +29,5 @@ datalchemist.exe
 
 #Local build
 dist/
-Dockerfile
-.goreleaser.yaml
 .vite/
+tmp/
