@@ -36,6 +36,9 @@ dist/
 .vite/
 tmp/
 
+# Local Graphify index; regenerate it with `graphify extract .`.
+graphify-out/
+
 # Local credentials for AI coding CLIs (normally stored in Docker volumes)
 .codex/
 .claude/

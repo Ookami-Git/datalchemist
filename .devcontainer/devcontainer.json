@@ -10,7 +10,7 @@
     "8080": { "label": "Go backend" },
     "5173": { "label": "Vite frontend" }
   },
-  "postCreateCommand": "git config --global --add safe.directory '*'",
+  "postCreateCommand": "git config --global --add safe.directory '*' && .devcontainer/setup-graphify.sh",
   "customizations": {
     "vscode": {
       "extensions": [

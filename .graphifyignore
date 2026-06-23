@@ -1,0 +1,12 @@
+# Generated, dependency, and VCS content does not add useful architectural context.
+.git/
+.agents/
+.codex/
+graphify-out/
+node_modules/
+web/node_modules/
+web/dist/
+dist/
+.vite/
+tmp/
+*.sqlite
