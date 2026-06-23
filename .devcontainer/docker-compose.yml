@@ -7,6 +7,8 @@ services:
       - ..:/workspace:cached
       - go-cache:/home/vscode/go
       - go-pkg:/home/vscode/go/pkg
+      # CLI sessions (including credential files) live outside the repository.
+      - ai-cli-home:/root
     environment:
       - GOPATH=/home/vscode/go
     stdin_open: true
@@ -32,3 +34,4 @@ networks:
 volumes:
   go-cache:
   go-pkg:
+  ai-cli-home:

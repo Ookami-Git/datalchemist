@@ -240,3 +240,65 @@ echo 'export DOCKER_PASSWORD="votre_mot_de_passe_ou_token_docker"' >> ~/.bashrc
 - **Volumes optimisés**: Code source monté en `:cached` pour meilleures performances
 - **Persistance**: `node_modules` et cache Go dans volumes Docker
 - **Production**: Utiliser le `Dockerfile` racine (Alpine) avec binaire compilé
+
+## Assistant IA dans le devcontainer
+
+Les assistants sont des CLI installées dans l'image du devcontainer. Après une modification de `Dockerfile`, lancez **Dev Containers: Rebuild Container** dans VS Code pour les installer, puis utilisez le terminal intégré au conteneur.
+
+| Assistant | Commande | Première utilisation |
+| --------- | -------- | -------------------- |
+| Codex (OpenAI) | `codex` | `codex login`, puis connexion avec ChatGPT ou une clé API |
+| Antigravity | `agy` | `agy`, puis suivre le flux de connexion interactif |
+| Claude Code | `claude` | `claude`, puis `/login` — à effectuer lorsqu'un compte Anthropic sera disponible |
+
+Exemples de demandes depuis la racine du projet :
+
+```bash
+# Demander à Codex d'expliquer ou de modifier le projet courant
+codex "Explique la structure de ce projet et propose une amélioration."
+
+# Ouvrir Antigravity dans le répertoire courant
+agy
+
+# Démarrer Claude Code (après connexion)
+claude
+```
+
+### Authentification et secrets
+
+Les sessions et jetons des trois CLI sont enregistrés dans le volume Docker nommé `ai-cli-home`, monté sur `/root`. Ce volume est séparé du dossier `/workspace`, qui est le dépôt Git : les identifiants ne sont donc ni créés ni versionnés dans le projet.
+
+Ne mettez jamais une clé API ou un jeton dans :
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `devcontainer.json`
+- un fichier `.env` destiné à être partagé ou commité
+
+Pour Codex, la connexion interactive `codex login` est la méthode la plus simple. Si une clé API est nécessaire ponctuellement, saisissez-la sans l'écrire dans l'historique du shell :
+
+```bash
+read -s OPENAI_API_KEY
+export OPENAI_API_KEY
+```
+
+La variable n'existe alors que dans le terminal courant. Fermez-le pour la supprimer. Pour une configuration durable, utilisez un gestionnaire de secrets ou les variables d'environnement sécurisées de votre environnement de développement, jamais les fichiers du dépôt.
+
+### Vérifier les installations
+
+```bash
+codex --version
+agy --version
+claude --version
+```
+
+### Réinitialiser les connexions IA
+
+Supprimer le volume efface les sessions enregistrées sans toucher au code. Listez d'abord son nom exact, qui reçoit généralement un préfixe lié au projet :
+
+```bash
+docker volume ls
+docker volume rm <nom-du-volume-ai-cli-home>
+```
+
+Au prochain démarrage du devcontainer, reconnectez simplement les assistants nécessaires.

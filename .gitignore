@@ -31,3 +31,9 @@ datalchemist.exe
 dist/
 .vite/
 tmp/
+
+# Local credentials for AI coding CLIs (normally stored in Docker volumes)
+.codex/
+.claude/
+.claude.json
+.config/antigravity/
