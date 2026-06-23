@@ -25,7 +25,7 @@ go.work
 
 # Local configuration and Docker secrets
 .datalchemist.yaml
-secrets/
+/secrets/
 
 #Binaries
 datalchemist

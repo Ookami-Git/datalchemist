@@ -1,4 +1,12 @@
-# Préférences
+# Datalchemist
+
+## Projet
+
+### Backend GO
+
+- Rédige et maintiens à jours les fichiers \_test.go.
+
+## Préférences
 
 - Réponds en français.
 - Sois concis ; pas de résumé de ce que tu viens de faire.

@@ -54,3 +54,9 @@ func TestBootstrapAndResetAdmin(t *testing.T) {
 		t.Fatalf("verify reset password: %v", err)
 	}
 }
+
+func TestAdminPasswordHashRejectsShortPassword(t *testing.T) {
+	if _, err := adminPasswordHash("too-short"); err == nil {
+		t.Fatal("short administrator password was accepted")
+	}
+}
