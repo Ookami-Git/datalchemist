@@ -23,6 +23,10 @@ go.work
 #database
 *.sqlite
 
+# Local configuration and Docker secrets
+.datalchemist.yaml
+secrets/
+
 #Binaries
 datalchemist
 datalchemist.exe

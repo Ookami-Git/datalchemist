@@ -10,7 +10,7 @@ Datalchemist is an open-source data orchestration platform that makes it easy to
 - Frontend: Vue.js + Bootstrap 5
 - Data source connectors: URL, file, database, text, and script (script is flagged as risky and can be disabled)
 - Templating: Gonja (Jinja-compatible) + NunJucks
-- User management and authentication (default admin/admin)
+- User management and authentication
 - Optional encrypted secrets management
 - YAML-based navigation menu for customizable dashboards
 
@@ -47,11 +47,7 @@ go build -o datalchemist .
 
 Open `http://localhost:8080`
 
-Default login:
-- username: `admin`
-- password: `admin`
-
-> Change default credentials after first login.
+The first administrator must be created explicitly; no default account exists.
 
 ## ⚙️ Configuration
 
@@ -61,7 +57,13 @@ Default login:
 - `-l`, `--listen`    string (default `:8080`)
 - `-s`, `--session`   int (seconds, default `3600`)
 - `-k`, `--secretkey` string
+- `--secretkey-file` string
 - `-m`, `--secretmigration` string
+- `--secretmigration-file` string
+- `--bootstrap-admin-username` string (default `admin`)
+- `--bootstrap-admin-password-file` string
+- `--reset-admin-username` string (default `admin`)
+- `--reset-admin-password-file` string
 
 ### Config file
 
@@ -80,17 +82,41 @@ secretkey: "YourSecretKey"
 export DA_LISTEN=":8080"
 export DA_DATABASE="datalchsmist.sqlite"
 export DA_SESSION=3600
-export DA_SECRETKEY="YourSecretKey"
+export DA_SECRETKEY_FILE="/run/secrets/datalchemist_secret_key"
+export DA_BOOTSTRAP_ADMIN_PASSWORD_FILE="/run/secrets/bootstrap_admin_password"
 ```
+
+## First administrator and recovery
+
+Create the first local administrator before starting the web service. The command creates the account and exits; the password must contain at least 12 characters.
+
+```bash
+./datalchemist --bootstrap-admin-username admin --bootstrap-admin-password-file /run/secrets/bootstrap_admin_password
+```
+
+If every administrator loses access, run the local break-glass command from an environment that has access to the SQLite volume. It only resets an existing local administrator and then exits without starting HTTP.
+
+```bash
+./datalchemist --reset-admin-username admin --reset-admin-password-file /run/secrets/recovery_admin_password
+```
+
+Do not keep either password file mounted in the web-service container after the operation. Keep at least two named administrator accounts.
 
 ## 🔐 Secrets Management
 
-- Secrets are encrypted only when `--secretkey` is provided.
+- Secrets are encrypted only when `--secretkey` or `--secretkey-file` is provided. Prefer `--secretkey-file`: passing a key as an environment variable or command-line argument makes it easier to expose through process inspection.
+- The supplied Compose file expects a local Docker secret at `./secrets/datalchemist_secret_key`. Generate it once and keep it outside version control:
+
+```bash
+install -d -m 700 secrets
+openssl rand -base64 48 > secrets/datalchemist_secret_key
+chmod 600 secrets/datalchemist_secret_key
+```
 - Use `--secretmigration` to rotate the secret:
 
 ```bash
-./datalchemist --secretkey "MyNewSecretKey" --secretmigration "MyOldSecretKey"
-./datalchemist --secretkey "MyNewSecretKey"
+./datalchemist --secretkey-file /run/secrets/new_key --secretmigration-file /run/secrets/old_key
+./datalchemist --secretkey-file /run/secrets/new_key
 ```
 
 - Create secrets through the UI.

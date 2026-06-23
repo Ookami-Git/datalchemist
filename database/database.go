@@ -54,17 +54,6 @@ func Init() error {
 			db.Create(p)
 		}
 	}
-	adminpassword, _ := bcrypt.GenerateFromPassword([]byte("admin"), 14)
-	users := []*models.Users{
-		{ID: 1, Name: "admin", Type: "local", Password: string(adminpassword)},
-	}
-	for _, u := range users {
-		var count int64
-		db.Model(models.Users{}).Where("name = ?", u.Name).Count(&count)
-		if count == 0 {
-			db.Create(u)
-		}
-	}
 	groups := []*models.Groups{
 		{ID: 1, Name: "admin", Description: "Administrator"},
 	}
@@ -73,16 +62,6 @@ func Init() error {
 		db.Model(models.Groups{}).Where("name = ?", g.Name).Count(&count)
 		if count == 0 {
 			db.Create(g)
-		}
-	}
-	roles := []*models.Roles{
-		{Gid: 1, User: 1},
-	}
-	for _, r := range roles {
-		var count int64
-		db.Model(models.Roles{}).Where("gid = ? AND user = ?", r.Gid, r.User).Count(&count)
-		if count == 0 {
-			db.Create(r)
 		}
 	}
 	return nil
@@ -362,6 +341,95 @@ func UserAdd(User models.Users) uint {
 	log.Printf("User added with id %d\n", User.ID)
 
 	return User.ID
+}
+
+// BootstrapAdmin creates the first local administrator. It is deliberately
+// limited to an empty user database so it cannot be used as a remote reset path.
+func BootstrapAdmin(username string, password string) error {
+	db, err := OpenGorm()
+	if err != nil {
+		return err
+	}
+
+	if strings.TrimSpace(username) == "" {
+		return fmt.Errorf("administrator username cannot be empty")
+	}
+	hash, err := adminPasswordHash(password)
+	if err != nil {
+		return err
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		var count int64
+		if err := tx.Model(&models.Users{}).Count(&count).Error; err != nil {
+			return err
+		}
+		if count != 0 {
+			return fmt.Errorf("an administrator can only be bootstrapped when no users exist")
+		}
+
+		var group models.Groups
+		if err := tx.First(&group, 1).Error; err != nil || group.Name != "admin" {
+			return fmt.Errorf("administrator group is missing")
+		}
+
+		user := models.Users{Name: username, Type: "local", Password: string(hash)}
+		if err := tx.Create(&user).Error; err != nil {
+			return err
+		}
+		return tx.Create(&models.Roles{Gid: group.ID, User: user.ID}).Error
+	})
+}
+
+// ResetAdminPassword changes the password of an existing local administrator.
+// It is intended for the local break-glass command only.
+func ResetAdminPassword(username string, password string) error {
+	db, err := OpenGorm()
+	if err != nil {
+		return err
+	}
+
+	hash, err := adminPasswordHash(password)
+	if err != nil {
+		return err
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		var user models.Users
+		if err := tx.Where("name = ?", username).First(&user).Error; err != nil {
+			return fmt.Errorf("administrator %q not found", username)
+		}
+		if user.Type != "local" {
+			return fmt.Errorf("administrator %q is not a local user", username)
+		}
+
+		var role models.Roles
+		if err := tx.Where("user = ? AND gid = ?", user.ID, 1).First(&role).Error; err != nil {
+			return fmt.Errorf("user %q is not an administrator", username)
+		}
+
+		return tx.Model(&user).Update("password", string(hash)).Error
+	})
+}
+
+func adminPasswordHash(password string) ([]byte, error) {
+	if len(password) < 12 {
+		return nil, fmt.Errorf("administrator password must contain at least 12 characters")
+	}
+	return bcrypt.GenerateFromPassword([]byte(password), 14)
+}
+
+func HasUsers() (bool, error) {
+	db, err := OpenGorm()
+	if err != nil {
+		return false, err
+	}
+
+	var count int64
+	if err := db.Model(&models.Users{}).Count(&count).Error; err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func UserUpdate(User models.Users) {
@@ -673,7 +741,7 @@ func checkErr(err error) {
 	}
 }
 
-func SecretAdd(Secret models.Secrets) (error) {
+func SecretAdd(Secret models.Secrets) error {
 	db, err := OpenGorm()
 	checkErr(err)
 
@@ -682,7 +750,7 @@ func SecretAdd(Secret models.Secrets) (error) {
 	return err
 }
 
-func SecretUpdate(Secret models.Secrets) (error) {
+func SecretUpdate(Secret models.Secrets) error {
 	db, err := OpenGorm()
 	checkErr(err)
 
