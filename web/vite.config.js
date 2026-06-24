@@ -5,6 +5,15 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  // Bind mounts (Docker Desktop, remote workspaces and AI edits) do not always
+  // propagate filesystem events to the container. Polling keeps HMR reliable
+  // regardless of where the file change originated.
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 250,
+    },
+  },
   
   optimizeDeps: {
     include: ["dagre", "mermaid"]
