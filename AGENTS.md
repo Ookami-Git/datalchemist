@@ -1,12 +1,29 @@
+# Datalchemist
+
+## Projet
+
+### Backend GO
+
+- Rédige et maintiens à jours les fichiers \_test.go.
+
+## Préférences
+
+- Réponds en français.
+- Sois concis ; pas de résumé de ce que tu viens de faire.
+- Avant toute modification non triviale, propose un plan court.
+- N'invente rien : si tu ne sais pas, dis-le. Vérifie dans le code ou la doc avant d'affirmer, et cite ta source.
+- Si ma demande est ambiguë, pose-moi des questions avant d'agir.
+
 ## graphify
 
-This project has a knowledge graph at graphify-out/ with god nodes, community structure, and cross-file relationships.
+Ce projet possède un graphe de connaissance dans `graphify-out/`, avec des nœuds centraux, une structure en communautés et des relations inter-fichiers.
 
-When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
+Quand l'utilisateur saisit `/graphify`, invoquer le skill `graphify` avant toute autre action.
 
-Rules:
-- For codebase questions, first run `graphify query "<question>"` when graphify-out/graph.json exists. Use `graphify path "<A>" "<B>"` for relationships and `graphify explain "<concept>"` for focused concepts. These return a scoped subgraph, usually much smaller than GRAPH_REPORT.md or raw grep output.
-- Dirty graphify-out/ files are expected after hooks or incremental updates; dirty graph files are not a reason to skip graphify. Only skip graphify if the task is about stale or incorrect graph output, or the user explicitly says not to use it.
-- If graphify-out/wiki/index.md exists, use it for broad navigation instead of raw source browsing.
-- Read graphify-out/GRAPH_REPORT.md only for broad architecture review or when query/path/explain do not surface enough context.
-- After modifying code, run `graphify update .` to keep the graph current (AST-only, no API cost).
+Règles :
+
+- Pour les questions sur le code, exécuter d'abord `graphify query "<question>"` si `graphify-out/graph.json` existe. Utiliser `graphify path "<A>" "<B>"` pour les relations et `graphify explain "<concept>"` pour un concept ciblé.
+- Des fichiers modifiés dans `graphify-out/` sont normaux après les hooks ou mises à jour incrémentales ; ce n'est pas une raison pour ne pas utiliser Graphify. Ne l'ignorer que si la demande concerne un graphe obsolète ou incorrect, ou si l'utilisateur le demande explicitement.
+- Si `graphify-out/wiki/index.md` existe, l'utiliser pour une navigation générale plutôt que de parcourir directement les sources.
+- Ne lire `graphify-out/GRAPH_REPORT.md` que pour une revue d'architecture large ou si `query`, `path` et `explain` ne fournissent pas assez de contexte.
+- Après une modification du code, exécuter `graphify update .` pour garder le graphe à jour (analyse AST uniquement, sans coût d'API).
