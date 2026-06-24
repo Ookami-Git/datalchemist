@@ -183,13 +183,32 @@ watch(() => props.collapsed, (collapsed, previousCollapsed) => {
     transform: translateX(-0.35rem);
 }
 
+/* Base style for sidebar dropdown menus */
+.dropdown-menu {
+    border-radius: 10px;
+    padding: 0.35rem;
+    border: 1px solid var(--bs-border-color-translucent);
+    background-color: rgba(var(--bs-body-bg-rgb), 0.94);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+/* When sidebar is expanded (inline submenus) */
 .dropdown-inline>.dropdown-menu {
     position: static !important;
     inset: auto !important;
     transform: none !important;
     float: none;
     width: 100%;
-    margin-top: 0.25rem;
+    margin-top: 0.15rem;
+    margin-bottom: 0.35rem;
+    padding: 0;
+    padding-left: 1.15rem; /* Clean indentation for subitems */
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
 }
 
 .dropdown-inline>.dropdown-menu :deep(.dropdown-item) {

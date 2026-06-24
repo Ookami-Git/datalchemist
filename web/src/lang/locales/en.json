@@ -78,17 +78,62 @@
             "header": "Navbar",
             "subtitle": "Configure menu structure and links",
             "status": {
-                "valid": "Menu YAML is valid",
-                "invalid": "Menu YAML has errors"
+                "valid": "Menu is ready to save",
+                "invalid": "Menu has errors"
             },
             "editor": {
-                "title": "YAML editor",
-                "help": "Update your menu, validate it, then save to publish navigation changes."
+                "title": "Navigation editor",
+                "help": "Add, order, and configure menu items, then save your changes."
             },
             "guide": {
                 "title": "Quick reference",
                 "resources": "Useful links",
-                "example": "Example"
+                "example": "Example",
+                "visualHelp": "Changes are saved in the format compatible with your existing menu. Add a submenu to group links one level deep."
+            },
+            "empty": "Your navigation bar does not contain any items yet.",
+            "untitled": "Untitled item",
+            "item": {
+                "divider": "Divider"
+            },
+            "types": {
+                "link": "Link",
+                "submenu": "Submenu",
+                "divider": "Divider"
+            },
+            "destinations": {
+                "internal": "Internal",
+                "external": "External",
+                "chooseView": "Choose a view…",
+                "custom": "Other internal path"
+            },
+            "preview": {
+                "title": "Live preview",
+                "help": "Immediately reflects unsaved changes."
+            },
+            "fields": {
+                "name": "Label",
+                "namePlaceholder": "For example, Dashboard",
+                "link": "Link",
+                "linkPlaceholder": "For example, /view/home or https://…",
+                "type": "Entry type",
+                "destination": "Destination",
+                "view": "Internal view",
+                "externalUrl": "External address",
+                "icon": "Icon",
+                "divider": "Divider",
+                "external": "External link",
+                "newtab": "Open in a new tab"
+            },
+            "submenu": { "title": "Submenu" },
+            "actions": {
+                "add": "Add item",
+                "addFirst": "Add first item",
+                "addSubmenu": "Add submenu",
+                "removeSubmenu": "Remove submenu",
+                "addSubitem": "Add link",
+                "makeLink": "Convert to link",
+                "order": "Reorder item"
             },
             "resources": {
                 "bootstrapIcons": "Bootstrap Icons",
@@ -104,6 +149,7 @@
                 "newtab": "Opens the link in a new tab"
             },
             "error": {
+                "load": "The current menu configuration could not be read. You can create a new list.",
                 "yaml":"The YAML code contains syntax errors",
                 "req-name":"The \"name\" key is required",
                 "req-boolean":"The value must be a boolean (true/false)",
