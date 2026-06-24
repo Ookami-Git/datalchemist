@@ -78,17 +78,62 @@
             "header": "Barre de navigation",
             "subtitle": "Configurez la structure du menu et ses liens",
             "status": {
-                "valid": "Le YAML du menu est valide",
-                "invalid": "Le YAML du menu contient des erreurs"
+                "valid": "Le menu est prêt à être enregistré",
+                "invalid": "Le menu contient des erreurs"
             },
             "editor": {
-                "title": "Éditeur YAML",
-                "help": "Modifiez le menu, validez-le, puis sauvegardez pour publier la navigation."
+                "title": "Éditeur de navigation",
+                "help": "Ajoutez, organisez et configurez les éléments du menu, puis enregistrez vos modifications."
             },
             "guide": {
                 "title": "Référence rapide",
                 "resources": "Liens utiles",
-                "example": "Exemple"
+                "example": "Exemple",
+                "visualHelp": "Les changements sont enregistrés au format compatible avec votre menu existant. Ajoutez un sous-menu pour regrouper des liens sur un seul niveau."
+            },
+            "empty": "Votre barre de navigation ne contient encore aucun élément.",
+            "untitled": "Élément sans titre",
+            "item": {
+                "divider": "Séparateur"
+            },
+            "types": {
+                "link": "Lien",
+                "submenu": "Sous-menu",
+                "divider": "Séparateur"
+            },
+            "destinations": {
+                "internal": "Interne",
+                "external": "Externe",
+                "chooseView": "Choisir une vue…",
+                "custom": "Autre chemin interne"
+            },
+            "preview": {
+                "title": "Aperçu en direct",
+                "help": "Reflète immédiatement les modifications non enregistrées."
+            },
+            "fields": {
+                "name": "Libellé",
+                "namePlaceholder": "Ex. Tableau de bord",
+                "link": "Lien",
+                "linkPlaceholder": "Ex. /view/home ou https://…",
+                "type": "Type d'entrée",
+                "destination": "Destination",
+                "view": "Vue interne",
+                "externalUrl": "Adresse externe",
+                "icon": "Icône",
+                "divider": "Séparateur",
+                "external": "Lien externe",
+                "newtab": "Ouvrir dans un nouvel onglet"
+            },
+            "submenu": { "title": "Sous-menu" },
+            "actions": {
+                "add": "Ajouter un élément",
+                "addFirst": "Ajouter le premier élément",
+                "addSubmenu": "Ajouter un sous-menu",
+                "removeSubmenu": "Retirer le sous-menu",
+                "addSubitem": "Ajouter un lien",
+                "makeLink": "Transformer en lien",
+                "order": "Réorganiser l'élément"
             },
             "resources": {
                 "bootstrapIcons": "Bootstrap Icons",
@@ -104,6 +149,7 @@
                 "newtab": "Ouvre le lien dans un nouvel onglet"
             },
             "error": {
+                "load": "La configuration actuelle du menu n'a pas pu être lue. Vous pouvez créer une nouvelle liste.",
                 "yaml":"Le code YAML comporte des erreurs de syntaxe",
                 "req-name":"La clé \"name\" est requise",
                 "req-boolean":"La valeur doit être un booléen (true/false)",
