@@ -1,386 +1,457 @@
 {
-    "global": {
-        "apply": "Apply",
-        "cancel": "Cancel",
-        "close": "Close",
-        "username": "Username",
-        "password": "Password",
-        "yes": "Yes",
-        "no": "No",
-        "groups": "Groups",
-        "add": "Add",
-        "remove": "Remove",
-        "copy": "Copy",
-        "copied": "Copied",
-        "edit": "Edit",
-        "preview": "Preview",
-        "preview_saved_hint": "Preview of the saved version",
-        "error": {
-            "unknown": "Unknown error",
-            "fetch_sources": "Error while fetching sources",
-            "fetch_items": "Error while fetching items",
-            "fetch_views": "Error while fetching views",
-            "fetch_secrets": "Error while fetching secrets"
-        }
-    },
-    "auth": {
-        "message": "Please enter your username and password",
-        "button": "Login"
-    },
-    "menu": {
-        "profil": "My account",
-        "logout": "Logout",
-        "admin": "Settings",
-        "edit": "Editor",
-        "search": "Filter tables",
-        "clearsearch": "Clear filter"
-    },
-    "profil": {
-        "header": "My account",
-        "parameters": "Settings",
-        "language": "Language",
-        "languageEnglish": "English",
-        "languageFrench": "French",
-        "theme": "Theme",
-        "defaultPreview": "Default",
-        "password": "New password",
-        "passwordrepeat": "Confirm new password",
-        "passwordmismatch": "Passwords do not match",
-        "savesuccess": "Profile saved successfully",
-        "save": "Save changes"
-    },
-    "admin": {
-        "header": "Settings",
-        "global": {
-            "header": "General",
-            "pending": "Pending changes",
-            "synced": "Everything is saved",
-            "name": "Name",
-            "theme": "Theme",
-            "lang": "Language",
-            "bg": "Background",
-            "dark": "Dark",
-            "light": "Light",
-            "ldap": {
-                "header": "Configure LDAP authentication",
-                "enable": "Enable",
-                "skipverify": "Ignore certificate verification",
-                "server": "Server",
-                "port": "Port",
-                "basedn": "Base DN",
-                "login": "Login field",
-                "user": "User",
-                "password": "Password"
-            },
-            "defaultview": "Home"
-        },
-        "navbar": {
-            "header": "Navbar",
-            "subtitle": "Configure menu structure and links",
-            "status": {
-                "valid": "Menu is ready to save",
-                "invalid": "Menu has errors"
-            },
-            "editor": {
-                "title": "Navigation editor",
-                "help": "Add, order, and configure menu items, then save your changes."
-            },
-            "guide": {
-                "title": "Quick reference",
-                "resources": "Useful links",
-                "example": "Example",
-                "visualHelp": "Changes are saved in the format compatible with your existing menu. Add a submenu to group links one level deep."
-            },
-            "empty": "Your navigation bar does not contain any items yet.",
-            "untitled": "Untitled item",
-            "item": {
-                "divider": "Divider"
-            },
-            "types": {
-                "link": "Link",
-                "submenu": "Submenu",
-                "divider": "Divider"
-            },
-            "destinations": {
-                "internal": "Internal",
-                "external": "External",
-                "chooseView": "Choose a view…",
-                "custom": "Other internal path"
-            },
-            "preview": {
-                "title": "Live preview",
-                "help": "Immediately reflects unsaved changes."
-            },
-            "fields": {
-                "name": "Label",
-                "namePlaceholder": "For example, Dashboard",
-                "link": "Link",
-                "linkPlaceholder": "For example, /view/home or https://…",
-                "type": "Entry type",
-                "destination": "Destination",
-                "view": "Internal view",
-                "externalUrl": "External address",
-                "icon": "Icon",
-                "divider": "Divider",
-                "external": "External link",
-                "newtab": "Open in a new tab"
-            },
-            "submenu": { "title": "Submenu" },
-            "actions": {
-                "add": "Add item",
-                "addFirst": "Add first item",
-                "addSubmenu": "Add submenu",
-                "removeSubmenu": "Remove submenu",
-                "addSubitem": "Add link",
-                "makeLink": "Convert to link",
-                "order": "Reorder item"
-            },
-            "resources": {
-                "bootstrapIcons": "Bootstrap Icons",
-                "fontAwesome": "Font Awesome"
-            },
-            "rules": {
-                "name": "Label displayed in navigation",
-                "link": "Internal destination (/view/...) or external URL",
-                "icon": "Icon CSS class (example: bi bi-grid)",
-                "subitems": "Child entries list (single nesting level)",
-                "external": "Marks a link as external to the app",
-                "divider": "Adds a visual separator",
-                "newtab": "Opens the link in a new tab"
-            },
-            "error": {
-                "load": "The current menu configuration could not be read. You can create a new list.",
-                "yaml":"The YAML code contains syntax errors",
-                "req-name":"The \"name\" key is required",
-                "req-boolean":"The value must be a boolean (true/false)",
-                "req-array":"The value must be a YAML array",
-                "req-string":"The value must be a text",
-                "subitems":"The imbrication of \"subitems\" is not supported",
-                "unknown-key":"The following key is not supported"
-            }
-        },
-        "users": {
-            "header": "Users",
-            "subtitle": "Manage accounts, authentication type, and group membership",
-            "total": "Users",
-            "tablehint": "Edit profiles, assign groups, and remove unused accounts",
-            "user": "User",
-            "type": "Connection type",
-            "groups": "Groups",
-            "actions": "Actions",
-            "adduser": "Add user",
-            "usernameexists": "This username already exists",
-            "nogroup": "No group selected",
-            "local": "Local",
-            "ldap": "LDAP",
-            "edituser": "Edit user",
-            "changegroups": "Change user groups",
-            "deleteuser": "Delete user",
-            "preview": "Preview user",
-            "password":"Password",
-            "askdelete": "Are you sure you want to delete the user"
-        },
-        "groups": {
-            "header": "Groups",
-            "subtitle": "Manage groups and their descriptions",
-            "total": "Groups",
-            "tablehint": "Create, edit, and remove available groups",
-            "name": "Group name",
-            "description": "Description",
-            "addgroup": "Add group",
-            "editgroup": "Edit group",
-            "deletegroup": "Delete group",
-            "nameexists": "This group name already exists",
-            "askdelete": "Are you sure you want to delete the group"
-        },
-        "acl": {
-            "header": "Access control",
-            "subtitle": "Define which views are public or restricted to groups",
-            "total": "Views",
-            "protectedcount": "Protected",
-            "tablehint": "Enable protection on a view, then select allowed groups",
-            "view": "View",
-            "status": "Status",
-            "groupsallow": "Allowed groups",
-            "actions": "Actions",
-            "protected": "Protected",
-            "public": "Public",
-            "toggleprotection": "Toggle protection",
-            "allowgroups": "Allow groups"
-        }
-    },
-    "edit": {
-        "sources": "Sources",
-        "items": "Items",
-        "views": "Views",
-        "name": "Name",
-        "actions": "Actions",
-        "subtitle": "Manage sources, items, views, and secrets",
-        "total": "Entries",
-        "add": "Add",
-        "secrets": "Secrets",
-        "source_hint": "Define data connectors (API, files, databases)",
-        "item_hint": "Build objects from sources",
-        "view_hint": "Assemble objects for final rendering",
-        "secrets_sources_hint": "Used in source templates (backend)",
-        "modal_add_secret_title": "Add secret",
-        "modal_add_secret_note": "The secret is encrypted on the backend and can be used in source templates.",
-        "modal_add_secret_name_help": "Reference name used in your source templates",
-        "modal_add_secret_value_help": "Sensitive value encrypted in database",
-        "modal_add_generic_note": "This element will be available immediately after saving.",
-        "modal_add_generic_name_help": "Use a clear and unique name",
-        "modal_edit_secret_title": "Edit secret",
-        "modal_edit_secret_note": "Changes are encrypted on the backend.",
-        "modal_edit_secret_name_help": "Reference name used in your source templates",
-        "modal_edit_secret_value_help": "New value encrypted in database",
-        "modal_delete_subtitle": "Permanent deletion",
-        "modal_delete_warning": "This action cannot be undone.",
-        "modal_delete_type": "Element",
-        "secrets_edit_disabled": "Secret editing is disabled",
-        "secrets_state_enabled": "Secrets enabled",
-        "secrets_state_disabled": "Secrets disabled",
-        "secret_value": "Secret value"
-    },
-    "edititem": {
-        "header": "Item",
-        "subtitle": "Edit HTML template, JavaScript script, and linked sources for this item",
-        "loading": "Loading item...",
-        "loaderror": "Unable to load this item",
-        "retry": "Retry",
-        "preview": "Preview",
-        "preview_local": "Local preview",
-        "preview_local_hint": "Includes unsaved changes",
-        "preview_query_label": "GET variables",
-        "preview_query_placeholder": "var=value&lang=en",
-        "preview_reload": "Reload",
-        "global": {
-            "syntax": "Syntax",
-            "examples": "Examples",
-            "documentation": "Integrated documentation",
-            "docsbytype": "Each section contains its own dedicated documentation"
-        },
-        "bootstrap": {
-            "description": "Use Bootstrap classes in your HTML code to unify and customize the visual rendering of your items. The documentation contains many examples for each desired rendering."
-        },
-        "icons": {
-            "header": "Icons",
-            "description": "Use Font Awesome or Bootstrap icons to display items. The documentation contains many examples for each desired rendering."
-        },
-        "datatable": {
-            "description": "DataTables allows you to easily add search, sorting, export, and pagination to your HTML tables. To use the Bootstrap theme, add the 'table' class. Refer to the documentation for examples and more information."
-        },
-        "mermaid": {
-            "description": "Mermaid allows you to create diagrams. Must be contained in a 'pre' tag with the class 'mermaid'. Refer to the documentation for more information."
-        },
-        "nunjucks": {
-            "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",
-            "customfilter": "Additional filters",
-            "date": {
-                "description": "Allows to manipulate the format of dates."
-            },
-            "find": {
-                "description": "Allows to search for a value in an array of objects and return the first object that matches."
-            },
-            "fromjson": {
-                "description": "Allows to convert a JSON string to an object."
-            },
-            "setattribute":{
-                "description": "Allows to modify an attribute of an object."
-            },
-            "split": {
-                "description": "Allows splitting a string into an array using a separator."
-            }
-        },
-        "javascript": {
-            "description": "The JavaScript code is executed after the HTML code and can use Nunjucks. It is important to note that each datalchemist object can contain its own associated JavaScript code, so it is recommended to avoid potential conflicts with other objects by using unique variable or function names and minimizing the impact on the global environment."
-        }
-    },
-    "editsource": {
-        "type": {
-            "file": "File",
-            "url": "URL",
-            "execute": "Execute a command or a script",
-            "database": "Database",
-            "text": "Creation"
-        },
-        "header": "Source",
-        "subtitle": "Configure source type, output format, and retrieval logic",
-        "loading": "Loading source...",
-        "loaderror": "Unable to load this source",
-        "retry": "Retry",
-        "config_title": "Configuration",
-        "config_help": "Define connector, output format, and related parameters",
-        "secrets_hint": "Secrets are available in source templates (backend processing):",
-        "type_label": "Type",
-        "format": "Format",
-        "database": {
-            "connection": "Database connection string",
-            "helper": "See the help on the right for more information about the connection string syntax.",
-            "query": "SQL query"
-        },
-        "file": {
-            "path": "Path",
-            "helper": "Path of the file on the server where datalchemist is executed."
-        },
-        "execute": {
-            "path": "Command or script",
-            "helper": "Command or script that will be executed by the application. The standard output must correspond to the selected format."
-        },
-        "url": {
-            "skipverify": "Skip verify SSL Certificate",
-            "proxy": "Proxy",
-            "authentication": "Authentication (Basic Auth)",
-            "enable": "Enable",
-            "username": "Username",
-            "password": "Password",
-            "ak": "Access Key",
-            "sk": "Secret Key",
-            "region": "Region",
-            "service": "Service",
-            "headers": "Headers",
-            "method": "Method",
-            "data": "Data (Body request)",
-            "key": "Key",
-            "value": "Value"
-        },
-        "text": {
-            "helper": "Enter the item in the selected language. The JINJA syntax is valid."
-        },
-        "loop": "Loop",
-        "loopinfo": "More information"
-    },
-    "editview": {
-        "header": "View",
-        "subtitle": "Build your view in grid or row mode and fine-tune the visual layout",
-        "loading": "Loading view...",
-        "loaderror": "Unable to load this view",
-        "retry": "Retry",
-        "config_title": "Layout Editor",
-        "config_help": "Add items, adjust sizing, and organize row/column composition",
-        "mode": "Mode",
-        "mode_grid": "Grid",
-        "mode_row": "Row",
-        "header_item": "Header item",
-        "size": "Item size",
-        "item": "Item",
-        "addrow": "Add row",
-        "additem": "Add item",
-        "removerow": "Remove row",
-        "removeitem": "Remove item",
-        "float": "Float",
-        "resize": "Adjusted sizing"
-    },
-    "home":{
-        "welcome":"Welcome to DataChemist",
-        "header":"This is the home page.",
-        "message":"If you have a default view configured in the parameters, you will be redirected to it, otherwise you can explore the application from here"
-    },
-    "save": {
-        "label": "Save",
-        "nosave": "Do you really want to leave without saving changes ?",
-        "modalTitle": "Unsaved changes",
-        "stay": "Stay on this page",
-        "leave": "Leave without saving"
+  "global": {
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "close": "Close",
+    "username": "Username",
+    "password": "Password",
+    "yes": "Yes",
+    "no": "No",
+    "groups": "Groups",
+    "add": "Add",
+    "remove": "Remove",
+    "copy": "Copy",
+    "copied": "Copied",
+    "edit": "Edit",
+    "preview": "Preview",
+    "preview_saved_hint": "Preview of the saved version",
+    "error": {
+      "unknown": "Unknown error",
+      "fetch_sources": "Error while fetching sources",
+      "fetch_items": "Error while fetching items",
+      "fetch_views": "Error while fetching views",
+      "fetch_secrets": "Error while fetching secrets"
     }
+  },
+  "auth": {
+    "message": "Please enter your username and password",
+    "button": "Login"
+  },
+  "menu": {
+    "profil": "My account",
+    "logout": "Logout",
+    "admin": "Settings",
+    "edit": "Editor",
+    "search": "Filter tables",
+    "clearsearch": "Clear filter"
+  },
+  "profil": {
+    "header": "My account",
+    "parameters": "Settings",
+    "language": "Language",
+    "languageEnglish": "English",
+    "languageFrench": "French",
+    "theme": "Theme",
+    "defaultPreview": "Default",
+    "password": "New password",
+    "passwordrepeat": "Confirm new password",
+    "passwordmismatch": "Passwords do not match",
+    "savesuccess": "Profile saved successfully",
+    "save": "Save changes"
+  },
+  "admin": {
+    "header": "Settings",
+    "global": {
+      "header": "General",
+      "pending": "Pending changes",
+      "synced": "Everything is saved",
+      "name": "Name",
+      "theme": "Theme",
+      "lang": "Language",
+      "bg": "Background",
+      "dark": "Dark",
+      "light": "Light",
+      "ldap": {
+        "header": "Configure LDAP authentication",
+        "enable": "Enable",
+        "skipverify": "Ignore certificate verification",
+        "server": "Server",
+        "port": "Port",
+        "basedn": "Base DN",
+        "login": "Login field",
+        "user": "User",
+        "password": "Password"
+      },
+      "defaultview": "Home"
+    },
+    "navbar": {
+      "header": "Navbar",
+      "subtitle": "Configure menu structure and links",
+      "status": {
+        "valid": "Menu is ready to save",
+        "invalid": "Menu has errors"
+      },
+      "editor": {
+        "title": "Navigation editor",
+        "help": "Add, order, and configure menu items, then save your changes."
+      },
+      "guide": {
+        "title": "Quick reference",
+        "resources": "Useful links",
+        "example": "Example",
+        "visualHelp": "Changes are saved in the format compatible with your existing menu. Add a submenu to group links one level deep."
+      },
+      "empty": "Your navigation bar does not contain any items yet.",
+      "untitled": "Untitled item",
+      "item": {
+        "divider": "Divider"
+      },
+      "types": {
+        "link": "Link",
+        "submenu": "Submenu",
+        "divider": "Divider"
+      },
+      "destinations": {
+        "internal": "Internal",
+        "external": "External",
+        "chooseView": "Choose a view…",
+        "custom": "Other internal path"
+      },
+      "preview": {
+        "title": "Live preview",
+        "help": "Immediately reflects unsaved changes."
+      },
+      "fields": {
+        "name": "Label",
+        "namePlaceholder": "For example, Dashboard",
+        "link": "Link",
+        "linkPlaceholder": "For example, /view/home or https://…",
+        "type": "Entry type",
+        "destination": "Destination",
+        "view": "Internal view",
+        "externalUrl": "External address",
+        "icon": "Icon",
+        "divider": "Divider",
+        "external": "External link",
+        "newtab": "Open in a new tab"
+      },
+      "submenu": { "title": "Submenu" },
+      "actions": {
+        "add": "Add item",
+        "addFirst": "Add first item",
+        "addSubmenu": "Add submenu",
+        "removeSubmenu": "Remove submenu",
+        "addSubitem": "Add link",
+        "makeLink": "Convert to link",
+        "order": "Reorder item"
+      },
+      "resources": {
+        "bootstrapIcons": "Bootstrap Icons",
+        "fontAwesome": "Font Awesome"
+      },
+      "rules": {
+        "name": "Label displayed in navigation",
+        "link": "Internal destination (/view/...) or external URL",
+        "icon": "Icon CSS class (example: bi bi-grid)",
+        "subitems": "Child entries list (single nesting level)",
+        "external": "Marks a link as external to the app",
+        "divider": "Adds a visual separator",
+        "newtab": "Opens the link in a new tab"
+      },
+      "error": {
+        "load": "The current menu configuration could not be read. You can create a new list.",
+        "yaml": "The YAML code contains syntax errors",
+        "req-name": "The \"name\" key is required",
+        "req-boolean": "The value must be a boolean (true/false)",
+        "req-array": "The value must be a YAML array",
+        "req-string": "The value must be a text",
+        "subitems": "The imbrication of \"subitems\" is not supported",
+        "unknown-key": "The following key is not supported"
+      }
+    },
+    "users": {
+      "header": "Users",
+      "subtitle": "Manage accounts, authentication type, and group membership",
+      "total": "Users",
+      "tablehint": "Edit profiles, assign groups, and remove unused accounts",
+      "user": "User",
+      "type": "Connection type",
+      "groups": "Groups",
+      "actions": "Actions",
+      "adduser": "Add user",
+      "usernameexists": "This username already exists",
+      "nogroup": "No group selected",
+      "local": "Local",
+      "ldap": "LDAP",
+      "edituser": "Edit user",
+      "changegroups": "Change user groups",
+      "deleteuser": "Delete user",
+      "preview": "Preview user",
+      "password": "Password",
+      "askdelete": "Are you sure you want to delete the user"
+    },
+    "groups": {
+      "header": "Groups",
+      "subtitle": "Manage groups and their descriptions",
+      "total": "Groups",
+      "tablehint": "Create, edit, and remove available groups",
+      "name": "Group name",
+      "description": "Description",
+      "addgroup": "Add group",
+      "editgroup": "Edit group",
+      "deletegroup": "Delete group",
+      "nameexists": "This group name already exists",
+      "askdelete": "Are you sure you want to delete the group"
+    },
+    "acl": {
+      "header": "Access control",
+      "subtitle": "Define which views are public or restricted to groups",
+      "total": "Views",
+      "protectedcount": "Protected",
+      "tablehint": "Enable protection on a view, then select allowed groups",
+      "view": "View",
+      "status": "Status",
+      "groupsallow": "Allowed groups",
+      "actions": "Actions",
+      "protected": "Protected",
+      "public": "Public",
+      "toggleprotection": "Toggle protection",
+      "allowgroups": "Allow groups"
+    }
+  },
+  "edit": {
+    "sources": "Sources",
+    "items": "Items",
+    "views": "Views",
+    "name": "Name",
+    "actions": "Actions",
+    "subtitle": "Manage sources, items, views, and secrets",
+    "total": "Entries",
+    "add": "Add",
+    "secrets": "Secrets",
+    "source_hint": "Define data connectors (API, files, databases)",
+    "item_hint": "Build objects from sources",
+    "item_creation": {
+      "type_label": "Item type",
+      "free": "Free-form item",
+      "free_help": "Edit HTML and JavaScript after creation.",
+      "visual": "Item from a template",
+      "visual_help": "Configure a visual template without writing code.",
+      "template_label": "Visual template"
+    },
+    "view_hint": "Assemble objects for final rendering",
+    "secrets_sources_hint": "Used in source templates (backend)",
+    "modal_add_secret_title": "Add secret",
+    "modal_add_secret_note": "The secret is encrypted on the backend and can be used in source templates.",
+    "modal_add_secret_name_help": "Reference name used in your source templates",
+    "modal_add_secret_value_help": "Sensitive value encrypted in database",
+    "modal_add_generic_note": "This element will be available immediately after saving.",
+    "modal_add_generic_name_help": "Use a clear and unique name",
+    "modal_edit_secret_title": "Edit secret",
+    "modal_edit_secret_note": "Changes are encrypted on the backend.",
+    "modal_edit_secret_name_help": "Reference name used in your source templates",
+    "modal_edit_secret_value_help": "New value encrypted in database",
+    "modal_delete_subtitle": "Permanent deletion",
+    "modal_delete_warning": "This action cannot be undone.",
+    "modal_delete_type": "Element",
+    "secrets_edit_disabled": "Secret editing is disabled",
+    "secrets_state_enabled": "Secrets enabled",
+    "secrets_state_disabled": "Secrets disabled",
+    "secret_value": "Secret value"
+  },
+  "edititem": {
+    "header": "Item",
+    "subtitle": "Edit HTML template, JavaScript script, and linked sources for this item",
+    "loading": "Loading item...",
+    "loaderror": "Unable to load this item",
+    "retry": "Retry",
+    "preview": "Preview",
+    "preview_local": "Local preview",
+    "preview_local_hint": "Includes unsaved changes",
+    "preview_query_label": "GET variables",
+    "preview_query_placeholder": "var=value&lang=en",
+    "preview_reload": "Reload",
+    "templates": {
+      "open": "Templates",
+      "title": "Template library",
+      "subtitle": "Choose a template, then enter its data.",
+      "choose": "Choose a template",
+      "demo": "Preview",
+      "unavailable": "This template is no longer available. Choose another one.",
+      "use": "Use this template",
+      "selected": "Selected template",
+      "change": "Change template",
+      "convert_to_free": "Convert to free mode",
+      "convert_confirm": "Converting this item to free mode will generate HTML and JavaScript from the current template. After saving, you will not be able to switch it back to template mode. Continue?"
+    },
+    "visual": {
+      "configuration": "Data configuration",
+      "template_placeholder": "{'{{ total_revenue }} $'}",
+      "data_path_placeholder": "items",
+      "options_section": "Options & Features",
+      "fields": {
+        "title": "Title",
+        "value": "Value",
+        "subtitle": "Subtitle",
+        "accent": "Color",
+        "colorRules": "Color rules",
+        "statusColorRules": "Color rules",
+        "trend": "Trend",
+        "badge": "Badge",
+        "current": "Current value",
+        "target": "Target",
+        "percent": "Percentage",
+        "unit": "Unit",
+        "items": "Collection",
+        "columns": "Table columns",
+        "labelField": "Label field",
+        "detailField": "Detail field",
+        "badgeField": "Badge field",
+        "firstHeader": "First column",
+        "firstField": "First column field",
+        "secondHeader": "Second column",
+        "secondField": "Second column field",
+        "dateField": "Date field",
+        "pageLength": "Rows per page",
+        "searching": "Search",
+        "ordering": "Sorting",
+        "paging": "Pagination",
+        "info": "Information",
+        "responsive": "Responsive",
+        "buttons": "Buttons",
+        "searchBuilder": "Advanced search",
+        "searchPanes": "Filter panes",
+        "colReorder": "Reorder columns",
+        "fixedHeader": "Fixed header",
+        "stateSave": "Save state",
+        "selectRows": "Row selection",
+        "scrollX": "Horizontal scroll",
+        "scroller": "Scroller",
+        "fixedColumnsLeft": "Fixed columns left",
+        "fixedColumnsRight": "Fixed columns right",
+        "rowGroupColumn": "Group column",
+        "orderColumn": "Sort column",
+        "orderDirection": "Sort direction"
+      }
+    },
+    "mode_label": "Editing mode",
+    "global": {
+      "syntax": "Syntax",
+      "examples": "Examples",
+      "documentation": "Integrated documentation",
+      "docsbytype": "Each section contains its own dedicated documentation"
+    },
+    "bootstrap": {
+      "description": "Use Bootstrap classes in your HTML code to unify and customize the visual rendering of your items. The documentation contains many examples for each desired rendering."
+    },
+    "icons": {
+      "header": "Icons",
+      "description": "Use Font Awesome or Bootstrap icons to display items. The documentation contains many examples for each desired rendering."
+    },
+    "datatable": {
+      "description": "DataTables allows you to easily add search, sorting, export, and pagination to your HTML tables. To use the Bootstrap theme, add the 'table' class. Refer to the documentation for examples and more information."
+    },
+    "mermaid": {
+      "description": "Mermaid allows you to create diagrams. Must be contained in a 'pre' tag with the class 'mermaid'. Refer to the documentation for more information."
+    },
+    "nunjucks": {
+      "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",
+      "customfilter": "Additional filters",
+      "date": {
+        "description": "Allows to manipulate the format of dates."
+      },
+      "find": {
+        "description": "Allows to search for a value in an array of objects and return the first object that matches."
+      },
+      "fromjson": {
+        "description": "Allows to convert a JSON string to an object."
+      },
+      "setattribute": {
+        "description": "Allows to modify an attribute of an object."
+      },
+      "split": {
+        "description": "Allows splitting a string into an array using a separator."
+      }
+    },
+    "javascript": {
+      "description": "The JavaScript code is executed after the HTML code and can use Nunjucks. It is important to note that each datalchemist object can contain its own associated JavaScript code, so it is recommended to avoid potential conflicts with other objects by using unique variable or function names and minimizing the impact on the global environment."
+    }
+  },
+  "editsource": {
+    "type": {
+      "file": "File",
+      "url": "URL",
+      "execute": "Execute a command or a script",
+      "database": "Database",
+      "text": "Creation"
+    },
+    "header": "Source",
+    "subtitle": "Configure source type, output format, and retrieval logic",
+    "loading": "Loading source...",
+    "loaderror": "Unable to load this source",
+    "retry": "Retry",
+    "config_title": "Configuration",
+    "config_help": "Define connector, output format, and related parameters",
+    "secrets_hint": "Secrets are available in source templates (backend processing):",
+    "type_label": "Type",
+    "format": "Format",
+    "database": {
+      "connection": "Database connection string",
+      "helper": "See the help on the right for more information about the connection string syntax.",
+      "query": "SQL query"
+    },
+    "file": {
+      "path": "Path",
+      "helper": "Path of the file on the server where datalchemist is executed."
+    },
+    "execute": {
+      "path": "Command or script",
+      "helper": "Command or script that will be executed by the application. The standard output must correspond to the selected format."
+    },
+    "url": {
+      "skipverify": "Skip verify SSL Certificate",
+      "proxy": "Proxy",
+      "authentication": "Authentication (Basic Auth)",
+      "enable": "Enable",
+      "username": "Username",
+      "password": "Password",
+      "ak": "Access Key",
+      "sk": "Secret Key",
+      "region": "Region",
+      "service": "Service",
+      "headers": "Headers",
+      "method": "Method",
+      "data": "Data (Body request)",
+      "key": "Key",
+      "value": "Value"
+    },
+    "text": {
+      "helper": "Enter the item in the selected language. The JINJA syntax is valid."
+    },
+    "loop": "Loop",
+    "loopinfo": "More information"
+  },
+  "editview": {
+    "header": "View",
+    "subtitle": "Build your view in grid or row mode and fine-tune the visual layout",
+    "loading": "Loading view...",
+    "loaderror": "Unable to load this view",
+    "retry": "Retry",
+    "config_title": "Layout Editor",
+    "config_help": "Add items, adjust sizing, and organize row/column composition",
+    "mode": "Mode",
+    "mode_grid": "Grid",
+    "mode_row": "Row",
+    "header_item": "Header item",
+    "size": "Item size",
+    "item": "Item",
+    "addrow": "Add row",
+    "additem": "Add item",
+    "removerow": "Remove row",
+    "removeitem": "Remove item",
+    "float": "Float",
+    "resize": "Adjusted sizing"
+  },
+  "home": {
+    "welcome": "Welcome to DataChemist",
+    "header": "This is the home page.",
+    "message": "If you have a default view configured in the parameters, you will be redirected to it, otherwise you can explore the application from here"
+  },
+  "save": {
+    "label": "Save",
+    "nosave": "Do you really want to leave without saving changes ?",
+    "modalTitle": "Unsaved changes",
+    "stay": "Stay on this page",
+    "leave": "Leave without saving"
+  }
 }
-

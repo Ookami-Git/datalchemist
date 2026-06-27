@@ -8,8 +8,10 @@ import filevue from './source/file.vue'
 import urlvue from './source/url.vue'
 import executevue from './source/execute.vue'
 import textInput from './source/textInput.vue'
+import SourcePreviewModal from './common/SourcePreviewModal.vue';
 
 const typeSource = "source";
+const isPreviewOpen = ref(false);
 
 const route = useRoute();
 const apiUrl = inject('apiUrl');
@@ -200,11 +202,10 @@ onMounted(async () => {
               <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit' }" active-class="active">
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
-              <a v-if="SourceInfo" type="button" class="btn btn-outline-info btn-sm"
-                :title="$t('global.preview_saved_hint')" :href="`${apiUrl}/data/source/${SourceInfo.id}`"
-                target="_blank">
+              <button v-if="SourceInfo" type="button" class="btn btn-outline-info btn-sm"
+                :title="$t('global.preview_saved_hint')" @click="isPreviewOpen = true">
                 <i class="bi bi-eye-fill me-1"></i>{{ $t('global.preview') }}
-              </a>
+              </button>
             </div>
 
             <div class="flex-grow-1" v-if="SourceInfo">
@@ -333,4 +334,5 @@ onMounted(async () => {
       </div>
     </div>
   </section>
+  <SourcePreviewModal v-if="SourceInfo" :show="isPreviewOpen" :sourceId="SourceInfo.id" :sourceName="SourceInfo.name" @close="isPreviewOpen = false" />
 </template>

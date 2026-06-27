@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, inject, onMounted } from "vue";
 import axios from 'axios';
+import SourcePreviewModal from './SourcePreviewModal.vue';
 
 const props = defineProps({
   typeSource: String,
@@ -8,6 +9,16 @@ const props = defineProps({
 });
 
 const apiUrl = inject('apiUrl');
+
+const previewSourceId = ref(null)
+const previewSourceName = ref('')
+const isPreviewOpen = ref(false)
+
+const openSourcePreview = (id, name) => {
+  previewSourceId.value = id
+  previewSourceName.value = name
+  isPreviewOpen.value = true
+}
 
 const openBrace = '{{'
 const closeBrace = '}}'
@@ -196,9 +207,9 @@ onMounted(async () => {
       <div v-else class="d-flex flex-column gap-2">
         <article v-for="(item, index) in activeSources" :key="item.id" class="edit-item-source-entry">
           <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
-            <a class="btn btn-outline-primary btn-sm" :href="`${apiUrl}/data/source/${item.id}`" target="_blank">
+            <button type="button" class="btn btn-outline-primary btn-sm" @click="openSourcePreview(item.id, item.name)">
               <i class="bi bi-eye-fill me-1"></i>{{ item.name }}
-            </a>
+            </button>
             <button type="button" class="btn btn-outline-danger btn-sm" @click="removeItem(index)">{{
               $t('global.remove') }}</button>
           </div>
@@ -227,4 +238,5 @@ onMounted(async () => {
       </div>
     </div>
   </div>
+  <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName" @close="isPreviewOpen = false" />
 </template>

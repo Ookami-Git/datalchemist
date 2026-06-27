@@ -5,9 +5,19 @@ import axios from 'axios';
 
 import HtmlEditor from "./item/HtmlEditor.vue";
 import JSEditor from "./item/JavascriptEditor.vue";
+import VisualTemplateEditor from "./item/VisualTemplateEditor.vue";
+import TemplatePickerModal from "./item/TemplatePickerModal.vue";
 import Helpers from "./item/Helpers.vue";
 import sources from "./common/sources.vue";
 import Preview from '../view/preview.vue';
+import { templateCatalog } from '@/templates/catalog.js';
+import {
+  createVisualItemParameters,
+  parseItemParameters,
+  serializeVisualItemParameters,
+  FREE_ITEM_MODE,
+  VISUAL_ITEM_MODE
+} from '@/utils/itemTemplate.js';
 
 const props = defineProps({
   itemid: [String, Number]
@@ -21,12 +31,14 @@ const save = inject('save');
 const apiUrl = inject('apiUrl');
 save.value.safe();
 const parameter = inject('parameters');
+const i18n = inject('i18n');
 
 const ItemInfo = ref(null);
 const initialState = ref({
   name: '',
   template: '',
-  javascript: ''
+  javascript: '',
+  parameters: ''
 });
 
 const isLoading = ref(false);
@@ -35,6 +47,7 @@ const previewModalBodyClass = 'item-preview-modal-open';
 
 // Preview modal
 const showPreview = ref(false);
+const showTemplatePicker = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const previewReloadToken = ref(0);
@@ -76,6 +89,7 @@ function openPreview() {
 }
 
 function closePreview() { showPreview.value = false; }
+function closeTemplatePicker() { showTemplatePicker.value = false; }
 
 function reloadPreview() {
   applyPreviewQueryFromInput();
@@ -83,23 +97,63 @@ function reloadPreview() {
 }
 
 function handlePreviewKeydown(event) {
-  if (event.key === 'Escape' && showPreview.value) {
-    closePreview();
-  }
+  if (event.key !== 'Escape') return;
+  if (showPreview.value) closePreview();
+  if (showTemplatePicker.value) closeTemplatePicker();
 }
 const code = ref("<!-- HTML Code -->");
 const codeJs = ref("// Javascript Code");
+const rawParameters = ref('');
+const editorMode = ref(FREE_ITEM_MODE);
+const visualTemplateMeta = ref(createVisualItemParameters());
 
 provide('codeHtml', code);
 provide('codeJs', codeJs);
 
 const previewItem = computed(() => ({
+  id: ItemInfo.value?.id,
   template: code.value,
-  javascript: codeJs.value
+  javascript: codeJs.value,
+  parameters: parametersForSave.value
 }));
+
+const parametersForSave = computed(() => editorMode.value === VISUAL_ITEM_MODE
+  ? serializeVisualItemParameters(visualTemplateMeta.value)
+  : rawParameters.value);
 
 const previewQuerySignature = computed(() => JSON.stringify(previewQueryParams.value || {}));
 const previewRenderKey = computed(() => `${previewReloadToken.value}:${previewQuerySignature.value}`);
+const selectedVisualTemplate = computed(() => templateCatalog.find((template) => (
+  template.key === visualTemplateMeta.value?.templateKey &&
+  template.major === Number(visualTemplateMeta.value?.templateMajor)
+)) || null);
+
+function switchEditorMode(mode) {
+  if (mode === VISUAL_ITEM_MODE) {
+    return;
+  }
+
+  if (mode === FREE_ITEM_MODE && editorMode.value === VISUAL_ITEM_MODE) {
+    if (!window.confirm(i18n.global.t('edititem.templates.convert_confirm'))) {
+      return;
+    }
+
+    const compiled = selectedVisualTemplate.value?.compile(visualTemplateMeta.value?.config || {});
+    code.value = compiled?.template || code.value;
+    codeJs.value = compiled?.javascript || '';
+    rawParameters.value = '';
+  }
+
+  editorMode.value = mode;
+  refreshSaveStatus();
+}
+
+function selectVisualTemplate(key) {
+  const template = templateCatalog.find((entry) => entry.key === key);
+  if (template) {
+    visualTemplateMeta.value = createVisualItemParameters(template);
+  }
+}
 
 const hasPendingChanges = computed(() => {
   if (!ItemInfo.value) {
@@ -109,9 +163,27 @@ const hasPendingChanges = computed(() => {
   return (
     ItemInfo.value.name !== initialState.value.name ||
     code.value !== initialState.value.template ||
-    codeJs.value !== initialState.value.javascript
+    codeJs.value !== initialState.value.javascript ||
+    parametersForSave.value !== initialState.value.parameters
   );
 });
+
+function refreshSaveStatus() {
+  if (!ItemInfo.value) {
+    return;
+  }
+
+  if (hasPendingChanges.value) {
+    save.value.status.saveable()
+  } else {
+    save.value.status.show()
+  }
+}
+
+function updateVisualTemplateMeta(templateMeta) {
+  visualTemplateMeta.value = templateMeta;
+  refreshSaveStatus();
+}
 
 const fetchItem = async () => {
   isLoading.value = true;
@@ -123,11 +195,18 @@ const fetchItem = async () => {
 
     code.value = data.template || '';
     codeJs.value = data.javascript || '';
+    rawParameters.value = data.parameters || '';
+    const parsedParameters = parseItemParameters(rawParameters.value);
+    editorMode.value = parsedParameters.mode;
+    visualTemplateMeta.value = parsedParameters.mode === VISUAL_ITEM_MODE
+      ? parsedParameters
+      : createVisualItemParameters();
     ItemInfo.value = data;
     initialState.value = {
       name: data.name || '',
       template: data.template || '',
-      javascript: data.javascript || ''
+      javascript: data.javascript || '',
+      parameters: data.parameters || ''
     };
   } catch (error) {
     loadError.value = error.response?.data?.message || `Error fetching data for item ${itemid}`;
@@ -151,13 +230,16 @@ function updateItem() {
     id: ItemInfo.value.id,
     name: ItemInfo.value.name,
     template: code.value,
-    javascript: codeJs.value
+    javascript: codeJs.value,
+    parameters: parametersForSave.value
   })
     .then(function () {
+      rawParameters.value = parametersForSave.value;
       initialState.value = {
         name: ItemInfo.value.name || '',
         template: code.value,
-        javascript: codeJs.value
+        javascript: codeJs.value,
+        parameters: parametersForSave.value
       };
       save.value.status.show()
     })
@@ -167,17 +249,7 @@ function updateItem() {
     });
 }
 
-watch(hasPendingChanges, (dirty) => {
-  if (!ItemInfo.value || !save.value.show) {
-    return;
-  }
-
-  if (dirty) {
-    save.value.status.saveable()
-  } else {
-    save.value.status.show()
-  }
-});
+watch(hasPendingChanges, () => refreshSaveStatus());
 
 const refreshCodeMirror = () => {
   document.querySelectorAll('.CodeMirror').forEach((el) => {
@@ -188,8 +260,8 @@ const refreshCodeMirror = () => {
 const tabButtons = ref([]);
 const onTabShown = () => refreshCodeMirror();
 
-watch(showPreview, (isOpen) => {
-  document.body.classList.toggle(previewModalBodyClass, isOpen);
+watch([showPreview, showTemplatePicker], ([isPreviewOpen, isTemplatePickerOpen]) => {
+  document.body.classList.toggle(previewModalBodyClass, isPreviewOpen || isTemplatePickerOpen);
 });
 
 onMounted(async () => {
@@ -278,7 +350,13 @@ onBeforeUnmount(() => {
 
       <div v-else class="row g-3 g-xxl-4 align-items-start">
         <div class="col-12 col-xxl-8">
-          <article class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
+
+
+          <VisualTemplateEditor v-if="editorMode === VISUAL_ITEM_MODE" :template-meta="visualTemplateMeta"
+            :item-id="itemid"
+            @update:template-meta="updateVisualTemplateMeta" />
+
+          <article v-else class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
               <div class="admin-edit-item-panel-head px-3 px-lg-4 py-3">
                 <ul class="nav nav-pills admin-edit-item-tabs" id="myTab" role="tablist">
@@ -314,7 +392,35 @@ onBeforeUnmount(() => {
 
         <div class="col-12 col-xxl-4">
           <div class="d-flex flex-column gap-3 admin-edit-item-side">
-            <Helpers />
+            <div v-if="editorMode === VISUAL_ITEM_MODE" class="card admin-edit-item-template-card">
+              <div class="card-body p-2 d-flex flex-column gap-2">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <span class="fw-semibold small text-secondary">
+                    <i class="bi bi-layout-text-window-reverse me-1 text-primary"></i>{{ $t('edititem.templates.open') }}
+                  </span>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none admin-edit-item-template-change fw-semibold" 
+                      style="font-size: 0.75rem;" @click="showTemplatePicker = true">
+                      <i class="bi bi-pencil-square me-1"></i>{{ $t('global.edit') }}
+                    </button>
+                    <span class="text-secondary" style="font-size: 0.75rem;">|</span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger text-decoration-none fw-semibold"
+                      style="font-size: 0.75rem;" @click="switchEditorMode(FREE_ITEM_MODE)">
+                      <i class="bi bi-code-slash me-1"></i>{{ $t('edititem.templates.convert_to_free') }}
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="bg-body-tertiary rounded p-2 d-flex align-items-center justify-content-between border" style="border-style: dashed !important;">
+                  <span class="admin-edit-item-template-name text-truncate small fw-semibold" :title="selectedVisualTemplate?.name" style="font-size: 0.85rem;">
+                    {{ selectedVisualTemplate?.name || '-' }}
+                  </span>
+                  <span class="badge text-bg-secondary ms-2 opacity-75">v{{ selectedVisualTemplate?.major || '-' }}</span>
+                </div>
+              </div>
+            </div>
+            <Helpers v-if="editorMode === FREE_ITEM_MODE || selectedVisualTemplate?.helpSections?.length"
+              :sections="editorMode === VISUAL_ITEM_MODE ? selectedVisualTemplate?.helpSections : null" />
             <sources :typeSource="typeSource" :parentId="itemid" />
           </div>
         </div>
@@ -375,4 +481,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </div>
+
+  <TemplatePickerModal :open="showTemplatePicker" :selected-key="visualTemplateMeta.templateKey"
+    @close="closeTemplatePicker" @select="selectVisualTemplate" />
 </template>

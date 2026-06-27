@@ -2,8 +2,18 @@
 import { computed, ref, inject, unref } from 'vue';
 import axios from 'axios';
 import { RouterLink } from 'vue-router';
+import SourcePreviewModal from './common/SourcePreviewModal.vue';
 
 const sources = ref(null)
+const previewSourceId = ref(null)
+const previewSourceName = ref('')
+const isPreviewOpen = ref(false)
+
+const openSourcePreview = (id, name) => {
+  previewSourceId.value = id
+  previewSourceName.value = name
+  isPreviewOpen.value = true
+}
 const items = ref(null)
 const views = ref(null)
 const secrets = ref(null)
@@ -405,11 +415,10 @@ fetchSecrets()
                             @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })">
                             <i class="bi bi-pencil-square"></i>
                           </button>
-                          <a type="button" class="btn btn-outline-primary btn-sm"
-                            :title="$t('global.preview', 'Aperçu')" :href="`${apiUrl}/data/source/${row.id}`"
-                            target="_blank">
+                          <button type="button" class="btn btn-outline-primary btn-sm"
+                            :title="$t('global.preview', 'Aperçu')" @click="openSourcePreview(row.id, row.name)">
                             <i class="bi bi-eye-fill"></i>
-                          </a>
+                          </button>
                           <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
                             @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
                             <i class="bi bi-trash3"></i>
@@ -705,4 +714,5 @@ fetchSecrets()
       </div>
     </div>
   </div>
+  <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName" @close="isPreviewOpen = false" />
 </template>
