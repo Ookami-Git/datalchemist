@@ -3,6 +3,11 @@ import { computed, ref, inject, unref } from 'vue';
 import axios from 'axios';
 import { RouterLink } from 'vue-router';
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
+import { templateCatalog } from '@/templates/catalog.js';
+import {
+  createVisualItemParameters,
+  serializeVisualItemParameters
+} from '@/utils/itemTemplate.js';
 
 const sources = ref(null)
 const previewSourceId = ref(null)
@@ -26,6 +31,8 @@ const resolvedParameters = computed(() => unref(parameter) || {});
 const NewName = ref(null)
 const NewSecretValue = ref(null)
 const EditSecret = ref({ id: null, name: null, secret: null })
+const NewItemMode = ref('free')
+const NewItemTemplateKey = ref(templateCatalog[0]?.key || '')
 
 const ToDelete = ref({
   id: null,
@@ -50,6 +57,9 @@ const showSecretsPanel = computed(() =>
 );
 
 const canManageSecrets = computed(() => !!resolvedParameters.value.enableSecret);
+const selectedNewItemTemplate = computed(() => (
+  templateCatalog.find((template) => template.key === NewItemTemplateKey.value) || templateCatalog[0] || null
+));
 
 const types = [
   {
@@ -141,11 +151,23 @@ function AddToDA(type) {
       });
     return;
   }
-  axios.post(`${apiUrl}/${type}`, {
+  const payload = {
     name: NewName.value
-  })
+  };
+
+  if (type === 'item' && NewItemMode.value === 'visual' && selectedNewItemTemplate.value) {
+    payload.parameters = serializeVisualItemParameters(
+      createVisualItemParameters(selectedNewItemTemplate.value)
+    );
+  }
+
+  axios.post(`${apiUrl}/${type}`, payload)
     .then(function (response) {
       NewName.value = null
+      if (type === 'item') {
+        NewItemMode.value = 'free'
+        NewItemTemplateKey.value = templateCatalog[0]?.key || ''
+      }
       switch (type) {
         case 'view':
           fetchViews()
@@ -608,6 +630,40 @@ fetchSecrets()
               <input type="text" class="form-control" :id="'InputName-' + type.type" v-model="NewName"
                 autocomplete="off">
               <div class="form-text">{{ $t('edit.modal_add_generic_name_help') }}</div>
+            </div>
+            <div v-if="type.type === 'item'" class="mt-3">
+              <label class="form-label">{{ $t('edit.item_creation.type_label') }}</label>
+              <div class="row g-2">
+                <div class="col-12 col-md-6">
+                  <label class="border rounded-3 p-3 h-100 d-flex gap-2"
+                    :class="NewItemMode === 'free' ? 'border-primary bg-primary-subtle' : 'bg-body'">
+                    <input class="form-check-input mt-1" type="radio" value="free" v-model="NewItemMode">
+                    <span>
+                      <span class="d-block fw-semibold">{{ $t('edit.item_creation.free') }}</span>
+                      <span class="d-block small text-secondary">{{ $t('edit.item_creation.free_help') }}</span>
+                    </span>
+                  </label>
+                </div>
+                <div class="col-12 col-md-6">
+                  <label class="border rounded-3 p-3 h-100 d-flex gap-2"
+                    :class="NewItemMode === 'visual' ? 'border-primary bg-primary-subtle' : 'bg-body'">
+                    <input class="form-check-input mt-1" type="radio" value="visual" v-model="NewItemMode">
+                    <span>
+                      <span class="d-block fw-semibold">{{ $t('edit.item_creation.visual') }}</span>
+                      <span class="d-block small text-secondary">{{ $t('edit.item_creation.visual_help') }}</span>
+                    </span>
+                  </label>
+                </div>
+              </div>
+              <div v-if="NewItemMode === 'visual'" class="mt-3">
+                <label for="InputItemTemplate" class="form-label">{{ $t('edit.item_creation.template_label') }}</label>
+                <select id="InputItemTemplate" class="form-select" v-model="NewItemTemplateKey">
+                  <option v-for="template in templateCatalog" :key="`${template.key}:${template.major}`"
+                    :value="template.key">
+                    {{ template.name }}
+                  </option>
+                </select>
+              </div>
             </div>
           </template>
         </div>

@@ -1,15 +1,20 @@
 <script setup>
 import { computed, inject, ref } from 'vue';
 import axios from 'axios';
-import { getTemplateDefinition } from '@/templates/catalog.js';
+import {
+  getTemplateDefinition,
+  validateTemplateConfig
+} from '@/templates/catalog.js';
 import DataPathPicker from './DataPathPicker.vue';
 import DataFieldPicker from './DataFieldPicker.vue';
 import DataValuePicker from './DataValuePicker.vue';
 import DataTableColumnsManager from './DataTableColumnsManager.vue';
+import NunjucksTemplateEditor from './NunjucksTemplateEditor.vue';
 
 const props = defineProps({
   templateMeta: { type: Object, required: true },
-  itemId: { type: [String, Number], required: true }
+  itemId: { type: [String, Number], required: true },
+  sourceListVersion: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['update:templateMeta']);
@@ -24,6 +29,7 @@ const draggingRuleKey = ref('');
 const draggingRuleIndex = ref(null);
 const dragOverRuleKey = ref('');
 const dragOverRuleIndex = ref(null);
+const copiedTemplateVariableKey = ref('');
 
 function isObjectKeyField(field) {
   return field.key.endsWith('Field');
@@ -33,10 +39,62 @@ function isAbsoluteValueField(field) {
   return field.key === 'value' || field.key === 'prevValue';
 }
 
+function hasCollectionField(template) {
+  return Boolean(template?.fields?.some((field) => field.key === 'items' && field.type === 'data-path'));
+}
+
 const selectedTemplate = computed(() => getTemplateDefinition(
   props.templateMeta.templateKey,
   props.templateMeta.templateMajor
 ) || null);
+
+const openedSections = ref({
+  data: true,
+  display: true,
+  colors: true,
+  variables: false,
+  options: false,
+  advanced: false
+});
+
+const sectionDefinitions = [
+  {
+    key: 'data',
+    icon: 'bi-database',
+    title: 'Données',
+    description: 'Source, collection et champs à afficher.'
+  },
+  {
+    key: 'display',
+    icon: 'bi-layout-text-window',
+    title: 'Affichage',
+    description: 'Libellés, formats et options visibles.'
+  },
+  {
+    key: 'colors',
+    icon: 'bi-palette',
+    title: 'Couleurs',
+    description: 'Accent et règles conditionnelles.'
+  },
+  {
+    key: 'options',
+    icon: 'bi-toggle-on',
+    title: 'Options & Fonctionnalités',
+    description: 'Réglages courants activables rapidement.'
+  },
+  {
+    key: 'advanced',
+    icon: 'bi-sliders2',
+    title: 'Avancé',
+    description: 'Exports, persistance, colonnes figées et fonctions DataTables.'
+  },
+  {
+    key: 'variables',
+    icon: 'bi-braces',
+    title: 'Variables',
+    description: 'Calculs réutilisables dans les expressions du template.'
+  }
+];
 
 function updateField(key, value) {
   emit('update:templateMeta', {
@@ -69,14 +127,48 @@ function isBooleanField(field) {
 }
 
 const fields = computed(() => selectedTemplate.value?.fields || []);
+const selectedTemplateHasCollection = computed(() => hasCollectionField(selectedTemplate.value));
 const booleanFields = computed(() => fields.value.filter(isBooleanField));
 const regularFields = computed(() => fields.value.filter(f => !isBooleanField(f)));
 const templateItemsPath = computed(() => props.templateMeta.config?.items ?? '');
+const validationIssues = computed(() => (
+  selectedTemplate.value
+    ? validateTemplateConfig(selectedTemplate.value, props.templateMeta.config || {})
+    : []
+));
+const sections = computed(() => sectionDefinitions
+  .map((section) => {
+    const sectionFields = regularFields.value.filter((field) => (field.section || 'display') === section.key);
+    const sectionBooleanFields = section.key === 'options'
+      ? booleanFields.value.filter((field) => (field.section || 'options') === 'options')
+      : [];
+    const advancedBooleanFields = section.key === 'advanced'
+      ? booleanFields.value.filter((field) => (field.section || 'options') === 'advanced')
+      : [];
+    return {
+      ...section,
+      fields: sectionFields,
+      booleanFields: [...sectionBooleanFields, ...advancedBooleanFields]
+    };
+  })
+  .filter((section) => section.fields.length || section.booleanFields.length));
+
+function toggleSection(key) {
+  openedSections.value = {
+    ...openedSections.value,
+    [key]: !openedSections.value[key]
+  };
+}
+
+function fieldIssue(field) {
+  return validationIssues.value.find((issue) => issue.field === field.key) || null;
+}
 
 function getFieldClass(field) {
   if (field.type === 'columns-manager') return 'col-12';
   if (field.type === 'condition-colors') return 'col-12';
   if (field.type === 'threshold-colors') return 'col-12';
+  if (field.type === 'template-variables') return 'col-12';
   if (field.type === 'template') return 'col-12';
   if (field.key === 'title' || field.key === 'items') return 'col-12 col-md-6';
   if (field.type === 'number') return 'col-6 col-md-4';
@@ -101,6 +193,95 @@ function toggleBooleanField(field) {
 function getFieldDisplayValue(field) {
   const val = props.templateMeta.config?.[field.key] ?? selectedTemplate.value?.defaults?.[field.key] ?? '';
   return typeof val === 'object' ? '' : val;
+}
+
+function templateVariablesValue(field) {
+  const value = props.templateMeta.config?.[field.key] ?? selectedTemplate.value?.defaults?.[field.key] ?? [];
+  if (Array.isArray(value)) {
+    return value.map((variable) => ({
+      name: String(variable?.name ?? ''),
+      value: String(variable?.value ?? '')
+    }));
+  }
+
+  const normalized = String(value ?? '').trim();
+  if (!normalized) return [];
+
+  try {
+    const parsed = JSON.parse(normalized);
+    return Array.isArray(parsed)
+      ? parsed.map((variable) => ({
+          name: String(variable?.name ?? ''),
+          value: String(variable?.value ?? '')
+        }))
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function addTemplateVariable(field) {
+  updateField(field.key, [
+    ...templateVariablesValue(field),
+    { name: '', value: '' }
+  ]);
+}
+
+function updateTemplateVariable(field, variableIndex, key, value) {
+  const variables = templateVariablesValue(field);
+  variables[variableIndex] = {
+    ...variables[variableIndex],
+    [key]: value
+  };
+  updateField(field.key, variables);
+}
+
+function removeTemplateVariable(field, variableIndex) {
+  updateField(field.key, templateVariablesValue(field).filter((_, index) => index !== variableIndex));
+}
+
+function validTemplateVariableName(name) {
+  return /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(name ?? '').trim());
+}
+
+function templateVariableToken(field, variable) {
+  const name = String(variable?.name ?? '').trim();
+  if (!validTemplateVariableName(name)) return '';
+  return field.scope === 'loop' ? `{{ var.loop.${name} }}` : `{{ var.global.${name} }}`;
+}
+
+async function copyTemplateVariableToken(tokenKey, token) {
+  if (!token) return;
+
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(token);
+    } else {
+      const textArea = document.createElement('textarea');
+      textArea.value = token;
+      textArea.setAttribute('readonly', '');
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+
+    copiedTemplateVariableKey.value = tokenKey;
+    window.setTimeout(() => {
+      if (copiedTemplateVariableKey.value === tokenKey) {
+        copiedTemplateVariableKey.value = '';
+      }
+    }, 1500);
+  } catch (error) {
+    console.error('Unable to copy template variable token', error);
+  }
+}
+
+function appendTemplateToken(field, token) {
+  const current = getFieldDisplayValue(field);
+  updateField(field.key, current ? `${current} ${token}` : token);
 }
 
 function isHtmlColor(value) {
@@ -303,9 +484,16 @@ async function loadConditionKeys() {
       return;
     }
 
-    const savedExamples = props.templateMeta.sourceExamples?.[source.id] || {};
+    let sourceDefaults = {};
+    try {
+      const sourceRes = await axios.get(`${apiUrl}/source/${source.id}`);
+      sourceDefaults = sourceRes.data?.json ? (JSON.parse(sourceRes.data.json)?.getDefaults || {}) : {};
+    } catch {
+      sourceDefaults = {};
+    }
+
     const res = await axios.get(`${apiUrl}/data/source/${source.id}`, {
-      params: savedExamples
+      params: sourceDefaults
     });
     extractKeysFromData(res.data, subPath);
   } catch (err) {
@@ -346,11 +534,38 @@ function selectConditionKey(field, ruleIndex, keyName) {
       <span class="fw-semibold">{{ $t('edititem.visual.configuration') }}</span>
     </div>
     <div class="card-body p-3 p-lg-4">
-      <div v-if="selectedTemplate" class="d-flex flex-column gap-4">
-        <!-- Champs principaux -->
-        <div class="row g-3">
+      <div v-if="selectedTemplate" class="visual-template-workspace">
+        <div class="visual-template-builder d-flex flex-column gap-3">
+          <div v-if="validationIssues.length" class="alert alert-warning py-2 px-3 mb-0 small">
+            <div class="fw-semibold mb-1">Configuration à compléter</div>
+            <div v-for="issue in validationIssues" :key="issue.field">{{ issue.message }}</div>
+          </div>
+
+          <section
+            v-for="section in sections"
+            :key="section.key"
+            class="visual-template-section border rounded-3 bg-body"
+          >
+            <button
+              type="button"
+              class="visual-template-section-toggle w-100 border-0 bg-transparent p-3 d-flex align-items-center gap-3 text-start"
+              @click="toggleSection(section.key)"
+            >
+              <span class="visual-template-section-icon rounded-2 d-inline-flex align-items-center justify-content-center">
+                <i class="bi" :class="section.icon"></i>
+              </span>
+              <span class="flex-grow-1 min-w-0">
+                <span class="d-block fw-semibold">{{ section.title }}</span>
+                <span class="d-block small text-secondary">{{ section.description }}</span>
+              </span>
+              <span v-if="section.fields.some(fieldIssue)" class="badge text-bg-warning">À compléter</span>
+              <i class="bi" :class="openedSections[section.key] ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+            </button>
+
+            <div v-if="openedSections[section.key]" class="px-3 pb-3">
+              <div v-if="section.fields.length" class="row g-3">
           <div 
-            v-for="field in regularFields" 
+            v-for="field in section.fields" 
             :key="field.key" 
             :class="getFieldClass(field)"
           >
@@ -644,16 +859,94 @@ function selectConditionKey(field, ruleIndex, keyName) {
                   </button>
                 </div>
                 
-                <textarea v-else-if="field.type === 'template'" :id="`visual-${field.key}`" class="form-control font-monospace shadow-xs"
-                  rows="3" :value="getFieldDisplayValue(field)" :required="field.required"
-                  :placeholder="fieldPlaceholder(field)"
-                  @input="updateField(field.key, $event.target.value)"></textarea>
+                <div v-else-if="field.type === 'template'">
+                  <NunjucksTemplateEditor
+                    :id="`visual-${field.key}`"
+                    :model-value="getFieldDisplayValue(field)"
+                    :placeholder="fieldPlaceholder(field)"
+                    min-height="7rem"
+                    @update:model-value="updateField(field.key, $event)"
+                  />
+                  <div v-if="selectedTemplateHasCollection" class="d-flex flex-wrap gap-2 mt-2">
+                    <button type="button" class="btn btn-xs btn-outline-secondary font-monospace" @click="appendTemplateToken(field, '{{ value }}')" v-text="'{{ value }}'"></button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary font-monospace" @click="appendTemplateToken(field, '{{ item }}')" v-text="'{{ item }}'"></button>
+                    <button type="button" class="btn btn-xs btn-outline-secondary font-monospace" @click="appendTemplateToken(field, '{{ item.total }}')" v-text="'{{ item.total }}'"></button>
+                  </div>
+                </div>
+
+                <div v-else-if="field.type === 'template-variables'" class="d-flex flex-column gap-2">
+                  <div
+                    v-for="(variable, variableIndex) in templateVariablesValue(field)"
+                    :key="variableIndex"
+                    class="visual-template-rule-card border rounded-3 p-2 bg-body-tertiary"
+                  >
+                    <div class="row g-2 align-items-start">
+                      <div class="col-12 col-md-3">
+                        <input
+                          class="form-control form-control-sm font-monospace"
+                          :class="{ 'is-invalid': variable.name && !validTemplateVariableName(variable.name) }"
+                          type="text"
+                          :value="variable.name"
+                          placeholder="nom"
+                          @input="updateTemplateVariable(field, variableIndex, 'name', $event.target.value)"
+                        >
+                        <div v-if="variable.name && !validTemplateVariableName(variable.name)" class="invalid-feedback">
+                          Lettres, chiffres et _ uniquement. Le nom doit commencer par une lettre ou _.
+                        </div>
+                        <div
+                          v-else-if="templateVariableToken(field, variable)"
+                          class="input-group input-group-sm mt-2"
+                        >
+                          <code
+                            class="form-control bg-body font-monospace small text-truncate"
+                            v-text="templateVariableToken(field, variable)"
+                          ></code>
+                          <button
+                            type="button"
+                            class="btn btn-outline-secondary"
+                            :title="copiedTemplateVariableKey === `${field.key}:${variableIndex}` ? 'Copié' : 'Copier'"
+                            @click="copyTemplateVariableToken(`${field.key}:${variableIndex}`, templateVariableToken(field, variable))"
+                          >
+                            <i :class="copiedTemplateVariableKey === `${field.key}:${variableIndex}` ? 'bi bi-check2' : 'bi bi-clipboard'"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="col-12 col-md">
+                        <NunjucksTemplateEditor
+                          :model-value="variable.value"
+                          :placeholder="fieldPlaceholder(field)"
+                          min-height="5.5rem"
+                          @update:model-value="updateTemplateVariable(field, variableIndex, 'value', $event)"
+                        />
+                      </div>
+                      <div class="col-12 col-md-auto text-end">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          title="Supprimer"
+                          @click="removeTemplateVariable(field, variableIndex)"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary align-self-start d-inline-flex align-items-center gap-1"
+                    @click="addTemplateVariable(field)"
+                  >
+                    <i class="bi bi-plus-lg"></i>
+                    <span>Ajouter une variable</span>
+                  </button>
+                </div>
                 
                 <DataPathPicker
                   v-else-if="field.type === 'data-path'"
                   :field="field"
                   :template-meta="templateMeta"
                   :item-id="itemId"
+                  :source-list-version="sourceListVersion"
                   @update:template-meta="emit('update:templateMeta', $event)"
                   @update-field="updateField"
                 />
@@ -690,49 +983,45 @@ function selectConditionKey(field, ruleIndex, keyName) {
                   :placeholder="fieldPlaceholder(field)"
                   @input="updateField(field.key, $event.target.value)">
               </div>
-              <div v-if="field.help && field.type !== 'columns-manager'" class="form-text mt-1 text-secondary opacity-75" style="font-size: 0.78rem;">{{ field.help }}</div>
+              <div v-if="fieldIssue(field)" class="form-text mt-1 text-warning" style="font-size: 0.78rem;">{{ fieldIssue(field).message }}</div>
+              <div v-else-if="field.help && field.type !== 'columns-manager'" class="form-text mt-1 text-secondary opacity-75" style="font-size: 0.78rem;">{{ field.help }}</div>
             </div>
           </div>
-        </div>
+              </div>
 
-        <!-- Section Options / Fonctionnalités -->
-        <div v-if="booleanFields.length > 0" class="pt-3 border-top">
-          <h5 class="h6 mb-3 text-secondary d-flex align-items-center gap-2">
-            <i class="bi bi-toggle-on"></i>
-            <span>{{ $t('edititem.visual.options_section') }}</span>
-          </h5>
-          
-          <div class="row g-3">
-            <div 
-              v-for="field in booleanFields" 
-              :key="field.key" 
-              class="col-12 col-md-6 col-lg-4"
-            >
-              <div 
-                class="visual-template-switch-card p-3 rounded-3 border h-100 d-flex align-items-start gap-3 transition-all cursor-pointer"
-                :class="{ active: isFieldValueTrue(field) }"
-                @click="toggleBooleanField(field)"
-              >
-                <div class="form-check form-switch m-0 pt-0.5">
-                  <input 
-                    class="form-check-input pe-none" 
-                    type="checkbox" 
-                    role="switch" 
-                    :checked="isFieldValueTrue(field)"
-                    readonly
-                  />
-                </div>
-                <div class="d-flex flex-column min-w-0 lh-sm">
-                  <span class="fw-semibold text-emphasis-dark mb-1" style="font-size: 0.88rem;">
-                    {{ $t(`edititem.visual.fields.${field.key}`) }}
-                  </span>
-                  <span v-if="field.help" class="text-secondary" style="font-size: 0.75rem; line-height: 1.3;">
-                    {{ field.help }}
-                  </span>
+              <div v-if="section.booleanFields.length" class="row g-3" :class="{ 'mt-0': !section.fields.length, 'mt-3': section.fields.length }">
+                <div
+                  v-for="field in section.booleanFields"
+                  :key="field.key"
+                  class="col-12 col-md-6 col-lg-4"
+                >
+                  <div
+                    class="visual-template-switch-card p-3 rounded-3 border h-100 d-flex align-items-start gap-3 transition-all cursor-pointer"
+                    :class="{ active: isFieldValueTrue(field) }"
+                    @click="toggleBooleanField(field)"
+                  >
+                    <div class="form-check form-switch m-0 pt-0.5">
+                      <input
+                        class="form-check-input pe-none"
+                        type="checkbox"
+                        role="switch"
+                        :checked="isFieldValueTrue(field)"
+                        readonly
+                      />
+                    </div>
+                    <div class="d-flex flex-column min-w-0 lh-sm">
+                      <span class="fw-semibold text-emphasis-dark mb-1" style="font-size: 0.88rem;">
+                        {{ $t(`edititem.visual.fields.${field.key}`) }}
+                      </span>
+                      <span v-if="field.help" class="text-secondary" style="font-size: 0.75rem; line-height: 1.3;">
+                        {{ field.help }}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          </section>
         </div>
 
       </div>
@@ -744,3 +1033,31 @@ function selectConditionKey(field, ruleIndex, keyName) {
   </article>
 
 </template>
+
+<style scoped>
+.visual-template-workspace {
+  max-width: 100%;
+}
+
+.visual-template-section {
+  overflow: hidden;
+}
+
+.visual-template-section-toggle,
+.visual-template-section-summary {
+  cursor: pointer;
+}
+
+.visual-template-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.visual-template-section-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  color: var(--bs-primary);
+  background: rgba(var(--bs-primary-rgb), 0.1);
+  flex: 0 0 auto;
+}
+
+</style>

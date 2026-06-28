@@ -249,6 +249,40 @@
     "secrets_state_disabled": "Secrets désactivés",
     "secret_value": "Valeur du secret"
   },
+  "templateVariables": {
+    "title": "Variables disponibles",
+    "context": {
+      "item": "Référence centralisée pour les templates d'objet et les données des sources liées.",
+      "source": "Référence centralisée pour les templates de source, les dépendances et les boucles."
+    },
+    "scope": {
+      "items_sources": "Objets / sources",
+      "sources_only": "Sources",
+      "source_loop": "Boucle source",
+      "object_loop": "Boucle objet",
+      "template_variables": "Variables template"
+    },
+    "sid": "Accède aux données d'une source liée par son identifiant. La clé commence par s suivi de l'id de la source.",
+    "sn": "Accède aux données d'une source liée par son nom. Utilisez la notation entre crochets si le nom contient des espaces ou des caractères spéciaux.",
+    "get": "Contient les paramètres GET de l'URL courante. Chaque clé renvoie une liste de valeurs.",
+    "var": "Accède aux variables globales calculées dans le template visuel.",
+    "var_loop": "Accède aux variables calculées à l’intérieur de la boucle courante du template visuel.",
+    "secret": "Accède à un secret chiffré dans un template de source. Le filtre secret déchiffre la valeur côté backend.",
+    "source_item": "Disponible uniquement dans une source avec une boucle. Représente l'élément courant de la collection parcourue.",
+    "value": "Dans une boucle de template objet, contient la valeur courante.",
+    "key": "Dans une boucle de template objet, contient l'index ou la clé de la valeur courante.",
+    "object_item": "Dans une boucle de template objet, contient l'objet courant. Ce n'est pas la variable item des boucles de source.",
+    "note": "Les chemins après ces variables suivent la structure réelle des données retournées par les sources."
+  },
+  "getVariables": {
+    "title": "Valeurs par défaut des variables GET",
+    "help": "Ces valeurs servent uniquement aux aperçus et aux éditeurs.",
+    "source_title": "Variables GET de la source",
+    "source_help": "Valeurs sauvegardées avec la source et utilisées par défaut dans les aperçus et les éditeurs.",
+    "object_variable_title": "Variables GET",
+    "object_variable_help": "Surcharge locale pour cette variable d'objet. Par défaut, la valeur de la source est utilisée.",
+    "default_placeholder": "Valeur par défaut"
+  },
   "edititem": {
     "header": "Objet",
     "subtitle": "Modifiez le template HTML, le script JavaScript et les sources associées à cet objet",
@@ -321,7 +355,9 @@
         "fixedColumnsRight": "Colonnes figées à droite",
         "rowGroupColumn": "Colonne de regroupement",
         "orderColumn": "Colonne de tri",
-        "orderDirection": "Sens du tri"
+        "orderDirection": "Sens du tri",
+        "globalVariables": "Variables globales",
+        "loopVariables": "Variables de boucle"
       }
     },
     "mode_label": "Mode d'édition",

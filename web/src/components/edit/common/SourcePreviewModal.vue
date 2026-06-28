@@ -1,6 +1,12 @@
 <script setup>
-import { ref, watch, inject, onBeforeUnmount } from 'vue';
+import { computed, ref, watch, inject, onBeforeUnmount } from 'vue';
 import axios from 'axios';
+import {
+  extractGetVariableNames,
+  formatGetQuery,
+  mergeGetVariableDefaults,
+  parseGetQuery
+} from '@/utils/getVariables.js';
 
 const props = defineProps({
   show: {
@@ -14,6 +20,10 @@ const props = defineProps({
   sourceName: {
     type: String,
     default: ''
+  },
+  sourceConfig: {
+    type: Object,
+    default: null
   }
 });
 
@@ -24,14 +34,48 @@ const loading = ref(false);
 const error = ref(null);
 const formattedJson = ref('');
 const copied = ref(false);
+const previewQueryInput = ref('');
+const previewQueryParams = ref({});
+const loadedSourceConfig = ref(null);
+
+const effectiveSourceConfig = computed(() => props.sourceConfig || loadedSourceConfig.value);
+const detectedGetVariables = computed(() => extractGetVariableNames(effectiveSourceConfig.value));
+const sourceGetDefaults = computed(() => effectiveSourceConfig.value?.getDefaults || {});
+
+const ensureSourceConfig = async () => {
+  if (props.sourceConfig || !props.sourceId) return;
+
+  try {
+    const response = await axios.get(`${apiUrl}/source/${props.sourceId}`);
+    loadedSourceConfig.value = response.data?.json ? JSON.parse(response.data.json) : null;
+  } catch (err) {
+    loadedSourceConfig.value = null;
+    console.error('Unable to load source config for preview', err);
+  }
+};
+
+const applyPreviewQueryFromInput = () => {
+  previewQueryParams.value = mergeGetVariableDefaults(
+    detectedGetVariables.value,
+    {
+      ...sourceGetDefaults.value,
+      ...parseGetQuery(previewQueryInput.value)
+    }
+  );
+  previewQueryInput.value = formatGetQuery(previewQueryParams.value);
+};
 
 const fetchSourceData = async () => {
   if (!props.sourceId) return;
+  await ensureSourceConfig();
+  applyPreviewQueryFromInput();
   loading.value = true;
   error.value = null;
   formattedJson.value = '';
   try {
-    const response = await axios.get(`${apiUrl}/data/source/${props.sourceId}`);
+    const response = await axios.get(`${apiUrl}/data/source/${props.sourceId}`, {
+      params: previewQueryParams.value
+    });
     formattedJson.value = JSON.stringify(response.data, null, 2);
   } catch (err) {
     console.error(err);
@@ -66,8 +110,23 @@ const copyJson = async () => {
   }
 };
 
-watch(() => props.show, (newVal) => {
+watch(() => props.sourceId, () => {
+  loadedSourceConfig.value = null;
+  previewQueryInput.value = '';
+  previewQueryParams.value = {};
+});
+
+watch(() => props.show, async (newVal) => {
   if (newVal) {
+    await ensureSourceConfig();
+    previewQueryParams.value = mergeGetVariableDefaults(
+      detectedGetVariables.value,
+      {
+        ...sourceGetDefaults.value,
+        ...parseGetQuery(previewQueryInput.value)
+      }
+    );
+    previewQueryInput.value = formatGetQuery(previewQueryParams.value);
     fetchSourceData();
     document.body.classList.add('modal-open');
   } else {
@@ -84,7 +143,7 @@ onBeforeUnmount(() => {
   <div v-if="show" class="modal fade show d-block source-preview-modal" tabindex="-1" role="dialog" aria-modal="true" @click.self="emit('close')">
     <div class="modal-dialog modal-dialog-centered modal-xl" role="document">
       <div class="modal-content shadow-lg border-0">
-        <div class="modal-header border-0 bg-body-tertiary">
+        <div class="modal-header border-0 bg-body-tertiary flex-wrap gap-2">
           <h5 class="modal-title d-flex align-items-center gap-2 me-auto">
             <i class="bi bi-database-fill-gear text-primary"></i>
             <span>
@@ -93,7 +152,20 @@ onBeforeUnmount(() => {
               <span class="text-secondary small ms-1" v-if="sourceName">({{ sourceName }})</span>
             </span>
           </h5>
-          <div class="d-flex align-items-center gap-2">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="input-group input-group-sm source-preview-query-group">
+              <label class="input-group-text" for="source-preview-query-input">
+                {{ $t('edititem.preview_query_label') }}
+              </label>
+              <input id="source-preview-query-input" v-model="previewQueryInput" type="text" class="form-control"
+                :placeholder="$t('edititem.preview_query_placeholder')" autocomplete="off" spellcheck="false"
+                @keyup.enter="fetchSourceData">
+              <button type="button" class="btn btn-outline-secondary d-flex align-items-center gap-1"
+                :disabled="loading" @click="fetchSourceData">
+                <i class="bi bi-arrow-clockwise"></i>
+                <span>{{ $t('edititem.preview_reload') }}</span>
+              </button>
+            </div>
             <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" @click="copyJson" v-if="!loading && !error && formattedJson">
               <i :class="copied ? 'bi bi-check2 text-success' : 'bi bi-clipboard'"></i>
               <span>{{ copied ? $t('global.copied', 'Copié') : $t('global.copy', 'Copier') }}</span>
@@ -152,5 +224,14 @@ onBeforeUnmount(() => {
   background: transparent !important;
   padding: 0 !important;
   color: #f8f9fa;
+}
+.source-preview-query-group {
+  width: min(42vw, 34rem);
+}
+
+@media (max-width: 768px) {
+  .source-preview-query-group {
+    width: 100%;
+  }
 }
 </style>

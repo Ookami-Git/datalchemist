@@ -5,7 +5,8 @@ import axios from 'axios';
 const props = defineProps({
   field: { type: Object, required: true },
   templateMeta: { type: Object, required: true },
-  itemId: { type: [String, Number], required: true }
+  itemId: { type: [String, Number], required: true },
+  sourceListVersion: { type: Number, default: 0 }
 });
 
 const emit = defineEmits(['update:templateMeta', 'updateField']);
@@ -16,9 +17,6 @@ const i18n = inject('i18n');
 const isOpen = ref(false);
 const activeSources = ref([]);
 const selectedSourceId = ref('');
-const sourceConfig = ref(null);
-const getParams = ref([]);
-const getParamValues = ref({});
 const isLoading = ref(false);
 const isDataLoading = ref(false);
 const loadError = ref('');
@@ -33,8 +31,6 @@ const t = (key) => {
       picker_title: 'Choisir depuis une source',
       select_source: 'Sélectionner une source de données',
       no_active_sources: 'Aucune source de données n\'est actuellement associée à cet item. Veuillez en ajouter dans le panneau "Sources" de droite.',
-      get_params_title: 'Variables GET requises',
-      load_data_btn: 'Charger et explorer les données',
       loading: 'Chargement...',
       select_path_title: 'Tableaux détectés dans les données :',
       no_arrays_found: 'Aucun tableau de données n\'a été détecté dans les données de cette source.',
@@ -49,8 +45,6 @@ const t = (key) => {
       picker_title: 'Choose from a source',
       select_source: 'Select a data source',
       no_active_sources: 'No data sources are currently associated with this item. Please add one in the right "Sources" panel.',
-      get_params_title: 'Required GET variables',
-      load_data_btn: 'Load and explore data',
       loading: 'Loading...',
       select_path_title: 'Detected arrays in data:',
       no_arrays_found: 'No arrays were detected in this source\'s data.',
@@ -70,6 +64,13 @@ const t = (key) => {
 const currentValue = computed(() => {
   return props.templateMeta.config?.[props.field.key] ?? '';
 });
+
+function resetExploration() {
+  selectedSourceId.value = '';
+  fetchedData.value = null;
+  foundArraysList.value = [];
+  dataLoadError.value = '';
+}
 
 // Essayer de présélectionner la source à partir de la valeur actuelle
 function parseCurrentSourceFromValue() {
@@ -115,9 +116,6 @@ async function fetchActiveSources() {
 
 // Observer le changement de source sélectionnée
 watch(selectedSourceId, async (newId) => {
-  sourceConfig.value = null;
-  getParams.value = [];
-  getParamValues.value = {};
   fetchedData.value = null;
   foundArraysList.value = [];
   dataLoadError.value = '';
@@ -131,8 +129,9 @@ watch(selectedSourceId, async (newId) => {
     const source = res.data;
     if (source && source.json) {
       const config = JSON.parse(source.json);
-      sourceConfig.value = config;
-      scanGetParams(config);
+      loadSourceData(config?.getDefaults || {});
+    } else {
+      loadSourceData();
     }
   } catch (err) {
     loadError.value = t('error_fetch_source_detail');
@@ -142,33 +141,8 @@ watch(selectedSourceId, async (newId) => {
   }
 });
 
-// Scanner le JSON de configuration pour trouver les variables GET
-function scanGetParams(config) {
-  const jsonStr = JSON.stringify(config);
-  const regex = /get\.([A-Za-z0-9_$]+)|get\[['"]([A-Za-z0-9_$]+)['"]\]/g;
-  let match;
-  const params = new Set();
-  while ((match = regex.exec(jsonStr)) !== null) {
-    params.add(match[1] || match[2]);
-  }
-  getParams.value = Array.from(params);
-
-  // Charger les exemples depuis templateMeta.sourceExamples
-  const savedExamples = props.templateMeta.sourceExamples?.[selectedSourceId.value] || {};
-  const values = {};
-  getParams.value.forEach(param => {
-    values[param] = savedExamples[param] ?? '';
-  });
-  getParamValues.value = values;
-
-  // Si pas de variables GET requises, charger les données directement
-  if (getParams.value.length === 0) {
-    loadSourceData();
-  }
-}
-
 // Charger les données réelles de la source
-async function loadSourceData() {
+async function loadSourceData(params = {}) {
   if (!selectedSourceId.value) return;
 
   isDataLoading.value = true;
@@ -178,19 +152,9 @@ async function loadSourceData() {
 
   try {
     const res = await axios.get(`${apiUrl}/data/source/${selectedSourceId.value}`, {
-      params: getParamValues.value
+      params
     });
     fetchedData.value = res.data;
-
-    // Sauvegarder les variables GET saisies dans templateMeta.sourceExamples
-    if (getParams.value.length > 0) {
-      const updatedMeta = { ...props.templateMeta };
-      if (!updatedMeta.sourceExamples) {
-        updatedMeta.sourceExamples = {};
-      }
-      updatedMeta.sourceExamples[selectedSourceId.value] = { ...getParamValues.value };
-      emit('update:templateMeta', updatedMeta);
-    }
 
     // Détecter les tableaux
     detectArrays(res.data);
@@ -256,6 +220,14 @@ function toggleOpen() {
   }
 }
 
+watch(() => props.sourceListVersion, async () => {
+  activeSources.value = [];
+  resetExploration();
+  if (isOpen.value || currentValue.value) {
+    await fetchActiveSources();
+  }
+});
+
 onMounted(() => {
   if (currentValue.value) {
     fetchActiveSources();
@@ -316,39 +288,6 @@ onMounted(() => {
               <i class="bi bi-exclamation-triangle-fill me-1"></i>
               {{ t('no_active_sources') }}
             </p>
-          </div>
-
-          <!-- Variables GET si présentes -->
-          <div v-if="selectedSourceId && getParams.length > 0" class="card p-2 border bg-body">
-            <h6 class="card-title text-secondary fw-semibold small mb-2 d-flex align-items-center gap-1">
-              <i class="bi bi-sliders text-primary"></i>
-              <span>{{ t('get_params_title') }}</span>
-            </h6>
-            <div class="row g-2">
-              <div v-for="param in getParams" :key="param" class="col-12 col-md-6">
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text font-monospace">{{ param }}</span>
-                  <input 
-                    type="text" 
-                    v-model="getParamValues[param]" 
-                    class="form-control"
-                    @keydown.enter.prevent="loadSourceData"
-                  >
-                </div>
-              </div>
-            </div>
-            <div class="mt-2 text-end">
-              <button 
-                type="button" 
-                class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1"
-                @click="loadSourceData"
-                :disabled="isDataLoading"
-              >
-                <span v-if="isDataLoading" class="spinner-border spinner-border-sm"></span>
-                <i v-else class="bi bi-play-fill"></i>
-                <span>{{ t('load_data_btn') }}</span>
-              </button>
-            </div>
           </div>
 
           <div v-if="dataLoadError" class="alert alert-danger p-2 mb-0 small">

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, inject, watch } from 'vue';
 import axios from 'axios';
+import NunjucksTemplateEditor from './NunjucksTemplateEditor.vue';
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -17,7 +18,9 @@ const activeSources = ref([]);
 const isDataLoading = ref(false);
 const dataLoadError = ref('');
 const availableKeys = ref([]);
+const sampleRows = ref([]);
 const newCustomKey = ref('');
+const columnSearch = ref('');
 const showAddDropdown = ref(false);
 const draggingColumnIndex = ref(null);
 const dragOverColumnIndex = ref(null);
@@ -43,7 +46,9 @@ const t = (key) => {
       variables_available: 'Variables disponibles (cliquez pour insérer) :',
       value_desc: 'Valeur brute de la cellule (ex: {{ value }})',
       key_desc: 'Index de ligne pour un tableau, nom de clé pour un objet',
-      item_desc: 'Ligne complète : objet courant ou valeur associée à la clé'
+      item_desc: 'Ligne complète : objet courant ou valeur associée à la clé',
+      search_columns: 'Rechercher un champ',
+      sample_value: 'Exemple'
     },
     en: {
       title: 'Columns Management',
@@ -64,7 +69,9 @@ const t = (key) => {
       variables_available: 'Available variables (click to insert):',
       value_desc: 'Raw cell value (ex: {{ value }})',
       key_desc: 'Row index for an array, key name for an object',
-      item_desc: 'Full row: current object or value associated with the key'
+      item_desc: 'Full row: current object or value associated with the key',
+      search_columns: 'Search field',
+      sample_value: 'Sample'
     }
   };
   const lang = i18n?.global?.locale?.value === 'fr' ? 'fr' : 'en';
@@ -133,12 +140,17 @@ function extractKeysFromData(data, subPath = '') {
   }
   const isArrayCollection = Array.isArray(target);
   if (Array.isArray(target)) {
+    sampleRows.value = target.slice(0, 3);
     if (target.length > 0) {
       target = target[0];
     } else {
       availableKeys.value = [];
       return;
     }
+  } else if (target && typeof target === 'object') {
+    sampleRows.value = Object.values(target).slice(0, 3);
+  } else {
+    sampleRows.value = [];
   }
   if (typeof target === 'object' && target !== null) {
     const values = Object.values(target);
@@ -204,9 +216,16 @@ watch(templateItemsPath, async (pathVal) => {
       return;
     }
 
-    const savedExamples = props.templateMeta.sourceExamples?.[source.id] || {};
+    let sourceDefaults = {};
+    try {
+      const sourceRes = await axios.get(`${apiUrl}/source/${source.id}`);
+      sourceDefaults = sourceRes.data?.json ? (JSON.parse(sourceRes.data.json)?.getDefaults || {}) : {};
+    } catch {
+      sourceDefaults = {};
+    }
+
     const res = await axios.get(`${apiUrl}/data/source/${source.id}`, {
-      params: savedExamples
+      params: sourceDefaults
     });
     extractKeysFromData(res.data, subPath);
   } catch (err) {
@@ -324,31 +343,33 @@ function resetColumns() {
 }
 
 function insertVariable(idx, varName) {
-  const textarea = document.getElementById(`textarea-template-${idx}`);
-  if (!textarea) return;
-
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const text = textarea.value;
-  const before = text.substring(0, start);
-  const after = text.substring(end, text.length);
-  
   const insertText = `{{ ${varName} }}`;
-  const newValue = before + insertText + after;
-  
+  const currentValue = columnsList.value[idx].template || '';
+  const separator = currentValue && !currentValue.endsWith(' ') ? ' ' : '';
+  const newValue = `${currentValue}${separator}${insertText}`;
+
   columnsList.value[idx].template = newValue;
   saveChanges();
-
-  setTimeout(() => {
-    textarea.focus();
-    const newCursorPos = start + insertText.length;
-    textarea.setSelectionRange(newCursorPos, newCursorPos);
-  }, 50);
 }
 
 const unusedKeys = computed(() => {
   return availableKeys.value.filter(k => !columnsList.value.some(c => c.key === k));
 });
+
+const filteredUnusedKeys = computed(() => {
+  const query = columnSearch.value.trim().toLowerCase();
+  if (!query) return unusedKeys.value;
+  return unusedKeys.value.filter((key) => key.toLowerCase().includes(query));
+});
+
+function previewValueForKey(key) {
+  const row = sampleRows.value.find((candidate) => candidate && typeof candidate === 'object' && key in candidate);
+  if (!row) return '';
+  const value = row[key];
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
 </script>
 
 <template>
@@ -427,6 +448,9 @@ const unusedKeys = computed(() => {
               <span class="text-secondary font-monospace text-truncate lh-sm mb-1" style="font-size: 0.72rem;" :title="col.key">
                 {{ col.key }}
               </span>
+              <span v-if="previewValueForKey(col.key)" class="text-secondary text-truncate mb-1" style="font-size: 0.72rem;" :title="previewValueForKey(col.key)">
+                {{ t('sample_value') }} : {{ previewValueForKey(col.key) }}
+              </span>
               <input 
                 type="text" 
                 class="form-control form-control-sm shadow-xs border-secondary-subtle" 
@@ -440,8 +464,11 @@ const unusedKeys = computed(() => {
             <div class="d-flex align-items-center gap-1 mt-2 mt-md-0 ms-auto">
               <button 
                 type="button" 
-                class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-xs"
-                :class="{ active: col.showTemplate, 'border-primary text-primary': col.template }"
+                class="btn btn-sm d-flex align-items-center gap-1 shadow-xs"
+                :class="[
+                  col.template ? 'btn-outline-primary' : 'btn-outline-secondary',
+                  { active: col.showTemplate }
+                ]"
                 @click="toggleTemplateEditor(idx)"
                 title="Personnaliser le template"
               >
@@ -466,14 +493,14 @@ const unusedKeys = computed(() => {
               <label class="form-label small fw-semibold text-secondary mb-0">{{ t('template') }}</label>
               <span class="text-secondary small font-monospace" style="font-size: 0.7rem;">{% set value = ... %}</span>
             </div>
-            <textarea 
-              :id="`textarea-template-${idx}`"
-              class="form-control form-control-sm font-monospace shadow-xs mb-2" 
-              rows="3.5" 
-              :value="col.template" 
-              :placeholder="t('template_placeholder')"
-              @input="updateColumnTemplate(idx, $event.target.value)"
-            ></textarea>
+            <div class="mb-2">
+              <NunjucksTemplateEditor
+                :model-value="col.template"
+                :placeholder="t('template_placeholder')"
+                min-height="7rem"
+                @update:model-value="updateColumnTemplate(idx, $event)"
+              />
+            </div>
             
             <div class="d-flex flex-column gap-1.5 mt-2">
               <div class="text-secondary fw-semibold d-flex align-items-center gap-1" style="font-size: 0.72rem;">
@@ -518,6 +545,12 @@ const unusedKeys = computed(() => {
       <div v-if="!isDataLoading" class="pt-2 border-top">
         <!-- Ajout via clés détectées -->
         <div v-if="unusedKeys.length > 0" class="position-relative mb-2">
+          <input
+            v-model="columnSearch"
+            type="search"
+            class="form-control form-control-sm mb-2"
+            :placeholder="t('search_columns')"
+          >
           <button 
             type="button" 
             class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 shadow-xs w-100 justify-content-center fw-semibold py-1.5"
@@ -529,15 +562,18 @@ const unusedKeys = computed(() => {
           
           <div v-if="showAddDropdown" class="dropdown-menu show shadow border-secondary-subtle w-100 mt-1 max-vh-40 overflow-y-auto bg-body" style="z-index: 1000;">
             <button 
-              v-for="key in unusedKeys" 
+              v-for="key in filteredUnusedKeys" 
               :key="key" 
               type="button" 
-              class="dropdown-item py-1.5 d-flex align-items-center gap-2 font-monospace"
+              class="dropdown-item py-1.5 d-flex align-items-start gap-2"
               style="font-size: 0.8rem;"
               @click="addColumn(key)"
             >
               <i class="bi bi-plus-circle text-primary opacity-50"></i>
-              <span>{{ key }}</span>
+              <span class="min-w-0">
+                <span class="d-block font-monospace">{{ key }}</span>
+                <span v-if="previewValueForKey(key)" class="d-block small text-secondary text-truncate">{{ previewValueForKey(key) }}</span>
+              </span>
             </button>
           </div>
         </div>

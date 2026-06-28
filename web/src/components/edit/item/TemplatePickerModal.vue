@@ -32,8 +32,14 @@ function selectTemplate(template) {
               <article class="card h-100" :class="selectedKey === template.key ? 'border-primary' : ''">
                 <div class="card-body d-flex flex-column gap-3">
                   <div>
-                    <h6 class="mb-0">{{ template.name }}</h6>
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                      <h6 class="mb-0">{{ template.name }}</h6>
+                      <span v-if="template.category" class="badge text-bg-light border">{{ template.category }}</span>
+                    </div>
                     <p class="small text-secondary mb-0 mt-1">{{ template.description }}</p>
+                    <p v-if="template.useCase" class="small mb-0 mt-2">
+                      <i class="bi bi-bullseye text-primary me-1"></i>{{ template.useCase }}
+                    </p>
                   </div>
                   <div v-if="template.preview" v-html="template.preview"></div>
                   <button type="button" class="btn btn-outline-primary mt-auto" @click="selectTemplate(template)">

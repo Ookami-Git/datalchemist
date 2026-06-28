@@ -2,11 +2,15 @@
 import { computed, ref, inject, onMounted } from "vue";
 import axios from 'axios';
 import SourcePreviewModal from './SourcePreviewModal.vue';
+import GetVariablesConfig from './GetVariablesConfig.vue';
+import { extractGetVariableNames, valuesForGetVariables } from '@/utils/getVariables.js';
 
 const props = defineProps({
   typeSource: String,
   parentId: [String, Number],
 });
+
+const emit = defineEmits(['source-change']);
 
 const apiUrl = inject('apiUrl');
 
@@ -27,9 +31,11 @@ const selectedSource = ref('');
 const activeSources = ref([]);
 const availableSources = ref([]);
 const copiedTokenKey = ref(null);
+const sourceDetails = ref({});
 
 const hasAvailableSources = computed(() => availableSources.value.length > 0);
 const hasActiveSources = computed(() => activeSources.value.length > 0);
+const previewSourceConfig = computed(() => getSourceDetail(previewSourceId.value)?.config || null);
 
 const sortById = (list) => list.sort((a, b) => a.id - b.id);
 const SIMPLE_SN_KEY_PATTERN = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
@@ -43,6 +49,112 @@ const getSourceNameToken = (item) => {
   }
   return `${openBrace} sn[${JSON.stringify(sourceName)}] ${closeBrace}`;
 };
+
+const getSourceDetail = (sourceId) => sourceDetails.value[sourceId] || null;
+
+const getSourceGetVariables = (sourceId) => getSourceDetail(sourceId)?.getVariables || [];
+
+const getSourceGetDefaults = (sourceId) => valuesForGetVariables(
+  getSourceGetVariables(sourceId),
+  getSourceDetail(sourceId)?.config?.getDefaults || {}
+);
+
+function setSourceDetail(sourceId, detail) {
+  sourceDetails.value = {
+    ...sourceDetails.value,
+    [sourceId]: detail
+  };
+}
+
+async function loadSourceDetail(source) {
+  if (!source?.id) return;
+
+  try {
+    const response = await axios.get(`${apiUrl}/source/${source.id}`);
+    const payload = response.data || {};
+    const config = payload.json ? JSON.parse(payload.json) : {};
+    const getVariables = extractGetVariableNames({
+      ...config,
+      getDefaults: undefined
+    });
+
+    setSourceDetail(source.id, {
+      payload,
+      config,
+      getVariables,
+      saving: false,
+      error: '',
+      saved: false
+    });
+  } catch (error) {
+    setSourceDetail(source.id, {
+      payload: source,
+      config: {},
+      getVariables: [],
+      saving: false,
+      error: 'Impossible de charger la configuration GET.',
+      saved: false
+    });
+    console.error('Unable to load source detail', error);
+  }
+}
+
+async function loadActiveSourceDetails() {
+  await Promise.all(activeSources.value.map((source) => loadSourceDetail(source)));
+}
+
+function updateSourceGetDefaults(source, value) {
+  const detail = getSourceDetail(source.id);
+  if (!detail) return;
+
+  setSourceDetail(source.id, {
+    ...detail,
+    config: {
+      ...detail.config,
+      getDefaults: valuesForGetVariables(detail.getVariables, value || {})
+    },
+    saved: false,
+    error: ''
+  });
+}
+
+async function saveSourceGetDefaults(source) {
+  const detail = getSourceDetail(source.id);
+  if (!detail) return;
+
+  setSourceDetail(source.id, { ...detail, saving: true, error: '', saved: false });
+
+  try {
+    const payload = detail.payload || source;
+    const config = {
+      ...detail.config,
+      getDefaults: valuesForGetVariables(detail.getVariables, detail.config?.getDefaults || {})
+    };
+
+    await axios.post(`${apiUrl}/source`, {
+      id: payload.id || source.id,
+      name: payload.name || source.name,
+      json: JSON.stringify(config)
+    });
+
+    setSourceDetail(source.id, {
+      ...detail,
+      config,
+      saving: false,
+      error: '',
+      saved: true
+    });
+    emit('source-change');
+  } catch (error) {
+    setSourceDetail(source.id, {
+      ...detail,
+      saving: false,
+      error: 'Erreur de sauvegarde des variables GET.',
+      saved: false
+    });
+    console.error('Unable to save source GET defaults', error);
+  }
+}
 
 const copySourceToken = async (tokenKey, textToCopy) => {
   if (!textToCopy) {
@@ -80,15 +192,23 @@ const addItem = async () => {
     return;
   }
 
-  await linkSource(selectedSource.value.id);
+  try {
+    await linkSource(selectedSource.value.id);
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+
   activeSources.value.push(selectedSource.value);
   sortById(activeSources.value);
+  await loadSourceDetail(selectedSource.value);
 
   const index = availableSources.value.indexOf(selectedSource.value);
   if (index > -1) {
     availableSources.value.splice(index, 1);
   }
   selectedSource.value = availableSources.value[0] || '';
+  emit('source-change');
 };
 
 const removeItem = async (index) => {
@@ -96,10 +216,22 @@ const removeItem = async (index) => {
     return;
   }
 
-  await unlinkSource(activeSources.value[index].id);
-  availableSources.value.push(activeSources.value[index]);
+  const source = activeSources.value[index];
+
+  try {
+    await unlinkSource(source.id);
+  } catch (error) {
+    console.log(error);
+    return;
+  }
+
+  availableSources.value.push(source);
   sortById(availableSources.value);
   activeSources.value.splice(index, 1);
+  const nextDetails = { ...sourceDetails.value };
+  delete nextDetails[source.id];
+  sourceDetails.value = nextDetails;
+  emit('source-change');
 };
 
 const fetchSources = async () => {
@@ -123,6 +255,7 @@ const fetchSources = async () => {
     diffArray();
     sortById(availableSources.value);
     sortById(activeSources.value);
+    await loadActiveSourceDetails();
     selectedSource.value = availableSources.value[0] || '';
   } catch (error) {
     console.error(`Erreur lors de la récupération des objets`, error);
@@ -153,10 +286,7 @@ function linkSource(id) {
     required_source_id: parseInt(id),
   };
 
-  return axios.post(`${apiUrl}/${props.typeSource}/require`, data)
-    .catch(function (error) {
-      console.log(error);
-    });
+  return axios.post(`${apiUrl}/${props.typeSource}/require`, data);
 }
 
 /**
@@ -166,10 +296,7 @@ function linkSource(id) {
  * @return {Promise} A Promise that resolves with the server response or rejects with an error.
  */
 function unlinkSource(id) {
-  return axios.delete(`${apiUrl}/${props.typeSource}/${props.parentId}/require/${id}`)
-    .catch(function (error) {
-      console.log(error);
-    });
+  return axios.delete(`${apiUrl}/${props.typeSource}/${props.parentId}/require/${id}`);
 }
 
 onMounted(async () => {
@@ -234,9 +361,63 @@ onMounted(async () => {
               </button>
             </div>
           </div>
+          <div v-if="props.typeSource === 'item' && getSourceGetVariables(item.id).length" class="mt-2">
+            <button
+              class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between gap-2"
+              type="button"
+              data-bs-toggle="collapse"
+              :data-bs-target="`#source-item-get-${item.id}`"
+              aria-expanded="false"
+              :aria-controls="`source-item-get-${item.id}`"
+            >
+              <span class="d-flex align-items-center gap-2">
+                <i class="bi bi-braces text-primary" aria-hidden="true"></i>
+                <span>{{ $t('getVariables.source_title') }}</span>
+                <span class="badge text-bg-secondary">{{ getSourceGetVariables(item.id).length }}</span>
+              </span>
+              <i class="bi bi-caret-down-square-fill" aria-hidden="true"></i>
+            </button>
+            <div :id="`source-item-get-${item.id}`" class="collapse">
+              <GetVariablesConfig
+                class="mt-2"
+                :model-value="getSourceGetDefaults(item.id)"
+                :variable-names="getSourceGetVariables(item.id)"
+                :title="$t('getVariables.source_title')"
+                :help="$t('getVariables.source_help')"
+                :input-id-prefix="`item-source-get-${item.id}`"
+                @update:model-value="updateSourceGetDefaults(item, $event)"
+                @submit="saveSourceGetDefaults(item)"
+              />
+              <div class="d-flex align-items-center justify-content-between gap-2 mt-2">
+                <small v-if="getSourceDetail(item.id)?.error" class="text-danger">
+                  {{ getSourceDetail(item.id).error }}
+                </small>
+                <small v-else-if="getSourceDetail(item.id)?.saved" class="text-success">
+                  Sauvegardé
+                </small>
+                <span v-else></span>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  :disabled="getSourceDetail(item.id)?.saving"
+                  @click="saveSourceGetDefaults(item)"
+                >
+                  <span v-if="getSourceDetail(item.id)?.saving" class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>
+                  <i v-else class="bi bi-save me-1" aria-hidden="true"></i>
+                  {{ $t('save.label') }}
+                </button>
+              </div>
+            </div>
+          </div>
         </article>
       </div>
     </div>
   </div>
-  <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName" @close="isPreviewOpen = false" />
+  <SourcePreviewModal
+    :show="isPreviewOpen"
+    :sourceId="previewSourceId"
+    :sourceName="previewSourceName"
+    :sourceConfig="previewSourceConfig"
+    @close="isPreviewOpen = false"
+  />
 </template>

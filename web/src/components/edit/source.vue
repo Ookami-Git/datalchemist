@@ -9,6 +9,9 @@ import urlvue from './source/url.vue'
 import executevue from './source/execute.vue'
 import textInput from './source/textInput.vue'
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
+import GetVariablesConfig from './common/GetVariablesConfig.vue';
+import Helpers from './item/Helpers.vue';
+import { extractGetVariableNames, valuesForGetVariables } from '@/utils/getVariables.js';
 
 const typeSource = "source";
 const isPreviewOpen = ref(false);
@@ -33,7 +36,8 @@ const defaultJsonSource = () => ({
   path: '',
   loop: '',
   query: '',
-  parameters: {}
+  parameters: {},
+  getDefaults: {}
 });
 
 const isFlatSourceType = (src) => src === 'file' || src === 'url' || src === 'execute' || src === 'text';
@@ -60,6 +64,10 @@ const normalizeJsonSource = (value) => {
     normalized.parameters = {};
   }
 
+  if (!normalized.getDefaults || typeof normalized.getDefaults !== 'object' || Array.isArray(normalized.getDefaults)) {
+    normalized.getDefaults = {};
+  }
+
   return normalized;
 };
 
@@ -74,6 +82,14 @@ const isFlatSourceSelected = computed(() => isFlatSourceType(JsonSource.value.sr
 const showSourceEditor = computed(
   () => JsonSource.value.src && SourceInfo.value && !isLoading.value && !loadError.value
 );
+const detectedGetVariables = computed(() => extractGetVariableNames({
+  ...JsonSource.value,
+  getDefaults: undefined
+}));
+const sourceGetDefaults = computed(() => valuesForGetVariables(
+  detectedGetVariables.value,
+  JsonSource.value.getDefaults || {}
+));
 
 provide('source', JsonSource);
 
@@ -85,6 +101,10 @@ function updateSource() {
   if (!JsonSource.value.parameters || typeof JsonSource.value.parameters !== 'object') {
     JsonSource.value.parameters = {};
   }
+  JsonSource.value.getDefaults = valuesForGetVariables(
+    detectedGetVariables.value,
+    JsonSource.value.getDefaults || {}
+  );
 
   // Clear other type parameters
   for (const key in JsonSource.value.parameters) {
@@ -106,6 +126,13 @@ function updateSource() {
     .catch(function () {
       save.value.status.error()
     });
+}
+
+function updateSourceGetDefaults(value) {
+  JsonSource.value.getDefaults = valuesForGetVariables(
+    detectedGetVariables.value,
+    value || {}
+  );
 }
 
 const fetchSource = async (id) => {
@@ -283,6 +310,37 @@ onMounted(async () => {
 
         <div class="col-12 col-xxl-4">
           <div class="d-flex flex-column gap-3 admin-edit-source-side">
+            <article v-if="detectedGetVariables.length" class="card admin-edit-source-panel shadow-sm">
+              <div class="card-body p-3 p-lg-4">
+                <button
+                  class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-between gap-2"
+                  type="button"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#sourceGetDefaultsCollapse"
+                  aria-expanded="false"
+                  aria-controls="sourceGetDefaultsCollapse"
+                >
+                  <span class="d-flex align-items-center gap-2">
+                    <i class="bi bi-braces text-primary" aria-hidden="true"></i>
+                    <span>{{ $t('getVariables.source_title') }}</span>
+                    <span class="badge text-bg-secondary">{{ detectedGetVariables.length }}</span>
+                  </span>
+                  <i class="bi bi-caret-down-square-fill" aria-hidden="true"></i>
+                </button>
+                <div id="sourceGetDefaultsCollapse" class="collapse">
+                  <GetVariablesConfig
+                    class="mt-3"
+                    :model-value="sourceGetDefaults"
+                    :variable-names="detectedGetVariables"
+                    :title="$t('getVariables.source_title')"
+                    :help="$t('getVariables.source_help')"
+                    input-id-prefix="source-get-default"
+                    @update:model-value="updateSourceGetDefaults"
+                  />
+                </div>
+              </div>
+            </article>
+
             <article v-if="JsonSource.src === 'database' && supportedDb.includes(JsonSource.type)"
               class="card admin-edit-source-panel shadow-sm">
               <div class="card-body p-3 p-lg-4 d-flex flex-column gap-2">
@@ -303,6 +361,8 @@ onMounted(async () => {
                 </div>
               </div>
             </article>
+
+            <Helpers context="source" :sections="['variables']" />
 
             <article class="card admin-edit-source-panel shadow-sm">
               <div class="card-body p-3 p-lg-4">
@@ -334,5 +394,12 @@ onMounted(async () => {
       </div>
     </div>
   </section>
-  <SourcePreviewModal v-if="SourceInfo" :show="isPreviewOpen" :sourceId="SourceInfo.id" :sourceName="SourceInfo.name" @close="isPreviewOpen = false" />
+  <SourcePreviewModal
+    v-if="SourceInfo"
+    :show="isPreviewOpen"
+    :sourceId="SourceInfo.id"
+    :sourceName="SourceInfo.name"
+    :sourceConfig="JsonSource"
+    @close="isPreviewOpen = false"
+  />
 </template>

@@ -1,4 +1,9 @@
-import { getTemplateDefinition, templateCatalog } from '@/templates/catalog.js';
+import {
+  compileTemplateDefinition,
+  getTemplateDefinition,
+  migrateTemplateConfig,
+  templateCatalog
+} from '@/templates/catalog.js';
 
 export const FREE_ITEM_MODE = 'free';
 export const VISUAL_ITEM_MODE = 'visual';
@@ -37,7 +42,7 @@ export function parseItemParameters(value) {
       return {
         ...parsed,
         configVersion: definition.configVersion,
-        config: definition.normalizeConfig(parsed.config)
+        config: migrateTemplateConfig(definition, parsed.config, parsed.configVersion)
       };
     }
   } catch {
@@ -48,7 +53,11 @@ export function parseItemParameters(value) {
 }
 
 export function serializeVisualItemParameters(parameters) {
-  return JSON.stringify(parameters);
+  const serializable = { ...(parameters || {}) };
+  delete serializable.getOverrides;
+  delete serializable.sourceExamples;
+
+  return JSON.stringify(serializable);
 }
 
 export function resolveItemRenderDefinition(item) {
@@ -66,6 +75,6 @@ export function resolveItemRenderDefinition(item) {
     };
   }
 
-  const compiled = definition.compile(parameters.config);
+  const compiled = compileTemplateDefinition(definition, parameters.config);
   return { ...item, ...compiled };
 }

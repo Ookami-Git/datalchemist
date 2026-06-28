@@ -1,6 +1,13 @@
 <script setup>
+import TemplateVariablesReference from '../common/TemplateVariablesReference.vue';
+
 const props = defineProps({
-  sections: { type: Array, default: null }
+  sections: { type: Array, default: null },
+  context: {
+    type: String,
+    default: 'item',
+    validator: (value) => ['item', 'source'].includes(value)
+  }
 });
 
 function showSection(section) {
@@ -57,6 +64,24 @@ const codeMermaid = `<pre class="mermaid"></pre>`
     </div>
     <div class="card-body p-0">
       <div class="accordion accordion-flush" id="item-helpers-accordion">
+        <div v-if="showSection('variables')" class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-variables-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-variables" aria-expanded="false" aria-controls="item-helper-variables">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">{{ $t('templateVariables.title') }}</span>
+                <span class="badge text-bg-secondary">Template</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-variables" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-variables-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <TemplateVariablesReference :context="props.context" />
+            </div>
+          </div>
+        </div>
+
         <div v-if="showSection('bootstrap')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-bootstrap-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"

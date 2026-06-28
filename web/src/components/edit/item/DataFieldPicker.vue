@@ -144,9 +144,16 @@ watch([isOpen, templateItemsPath], async ([openVal, pathVal]) => {
       return;
     }
 
-    const savedExamples = props.templateMeta.sourceExamples?.[source.id] || {};
+    let sourceDefaults = {};
+    try {
+      const sourceRes = await axios.get(`${apiUrl}/source/${source.id}`);
+      sourceDefaults = sourceRes.data?.json ? (JSON.parse(sourceRes.data.json)?.getDefaults || {}) : {};
+    } catch {
+      sourceDefaults = {};
+    }
+
     const res = await axios.get(`${apiUrl}/data/source/${source.id}`, {
-      params: savedExamples
+      params: sourceDefaults
     });
 
     extractKeysFromData(res.data, subPath);

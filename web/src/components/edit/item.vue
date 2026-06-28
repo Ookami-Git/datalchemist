@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, inject, watch, onMounted, onBeforeUnmount, provide } from "vue";
+import { computed, ref, inject, watch, onMounted, onBeforeUnmount, nextTick, provide } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
@@ -10,7 +10,13 @@ import TemplatePickerModal from "./item/TemplatePickerModal.vue";
 import Helpers from "./item/Helpers.vue";
 import sources from "./common/sources.vue";
 import Preview from '../view/preview.vue';
-import { templateCatalog } from '@/templates/catalog.js';
+import { compileTemplateDefinition, templateCatalog } from '@/templates/catalog.js';
+import {
+  extractGetVariableNames,
+  formatGetQuery,
+  mergeGetVariableDefaults,
+  parseGetQuery
+} from '@/utils/getVariables.js';
 import {
   createVisualItemParameters,
   parseItemParameters,
@@ -51,45 +57,61 @@ const showTemplatePicker = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const previewReloadToken = ref(0);
+const sourceListVersion = ref(0);
+const previewSourceConfigs = ref([]);
 
-function parsePreviewQuery(input) {
-  const raw = `${input || ''}`.trim();
-  if (!raw) {
-    return {};
-  }
-
-  const normalized = raw.startsWith('?') ? raw.slice(1) : raw;
-  const searchParams = new URLSearchParams(normalized);
-  const parsed = {};
-
-  for (const [key, value] of searchParams.entries()) {
-    if (!key) {
-      continue;
+function normalizePreviewQuery(params = {}) {
+  return mergeGetVariableDefaults(
+    detectedGetVariables.value,
+    {
+      ...sourceGetDefaults.value,
+      ...params
     }
-
-    if (Object.prototype.hasOwnProperty.call(parsed, key)) {
-      const current = parsed[key];
-      parsed[key] = Array.isArray(current) ? [...current, value] : [current, value];
-    } else {
-      parsed[key] = value;
-    }
-  }
-
-  return parsed;
+  );
 }
 
 function applyPreviewQueryFromInput() {
-  previewQueryParams.value = parsePreviewQuery(previewQueryInput.value);
+  previewQueryParams.value = normalizePreviewQuery(parseGetQuery(previewQueryInput.value));
+  previewQueryInput.value = formatGetQuery(previewQueryParams.value);
 }
 
-function openPreview() {
-  applyPreviewQueryFromInput();
+async function loadPreviewSourceConfigs() {
+  if (!itemid) return;
+
+  try {
+    const sourcesRes = await axios.get(`${apiUrl}/item/sources/${itemid}`);
+    const linkedSources = sourcesRes.data || [];
+    const details = await Promise.all(linkedSources.map(async (source) => {
+      try {
+        const res = await axios.get(`${apiUrl}/source/${source.id}`);
+        return res.data?.json ? JSON.parse(res.data.json) : null;
+      } catch {
+        return null;
+      }
+    }));
+    previewSourceConfigs.value = details.filter(Boolean);
+  } catch (error) {
+    previewSourceConfigs.value = [];
+    console.error('Unable to load linked source configs for preview', error);
+  }
+}
+
+async function openPreview() {
+  await loadPreviewSourceConfigs();
+  previewQueryParams.value = normalizePreviewQuery();
+  previewQueryInput.value = formatGetQuery(previewQueryParams.value);
   previewReloadToken.value += 1;
   showPreview.value = true;
 }
 
 function closePreview() { showPreview.value = false; }
 function closeTemplatePicker() { showTemplatePicker.value = false; }
+
+function handleSourceChange() {
+  sourceListVersion.value += 1;
+  previewSourceConfigs.value = [];
+  loadPreviewSourceConfigs();
+}
 
 function reloadPreview() {
   applyPreviewQueryFromInput();
@@ -112,14 +134,31 @@ provide('codeJs', codeJs);
 
 const previewItem = computed(() => ({
   id: ItemInfo.value?.id,
-  template: code.value,
-  javascript: codeJs.value,
+  template: effectiveTemplate.value,
+  javascript: effectiveJavascript.value,
   parameters: parametersForSave.value
 }));
 
 const parametersForSave = computed(() => editorMode.value === VISUAL_ITEM_MODE
   ? serializeVisualItemParameters(visualTemplateMeta.value)
   : rawParameters.value);
+const sourceGetDefaults = computed(() => previewSourceConfigs.value.reduce((defaults, sourceConfig) => ({
+  ...defaults,
+  ...(sourceConfig?.getDefaults || {})
+}), {}));
+const detectedGetVariables = computed(() => {
+  const names = new Set([
+    ...extractGetVariableNames(effectiveTemplate.value),
+    ...extractGetVariableNames(effectiveJavascript.value),
+    ...extractGetVariableNames(parametersForSave.value)
+  ]);
+
+  previewSourceConfigs.value.forEach((sourceConfig) => {
+    extractGetVariableNames(sourceConfig).forEach((name) => names.add(name));
+  });
+
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
+});
 
 const previewQuerySignature = computed(() => JSON.stringify(previewQueryParams.value || {}));
 const previewRenderKey = computed(() => `${previewReloadToken.value}:${previewQuerySignature.value}`);
@@ -127,6 +166,25 @@ const selectedVisualTemplate = computed(() => templateCatalog.find((template) =>
   template.key === visualTemplateMeta.value?.templateKey &&
   template.major === Number(visualTemplateMeta.value?.templateMajor)
 )) || null);
+const compiledVisualTemplate = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compileTemplateDefinition(selectedVisualTemplate.value, visualTemplateMeta.value?.config || {})
+    : null
+));
+const effectiveTemplate = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compiledVisualTemplate.value?.template || ''
+    : code.value
+));
+const effectiveJavascript = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compiledVisualTemplate.value?.javascript || ''
+    : codeJs.value
+));
+const visualTemplateHelpSections = computed(() => {
+  const sections = selectedVisualTemplate.value?.helpSections || [];
+  return [...new Set(['variables', ...sections, 'icons', 'bootstrap'])];
+});
 
 function switchEditorMode(mode) {
   if (mode === VISUAL_ITEM_MODE) {
@@ -138,14 +196,18 @@ function switchEditorMode(mode) {
       return;
     }
 
-    const compiled = selectedVisualTemplate.value?.compile(visualTemplateMeta.value?.config || {});
+    const compiled = compiledVisualTemplate.value;
     code.value = compiled?.template || code.value;
-    codeJs.value = compiled?.javascript || '';
+    codeJs.value = compiled?.javascript || codeJs.value;
     rawParameters.value = '';
   }
 
   editorMode.value = mode;
   refreshSaveStatus();
+  nextTick(() => {
+    bindTabListeners();
+    refreshCodeMirror();
+  });
 }
 
 function selectVisualTemplate(key) {
@@ -162,8 +224,8 @@ const hasPendingChanges = computed(() => {
 
   return (
     ItemInfo.value.name !== initialState.value.name ||
-    code.value !== initialState.value.template ||
-    codeJs.value !== initialState.value.javascript ||
+    effectiveTemplate.value !== initialState.value.template ||
+    effectiveJavascript.value !== initialState.value.javascript ||
     parametersForSave.value !== initialState.value.parameters
   );
 });
@@ -229,16 +291,16 @@ function updateItem() {
   axios.post(`${apiUrl}/item`, {
     id: ItemInfo.value.id,
     name: ItemInfo.value.name,
-    template: code.value,
-    javascript: codeJs.value,
+    template: effectiveTemplate.value,
+    javascript: effectiveJavascript.value,
     parameters: parametersForSave.value
   })
     .then(function () {
       rawParameters.value = parametersForSave.value;
       initialState.value = {
         name: ItemInfo.value.name || '',
-        template: code.value,
-        javascript: codeJs.value,
+        template: effectiveTemplate.value,
+        javascript: effectiveJavascript.value,
         parameters: parametersForSave.value
       };
       save.value.status.show()
@@ -260,18 +322,26 @@ const refreshCodeMirror = () => {
 const tabButtons = ref([]);
 const onTabShown = () => refreshCodeMirror();
 
+function bindTabListeners() {
+  tabButtons.value.forEach((tab) => {
+    tab.removeEventListener('shown.bs.tab', onTabShown);
+  });
+  tabButtons.value = Array.from(document.querySelectorAll('[data-bs-toggle="tab"]'));
+  tabButtons.value.forEach((tab) => {
+    tab.addEventListener('shown.bs.tab', onTabShown);
+  });
+}
+
 watch([showPreview, showTemplatePicker], ([isPreviewOpen, isTemplatePickerOpen]) => {
   document.body.classList.toggle(previewModalBodyClass, isPreviewOpen || isTemplatePickerOpen);
 });
 
 onMounted(async () => {
   await fetchItem();
+  await loadPreviewSourceConfigs();
   save.value.function = updateItem
   save.value.status.show()
-  tabButtons.value = Array.from(document.querySelectorAll('[data-bs-toggle="tab"]'));
-  tabButtons.value.forEach((tab) => {
-    tab.addEventListener('shown.bs.tab', onTabShown);
-  });
+  bindTabListeners();
   window.addEventListener('keydown', handlePreviewKeydown);
   refreshCodeMirror();
 })
@@ -354,6 +424,7 @@ onBeforeUnmount(() => {
 
           <VisualTemplateEditor v-if="editorMode === VISUAL_ITEM_MODE" :template-meta="visualTemplateMeta"
             :item-id="itemid"
+            :source-list-version="sourceListVersion"
             @update:template-meta="updateVisualTemplateMeta" />
 
           <article v-else class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
@@ -419,9 +490,9 @@ onBeforeUnmount(() => {
                 </div>
               </div>
             </div>
-            <Helpers v-if="editorMode === FREE_ITEM_MODE || selectedVisualTemplate?.helpSections?.length"
-              :sections="editorMode === VISUAL_ITEM_MODE ? selectedVisualTemplate?.helpSections : null" />
-            <sources :typeSource="typeSource" :parentId="itemid" />
+            <Helpers v-if="editorMode === FREE_ITEM_MODE || visualTemplateHelpSections.length"
+              :sections="editorMode === VISUAL_ITEM_MODE ? visualTemplateHelpSections : null" />
+            <sources :typeSource="typeSource" :parentId="itemid" @source-change="handleSourceChange" />
           </div>
         </div>
       </div>

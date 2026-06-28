@@ -249,6 +249,40 @@
     "secrets_state_disabled": "Secrets disabled",
     "secret_value": "Secret value"
   },
+  "templateVariables": {
+    "title": "Available variables",
+    "context": {
+      "item": "Central reference for item templates and linked source data.",
+      "source": "Central reference for source templates, dependencies, and loops."
+    },
+    "scope": {
+      "items_sources": "Items / sources",
+      "sources_only": "Sources",
+      "source_loop": "Source loop",
+      "object_loop": "Item loop",
+      "template_variables": "Template variables"
+    },
+    "sid": "Accesses linked source data by source id. The key starts with s followed by the source id.",
+    "sn": "Accesses linked source data by source name. Use bracket notation when the name contains spaces or special characters.",
+    "get": "Contains GET parameters from the current URL. Each key returns a list of values.",
+    "var": "Accesses global computed variables configured in the visual template.",
+    "var_loop": "Accesses computed variables inside the current visual template loop.",
+    "secret": "Accesses an encrypted secret in a source template. The secret filter decrypts the value on the backend.",
+    "source_item": "Only available in a source with a loop. Represents the current element from the iterated collection.",
+    "value": "In an item template loop, contains the current value.",
+    "key": "In an item template loop, contains the index or key for the current value.",
+    "object_item": "In an item template loop, contains the current object. This is not the same item variable as source loops.",
+    "note": "Paths after these variables follow the actual data structure returned by the sources."
+  },
+  "getVariables": {
+    "title": "Default GET variable values",
+    "help": "These values are only used in previews and editors.",
+    "source_title": "Source GET variables",
+    "source_help": "Values saved with the source and used by default in previews and editors.",
+    "object_variable_title": "GET variables",
+    "object_variable_help": "Local override for this item variable. By default, the source value is used.",
+    "default_placeholder": "Default value"
+  },
   "edititem": {
     "header": "Item",
     "subtitle": "Edit HTML template, JavaScript script, and linked sources for this item",
@@ -321,7 +355,9 @@
         "fixedColumnsRight": "Fixed columns right",
         "rowGroupColumn": "Group column",
         "orderColumn": "Sort column",
-        "orderDirection": "Sort direction"
+        "orderDirection": "Sort direction",
+        "globalVariables": "Global variables",
+        "loopVariables": "Loop variables"
       }
     },
     "mode_label": "Editing mode",
