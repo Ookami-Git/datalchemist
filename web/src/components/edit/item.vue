@@ -242,6 +242,15 @@ function refreshSaveStatus() {
   }
 }
 
+function updateItemName(value) {
+  if (!ItemInfo.value) {
+    return;
+  }
+
+  ItemInfo.value.name = value;
+  refreshSaveStatus();
+}
+
 function updateVisualTemplateMeta(templateMeta) {
   visualTemplateMeta.value = templateMeta;
   refreshSaveStatus();
@@ -392,7 +401,8 @@ onBeforeUnmount(() => {
               <div class="input-group input-group-sm admin-edit-item-name-input">
                 <span class="input-group-text"><i class="bi bi-tag"></i></span>
                 <input id="item-name-input" type="text" class="form-control" :placeholder="$t('edit.name')"
-                  :aria-label="$t('edit.name')" v-model="ItemInfo.name">
+                  :aria-label="$t('edit.name')" :value="ItemInfo.name"
+                  @input="updateItemName($event.target.value)">
               </div>
             </div>
           </div>
