@@ -101,8 +101,214 @@ test('compact table keeps DataTables initialization in javascript output', () =>
   assert.doesNotMatch(compiled.template, /new DataTable/);
   assert.doesNotMatch(compiled.template, /DataTable\.Buttons/);
   assert.match(compiled.javascript, /const dataTableOptions = /);
-  assert.match(compiled.javascript, /new DataTable\(table, dataTableOptions\)/);
+  assert.match(compiled.javascript, /"layout":\{"topStart":\["buttons"\],"topEnd":\["pageLength","search"\],"bottomStart":"info","bottomEnd":"paging"\}/);
+  assert.doesNotMatch(compiled.javascript, /"dom":/);
+  assert.match(compiled.javascript, /const tableOptions = \{ \.\.\.dataTableOptions \}/);
+  assert.match(compiled.javascript, /new DataTable\(table, tableOptions\)/);
   assert.match(compiled.javascript, /DataTable\.Buttons\.jszip/);
+});
+
+test('compact table does not require a display title', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const issues = validateTemplateConfig(template, {
+    items: 'clients'
+  });
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients'
+  }, {
+    item: { id: 12, name: 'Clients' }
+  });
+
+  assert.deepEqual(issues, []);
+  assert.match(compiled.template, /data-dc-datatable=/);
+});
+
+test('compact table disables dependent DataTables options with their parent option', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    searching: 'false',
+    searchBuilder: 'true',
+    searchPanes: 'true',
+    paging: 'false',
+    info: 'true',
+    ordering: 'false',
+    orderColumn: 2,
+    scrollX: 'false',
+    fixedColumnsLeft: 1
+  });
+
+  assert.match(compiled.javascript, /searching":false/);
+  assert.doesNotMatch(compiled.javascript, /searchBuilder":/);
+  assert.doesNotMatch(compiled.javascript, /searchPanes":/);
+  assert.match(compiled.javascript, /paging":false/);
+  assert.match(compiled.javascript, /info":false/);
+  assert.doesNotMatch(compiled.javascript, /fixedColumns":/);
+  assert.match(compiled.javascript, /order":\[\]/);
+});
+
+test('compact table uses DataTables layout feature names for advanced controls', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    searchBuilder: 'true',
+    searchPanes: 'true',
+    buttons: 'all'
+  });
+
+  assert.match(compiled.javascript, /"topStart":\["searchBuilder","searchPanes","buttons"\]/);
+  assert.match(compiled.javascript, /"searchPanes":\{"threshold":0\.6\}/);
+  assert.doesNotMatch(compiled.javascript, /"topStart":\["Q","P","buttons"\]/);
+});
+
+test('compact table supports manual SearchPanes columns', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    searchPanes: 'true',
+    searchPanesAutomatic: 'false',
+    searchPanesColumns: JSON.stringify(['Segment', 'Statut'])
+  });
+
+  assert.match(compiled.javascript, /"searchPanes":\{"columns":\[\],"threshold":1\}/);
+  assert.match(compiled.javascript, /const dataTableSearchPanesColumns = \["Segment","Statut"\]/);
+  assert.match(compiled.javascript, /searchPanes: \{ show: true, threshold: 1 \}/);
+});
+
+test('compact table clamps automatic SearchPanes threshold', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    searchPanes: 'true',
+    searchPanesThreshold: 2
+  });
+
+  assert.match(compiled.javascript, /"searchPanes":\{"threshold":1\}/);
+});
+
+test('compact table resolves initial sort column from configured column key', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    columns: JSON.stringify([
+      { key: 'name', label: 'Client' },
+      { key: 'revenue', label: 'CA' },
+      { key: 'segment', label: 'Segment' }
+    ]),
+    orderColumn: 'revenue',
+    orderDirection: 'desc'
+  });
+
+  assert.match(compiled.javascript, /"order":\[\[1,"desc"\]\]/);
+});
+
+test('compact table keeps legacy numeric initial sort column values', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    columns: JSON.stringify([
+      { key: 'name', label: 'Client' },
+      { key: 'revenue', label: 'CA' },
+      { key: 'segment', label: 'Segment' }
+    ]),
+    orderColumn: 3
+  });
+
+  assert.match(compiled.javascript, /"order":\[\[2,"asc"\]\]/);
+});
+
+test('compact table can resolve automatic initial sort column at runtime', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    orderColumn: 'revenue'
+  });
+
+  assert.match(compiled.javascript, /const dataTableOrderColumn = "revenue"/);
+  assert.match(compiled.javascript, /querySelectorAll\('thead th'\)/);
+  assert.match(compiled.javascript, /tableOptions\.order = \[\[headerIndex, dataTableOrderDirection\]\]/);
+});
+
+test('compact table enables DataTables runtime controls consistently', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    pageLength: 50,
+    ordering: 'true',
+    orderColumn: 2,
+    orderDirection: 'desc',
+    scrollX: 'true',
+    selectRows: 'true'
+  });
+
+  assert.match(compiled.javascript, /"pageLength":50/);
+  assert.match(compiled.javascript, /"lengthMenu":\[\[10,25,50,100,-1\],\[10,25,50,100,"All"\]\]/);
+  assert.match(compiled.javascript, /"lengthChange":true/);
+  assert.match(compiled.javascript, /"ordering":true/);
+  assert.match(compiled.javascript, /"order":\[\[1,"desc"\]\]/);
+  assert.match(compiled.javascript, /"select":\{"style":"multi","items":"row"\}/);
+  assert.match(compiled.javascript, /"scrollX":true/);
+  assert.match(compiled.javascript, /delete data\.length/);
+  assert.match(compiled.javascript, /delete data\.start/);
+  assert.doesNotMatch(compiled.javascript, /"responsive":true/);
+  assert.match(compiled.template, /text-nowrap/);
+});
+
+test('compact table treats Scroller as an alternative to visible pagination', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    paging: 'false',
+    scrollX: 'false',
+    scroller: 'true'
+  });
+
+  assert.match(compiled.javascript, /"paging":true/);
+  assert.match(compiled.javascript, /"lengthChange":false/);
+  assert.match(compiled.javascript, /"bottomEnd":null/);
+  assert.match(compiled.javascript, /"scroller":true/);
+  assert.match(compiled.javascript, /"scrollY":"50vh"/);
+  assert.match(compiled.javascript, /"scrollCollapse":true/);
+  assert.doesNotMatch(compiled.javascript, /"scrollX":true/);
+  assert.match(compiled.javascript, /scrollBody\.style\.overflowX = 'hidden'/);
+  assert.doesNotMatch(compiled.template, /text-nowrap/);
+});
+
+test('compact table keeps pagination ahead of Scroller for conflicting saved configs', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    paging: 'true',
+    scroller: 'true'
+  });
+
+  assert.match(compiled.javascript, /"paging":true/);
+  assert.match(compiled.javascript, /"bottomEnd":"paging"/);
+  assert.doesNotMatch(compiled.javascript, /"scroller":true/);
+  assert.doesNotMatch(compiled.javascript, /"scrollY":"50vh"/);
+});
+
+test('compact table includes custom page length in the DataTables length menu', () => {
+  const template = getTemplateDefinition('template/compact-table', 1);
+
+  const compiled = compileTemplateDefinition(template, {
+    items: 'clients',
+    pageLength: 30
+  });
+
+  assert.match(compiled.javascript, /"pageLength":30/);
+  assert.match(compiled.javascript, /"lengthMenu":\[\[10,25,30,50,100,-1\],\[10,25,30,50,100,"All"\]\]/);
 });
 
 test('catalog facade formats compiled visual templates for free mode readability', () => {

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import axios from 'axios';
 import {
   getTemplateDefinition,
@@ -30,6 +30,7 @@ const draggingRuleIndex = ref(null);
 const dragOverRuleKey = ref('');
 const dragOverRuleIndex = ref(null);
 const copiedTemplateVariableKey = ref('');
+const detectedDataTableColumnOptions = ref([]);
 
 function isObjectKeyField(field) {
   return field.key.endsWith('Field');
@@ -97,9 +98,18 @@ const sectionDefinitions = [
 ];
 
 function updateField(key, value) {
+  const nextConfig = { ...props.templateMeta.config, [key]: value };
+  const field = fields.value.find((candidate) => candidate.key === key);
+  if (String(value) === 'true' && field?.exclusiveWith) {
+    const exclusiveKeys = Array.isArray(field.exclusiveWith) ? field.exclusiveWith : [field.exclusiveWith];
+    exclusiveKeys.forEach((exclusiveKey) => {
+      nextConfig[exclusiveKey] = 'false';
+    });
+  }
+
   emit('update:templateMeta', {
     ...props.templateMeta,
-    config: { ...props.templateMeta.config, [key]: value }
+    config: nextConfig
   });
 }
 
@@ -126,10 +136,66 @@ function isBooleanField(field) {
          field.options.some(o => optionValue(o) === 'false');
 }
 
+function getConfiguredFieldValue(key) {
+  return props.templateMeta.config?.[key] ?? selectedTemplate.value?.defaults?.[key];
+}
+
+function isFieldEnabled(key) {
+  return String(getConfiguredFieldValue(key)) === 'true';
+}
+
+function fieldDependencyMet(field, visited = new Set()) {
+  if (!field.dependsOn) return true;
+  if (Array.isArray(field.dependsOn)) {
+    return field.dependsOn.every((dependency) => dependencyMet(dependency, visited));
+  }
+  return dependencyMet(field.dependsOn, visited);
+}
+
+function dependencyMet(dependency, visited = new Set()) {
+  const dependencyKey = typeof dependency === 'string' ? dependency : dependency?.field;
+  if (!dependencyKey) return true;
+
+  const dependencyField = fields.value.find((field) => field.key === dependencyKey);
+  if (dependencyField?.dependsOn && !visited.has(dependencyKey)) {
+    const nextVisited = new Set(visited);
+    nextVisited.add(dependencyKey);
+    if (!fieldDependencyMet(dependencyField, nextVisited)) return false;
+  }
+
+  if (typeof dependency === 'string') return isFieldEnabled(dependency);
+
+  const value = getConfiguredFieldValue(dependency.field);
+  return String(value) === String(dependency.value ?? 'true');
+}
+
+function groupTitle(groupKey) {
+  return selectedTemplate.value?.fieldGroups?.[groupKey] || groupKey;
+}
+
+function groupFields(fieldsToGroup) {
+  const groups = [];
+
+  fieldsToGroup.forEach((field) => {
+    const key = field.group || '_default';
+    let group = groups.find((entry) => entry.key === key);
+    if (!group) {
+      group = {
+        key,
+        title: key === '_default' ? '' : groupTitle(key),
+        fields: []
+      };
+      groups.push(group);
+    }
+    group.fields.push(field);
+  });
+
+  return groups;
+}
+
 const fields = computed(() => selectedTemplate.value?.fields || []);
 const selectedTemplateHasCollection = computed(() => hasCollectionField(selectedTemplate.value));
-const booleanFields = computed(() => fields.value.filter(isBooleanField));
-const regularFields = computed(() => fields.value.filter(f => !isBooleanField(f)));
+const visibleFields = computed(() => fields.value.filter((field) => fieldDependencyMet(field)));
 const templateItemsPath = computed(() => props.templateMeta.config?.items ?? '');
 const validationIssues = computed(() => (
   selectedTemplate.value
@@ -138,20 +204,14 @@ const validationIssues = computed(() => (
 ));
 const sections = computed(() => sectionDefinitions
   .map((section) => {
-    const sectionFields = regularFields.value.filter((field) => (field.section || 'display') === section.key);
-    const sectionBooleanFields = section.key === 'options'
-      ? booleanFields.value.filter((field) => (field.section || 'options') === 'options')
-      : [];
-    const advancedBooleanFields = section.key === 'advanced'
-      ? booleanFields.value.filter((field) => (field.section || 'options') === 'advanced')
-      : [];
+    const sectionFields = visibleFields.value.filter((field) => (field.section || 'display') === section.key);
     return {
       ...section,
       fields: sectionFields,
-      booleanFields: [...sectionBooleanFields, ...advancedBooleanFields]
+      fieldGroups: groupFields(sectionFields)
     };
   })
-  .filter((section) => section.fields.length || section.booleanFields.length));
+  .filter((section) => section.fieldGroups.length));
 
 function toggleSection(key) {
   openedSections.value = {
@@ -171,14 +231,17 @@ function getFieldClass(field) {
   if (field.type === 'template-variables') return 'col-12';
   if (field.type === 'template') return 'col-12';
   if (field.key === 'title' || field.key === 'items') return 'col-12 col-md-6';
+  if (field.type === 'range') return 'col-12 col-md-6';
   if (field.type === 'number') return 'col-6 col-md-4';
+  if (field.type === 'datatable-columns-select') return 'col-12';
+  if (field.type === 'datatable-column-select') return 'col-12 col-md-6';
   if (field.type === 'select') return 'col-12 col-md-6';
   if (field.type === 'color') return 'col-12';
   return 'col-12 col-md-6';
 }
 
 function isFieldValueTrue(field) {
-  const val = props.templateMeta.config?.[field.key];
+  const val = getConfiguredFieldValue(field.key);
   if (val === undefined || val === null) {
     return selectedTemplate.value?.defaults?.[field.key] === 'true';
   }
@@ -194,6 +257,190 @@ function getFieldDisplayValue(field) {
   const val = props.templateMeta.config?.[field.key] ?? selectedTemplate.value?.defaults?.[field.key] ?? '';
   return typeof val === 'object' ? '' : val;
 }
+
+function configuredDataTableColumnOptions() {
+  const rawColumns = props.templateMeta.config?.columns ?? selectedTemplate.value?.defaults?.columns ?? '';
+  if (!rawColumns) return [];
+
+  try {
+    const parsed = JSON.parse(rawColumns);
+    return Array.isArray(parsed)
+      ? parsed
+          .map((column) => ({
+            value: String(column?.key ?? '').trim(),
+            label: String(column?.label || column?.key || '').trim()
+          }))
+          .filter((column) => column.value)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function dataTableColumnOptionsFromData(data, subPath = '') {
+  let target = subPath ? getValueByPath(data, subPath) : data;
+  const isArrayCollection = Array.isArray(target);
+
+  if (Array.isArray(target)) {
+    target = target.length > 0 ? target[0] : null;
+  } else if (target && typeof target === 'object' && !isArrayCollection) {
+    const values = Object.values(target);
+    const hasOnlyScalarValues = values.length > 0 && values.every(value => (
+      value === null || typeof value !== 'object'
+    ));
+    const firstObjectValue = values.find(value => value && typeof value === 'object' && !Array.isArray(value));
+
+    if (hasOnlyScalarValues) {
+      return [
+        { value: 'key', label: 'Clé' },
+        { value: 'value', label: 'Valeur' }
+      ];
+    }
+
+    target = firstObjectValue || target;
+  }
+
+  return target && typeof target === 'object'
+    ? Object.keys(target).map((key) => ({ value: key, label: key }))
+    : [];
+}
+
+async function loadDataTableColumnOptions(pathVal) {
+  detectedDataTableColumnOptions.value = [];
+  if (!pathVal || configuredDataTableColumnOptions().length > 0) return;
+
+  try {
+    const sourcesRes = await axios.get(`${apiUrl}/item/sources/${props.itemId}`);
+    const activeSources = sourcesRes.data || [];
+    let sourceName = '';
+    let sourceId = null;
+    let subPath = '';
+
+    if (pathVal.startsWith('sn.')) {
+      const parts = pathVal.slice(3).split('.');
+      sourceName = parts[0];
+      if (sourceName.startsWith("['") || sourceName.startsWith("[\"")) {
+        sourceName = sourceName.slice(2, -2);
+      }
+      subPath = parts.slice(1).join('.');
+    } else if (pathVal.startsWith('sid.s')) {
+      const parts = pathVal.slice(5).split('.');
+      sourceId = parseInt(parts[0], 10);
+      subPath = parts.slice(1).join('.');
+    } else {
+      return;
+    }
+
+    const source = sourceId
+      ? activeSources.find((candidate) => candidate.id === sourceId)
+      : activeSources.find((candidate) => candidate.name === sourceName);
+
+    if (!source) return;
+
+    let sourceDefaults = {};
+    try {
+      const sourceRes = await axios.get(`${apiUrl}/source/${source.id}`);
+      sourceDefaults = sourceRes.data?.json ? (JSON.parse(sourceRes.data.json)?.getDefaults || {}) : {};
+    } catch {
+      sourceDefaults = {};
+    }
+
+    const res = await axios.get(`${apiUrl}/data/source/${source.id}`, {
+      params: sourceDefaults
+    });
+    detectedDataTableColumnOptions.value = dataTableColumnOptionsFromData(res.data, subPath);
+  } catch (error) {
+    detectedDataTableColumnOptions.value = [];
+    console.error('Unable to detect DataTables columns', error);
+  }
+}
+
+function dataTableColumnOptions(field) {
+  const configuredOptions = configuredDataTableColumnOptions();
+  const options = configuredOptions.length > 0 ? configuredOptions : detectedDataTableColumnOptions.value;
+  if (field.type === 'datatable-columns-select') {
+    return options;
+  }
+
+  const currentValue = getFieldDisplayValue(field);
+
+  if (options.some((option) => option.value === currentValue)) {
+    return options;
+  }
+
+  if (/^[1-9]\d*$/.test(String(currentValue))) {
+    const legacyIndex = Number.parseInt(currentValue, 10) - 1;
+    if (options[legacyIndex]) {
+      return options;
+    }
+    return [
+      ...options,
+      { value: currentValue, label: `Colonne ${currentValue}` }
+    ];
+  }
+
+  return currentValue
+    ? [...options, { value: currentValue, label: currentValue }]
+    : options;
+}
+
+function getDataTableColumnSelectValue(field) {
+  const currentValue = getFieldDisplayValue(field);
+  const configuredOptions = configuredDataTableColumnOptions();
+  const options = configuredOptions.length > 0 ? configuredOptions : detectedDataTableColumnOptions.value;
+
+  if (options.some((option) => option.value === currentValue)) {
+    return currentValue;
+  }
+
+  if (/^[1-9]\d*$/.test(String(currentValue))) {
+    const legacyOption = options[Number.parseInt(currentValue, 10) - 1];
+    return legacyOption?.value ?? currentValue;
+  }
+
+  return currentValue;
+}
+
+function getDataTableColumnsSelectValue(field) {
+  const rawValue = props.templateMeta.config?.[field.key] ?? selectedTemplate.value?.defaults?.[field.key] ?? [];
+  if (Array.isArray(rawValue)) {
+    return rawValue.map((value) => String(value ?? '').trim()).filter(Boolean);
+  }
+
+  const normalized = String(rawValue ?? '').trim();
+  if (!normalized) return [];
+
+  try {
+    const parsed = JSON.parse(normalized);
+    return Array.isArray(parsed)
+      ? parsed.map((value) => String(value ?? '').trim()).filter(Boolean)
+      : [];
+  } catch {
+    return normalized.split(',').map((value) => value.trim()).filter(Boolean);
+  }
+}
+
+function isDataTableColumnSelected(field, value) {
+  return getDataTableColumnsSelectValue(field).includes(value);
+}
+
+function toggleDataTableColumnSelection(field, value) {
+  const currentValues = getDataTableColumnsSelectValue(field);
+  const nextValues = currentValues.includes(value)
+    ? currentValues.filter((currentValue) => currentValue !== value)
+    : [...currentValues, value];
+  updateField(field.key, JSON.stringify(nextValues));
+}
+
+function getRangeFieldValue(field) {
+  const value = Number.parseFloat(getFieldDisplayValue(field));
+  if (Number.isFinite(value)) return value;
+  return Number.parseFloat(selectedTemplate.value?.defaults?.[field.key] ?? field.min ?? 0) || 0;
+}
+
+watch([templateItemsPath, () => props.templateMeta.config?.columns], ([pathVal]) => {
+  loadDataTableColumnOptions(pathVal);
+}, { immediate: true });
 
 function templateVariablesValue(field) {
   const value = props.templateMeta.config?.[field.key] ?? selectedTemplate.value?.defaults?.[field.key] ?? [];
@@ -563,13 +810,44 @@ function selectConditionKey(field, ruleIndex, keyName) {
             </button>
 
             <div v-if="openedSections[section.key]" class="px-3 pb-3">
-              <div v-if="section.fields.length" class="row g-3">
+              <div
+                v-for="group in section.fieldGroups"
+                :key="group.key"
+                class="visual-template-field-group"
+              >
+                <div v-if="group.title" class="visual-template-field-group-title">{{ group.title }}</div>
+                <div class="row g-3">
           <div 
-            v-for="field in section.fields" 
+            v-for="field in group.fields" 
             :key="field.key" 
-            :class="getFieldClass(field)"
+            :class="isBooleanField(field) ? 'col-12 col-md-6 col-lg-4' : getFieldClass(field)"
           >
-            <div class="visual-template-field h-100 d-flex flex-column justify-content-between">
+            <div
+              v-if="isBooleanField(field)"
+              class="visual-template-switch-card p-3 rounded-3 border h-100 d-flex align-items-start gap-3 transition-all cursor-pointer"
+              :class="{ active: isFieldValueTrue(field) }"
+              @click="toggleBooleanField(field)"
+            >
+              <div class="form-check form-switch m-0 pt-0.5">
+                <input
+                  class="form-check-input pe-none"
+                  type="checkbox"
+                  role="switch"
+                  :checked="isFieldValueTrue(field)"
+                  readonly
+                />
+              </div>
+              <div class="d-flex flex-column min-w-0 lh-sm">
+                <span class="fw-semibold text-emphasis-dark mb-1" style="font-size: 0.88rem;">
+                  {{ $t(`edititem.visual.fields.${field.key}`) }}
+                </span>
+                <span v-if="field.help" class="text-secondary" style="font-size: 0.75rem; line-height: 1.3;">
+                  {{ field.help }}
+                </span>
+              </div>
+            </div>
+
+            <div v-else class="visual-template-field h-100 d-flex flex-column justify-content-between">
               <div>
                 <label v-if="field.type !== 'columns-manager'" :for="`visual-${field.key}`" class="form-label visual-template-label mb-2 d-flex justify-content-between align-items-center w-100">
                   <span>
@@ -585,6 +863,49 @@ function selectConditionKey(field, ruleIndex, keyName) {
                     {{ optionLabel(option) }}
                   </option>
                 </select>
+
+                <select
+                  v-else-if="field.type === 'datatable-column-select'"
+                  :id="`visual-${field.key}`"
+                  class="form-select shadow-xs"
+                  :value="getDataTableColumnSelectValue(field)"
+                  :disabled="dataTableColumnOptions(field).length === 0"
+                  @change="updateField(field.key, $event.target.value)"
+                >
+                  <option v-if="dataTableColumnOptions(field).length === 0" value="">
+                    Configurez les colonnes du tableau
+                  </option>
+                  <option
+                    v-for="option in dataTableColumnOptions(field)"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </option>
+                </select>
+
+                <div
+                  v-else-if="field.type === 'datatable-columns-select'"
+                  :id="`visual-${field.key}`"
+                  class="d-flex flex-column gap-2"
+                >
+                  <div v-if="dataTableColumnOptions(field).length === 0" class="text-secondary small">
+                    Configurez les colonnes du tableau
+                  </div>
+                  <label
+                    v-for="option in dataTableColumnOptions(field)"
+                    :key="option.value"
+                    class="d-flex align-items-center gap-2 border rounded px-3 py-2 bg-body-tertiary"
+                  >
+                    <input
+                      class="form-check-input m-0"
+                      type="checkbox"
+                      :checked="isDataTableColumnSelected(field, option.value)"
+                      @change="toggleDataTableColumnSelection(field, option.value)"
+                    >
+                    <span class="small fw-medium">{{ option.label }}</span>
+                  </label>
+                </div>
                 
                 <div v-else-if="field.type === 'color'" class="visual-template-color-grid" role="radiogroup"
                   :aria-label="$t(`edititem.visual.fields.${field.key}`)">
@@ -940,6 +1261,26 @@ function selectConditionKey(field, ruleIndex, keyName) {
                     <span>Ajouter une variable</span>
                   </button>
                 </div>
+
+                <div v-else-if="field.type === 'range'" class="d-flex flex-column gap-2">
+                  <div class="d-flex align-items-center gap-3">
+                    <input
+                      :id="`visual-${field.key}`"
+                      class="form-range flex-grow-1"
+                      type="range"
+                      :min="field.min ?? 0"
+                      :max="field.max ?? 1"
+                      :step="field.step ?? 0.05"
+                      :value="getRangeFieldValue(field)"
+                      @input="updateField(field.key, $event.target.value)"
+                    >
+                    <span class="badge text-bg-secondary font-monospace">{{ getRangeFieldValue(field).toFixed(2) }}</span>
+                  </div>
+                  <div class="d-flex justify-content-between text-secondary small">
+                    <span>{{ field.min ?? 0 }}</span>
+                    <span>{{ field.max ?? 1 }}</span>
+                  </div>
+                </div>
                 
                 <DataPathPicker
                   v-else-if="field.type === 'data-path'"
@@ -988,37 +1329,6 @@ function selectConditionKey(field, ruleIndex, keyName) {
             </div>
           </div>
               </div>
-
-              <div v-if="section.booleanFields.length" class="row g-3" :class="{ 'mt-0': !section.fields.length, 'mt-3': section.fields.length }">
-                <div
-                  v-for="field in section.booleanFields"
-                  :key="field.key"
-                  class="col-12 col-md-6 col-lg-4"
-                >
-                  <div
-                    class="visual-template-switch-card p-3 rounded-3 border h-100 d-flex align-items-start gap-3 transition-all cursor-pointer"
-                    :class="{ active: isFieldValueTrue(field) }"
-                    @click="toggleBooleanField(field)"
-                  >
-                    <div class="form-check form-switch m-0 pt-0.5">
-                      <input
-                        class="form-check-input pe-none"
-                        type="checkbox"
-                        role="switch"
-                        :checked="isFieldValueTrue(field)"
-                        readonly
-                      />
-                    </div>
-                    <div class="d-flex flex-column min-w-0 lh-sm">
-                      <span class="fw-semibold text-emphasis-dark mb-1" style="font-size: 0.88rem;">
-                        {{ $t(`edititem.visual.fields.${field.key}`) }}
-                      </span>
-                      <span v-if="field.help" class="text-secondary" style="font-size: 0.75rem; line-height: 1.3;">
-                        {{ field.help }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </section>
@@ -1058,6 +1368,19 @@ function selectConditionKey(field, ruleIndex, keyName) {
   color: var(--bs-primary);
   background: rgba(var(--bs-primary-rgb), 0.1);
   flex: 0 0 auto;
+}
+
+.visual-template-field-group + .visual-template-field-group {
+  margin-top: 1rem;
+}
+
+.visual-template-field-group-title {
+  margin-bottom: 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--bs-secondary-color);
+  text-transform: uppercase;
+  letter-spacing: 0;
 }
 
 </style>

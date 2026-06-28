@@ -28,14 +28,14 @@ export function validateTemplateConfig(definition, config = {}) {
   return definition.validateConfig(config);
 }
 
-export function compileTemplateDefinition(definition, config = {}) {
+export function compileTemplateDefinition(definition, config = {}, context = {}) {
   if (!definition) {
     return {
       template: '<div class="alert alert-danger mb-0">Visual template unavailable.</div>',
       javascript: ''
     };
   }
-  const compiled = definition.compile(migrateTemplateConfig(definition, config));
+  const compiled = definition.compile(migrateTemplateConfig(definition, config), context);
   return {
     ...compiled,
     template: formatTemplateForHumans(compiled.template)

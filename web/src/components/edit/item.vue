@@ -134,6 +134,7 @@ provide('codeJs', codeJs);
 
 const previewItem = computed(() => ({
   id: ItemInfo.value?.id,
+  name: ItemInfo.value?.name,
   template: effectiveTemplate.value,
   javascript: effectiveJavascript.value,
   parameters: parametersForSave.value
@@ -168,7 +169,7 @@ const selectedVisualTemplate = computed(() => templateCatalog.find((template) =>
 )) || null);
 const compiledVisualTemplate = computed(() => (
   editorMode.value === VISUAL_ITEM_MODE
-    ? compileTemplateDefinition(selectedVisualTemplate.value, visualTemplateMeta.value?.config || {})
+    ? compileTemplateDefinition(selectedVisualTemplate.value, visualTemplateMeta.value?.config || {}, { item: ItemInfo.value })
     : null
 ));
 const effectiveTemplate = computed(() => (

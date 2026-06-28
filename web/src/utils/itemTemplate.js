@@ -75,6 +75,6 @@ export function resolveItemRenderDefinition(item) {
     };
   }
 
-  const compiled = compileTemplateDefinition(definition, parameters.config);
+  const compiled = compileTemplateDefinition(definition, parameters.config, { item });
   return { ...item, ...compiled };
 }
