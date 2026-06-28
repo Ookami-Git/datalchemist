@@ -66,32 +66,6 @@ docker-compose up --build
 
 ## 🔧 Commandes utiles
 
-### Graphify (contexte IA persistant)
-
-Graphify est installé dans l'image du devcontainer et son skill Codex est
-installé dans le dépôt à chaque création de conteneur. Il génère un graphe local
-(`graphify-out/`, ignoré par Git) pour éviter de relire tout le dépôt à chaque
-requête IA.
-
-```bash
-# Dans Codex, après le rebuild du devcontainer
-$graphify .
-
-# Reconstruire le graphe après un ensemble de modifications
-graphify extract .
-
-# Interroger le graphe depuis le terminal
-graphify query "où est gérée l'authentification ?"
-```
-
-Pour permettre l'extraction parallèle dans Codex, ajoutez une fois ce réglage
-à `/root/.codex/config.toml` dans le devcontainer :
-
-```toml
-[features]
-multi_agent = true
-```
-
 ### Démarrer le devcontainer:
 
 ```bash
