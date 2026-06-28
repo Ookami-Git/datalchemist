@@ -71,3 +71,8 @@ export function mergeGetVariableDefaults(names, params = {}, fallbackValue = '')
 
   return merged;
 }
+
+export function effectiveGetQuery(previewQuery = {}, routeQuery = {}) {
+  const hasPreviewQuery = Object.keys(previewQuery || {}).length > 0;
+  return hasPreviewQuery ? previewQuery : (routeQuery || {});
+}
