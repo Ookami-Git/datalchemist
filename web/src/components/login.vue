@@ -1,5 +1,5 @@
 <script setup>
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 
@@ -21,12 +21,46 @@ const appName = computed(() => {
     return 'DataChemist';
 });
 
-const loginTheme = computed(() => {
-    const raw = parameters.value;
-    if (raw && typeof raw === 'object' && !Array.isArray(raw) && raw.theme) {
-        return raw.theme;
+const getSystemTheme = () => {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+};
+
+const getInitialTheme = () => {
+    const fromDoc = document.documentElement.getAttribute('data-bs-theme');
+    if (fromDoc === 'light' || fromDoc === 'dark') {
+        return fromDoc;
     }
-    return document.documentElement.getAttribute('data-bs-theme') || 'dark';
+    return getSystemTheme();
+};
+
+const themeOverride = ref(getInitialTheme());
+
+const loginTheme = computed(() => {
+    return themeOverride.value;
+});
+
+const toggleTheme = () => {
+    const nextTheme = themeOverride.value === 'dark' ? 'light' : 'dark';
+    themeOverride.value = nextTheme;
+    document.documentElement.setAttribute('data-bs-theme', nextTheme);
+};
+
+let systemThemeMQ = null;
+const handleSystemThemeChange = (e) => {
+    const nextTheme = e.matches ? 'dark' : 'light';
+    themeOverride.value = nextTheme;
+    document.documentElement.setAttribute('data-bs-theme', nextTheme);
+};
+
+onMounted(() => {
+    systemThemeMQ = window.matchMedia('(prefers-color-scheme: dark)');
+    systemThemeMQ.addEventListener('change', handleSystemThemeChange);
+});
+
+onUnmounted(() => {
+    if (systemThemeMQ) {
+        systemThemeMQ.removeEventListener('change', handleSystemThemeChange);
+    }
 });
 
 const loginSceneStyle = computed(() => {
@@ -71,7 +105,10 @@ const login = async () => {
 </script>
 
 <template>
-    <section class="login-page d-flex align-items-center" :style="loginSceneStyle">
+    <section class="login-page" :style="loginSceneStyle">
+        <button class="login-theme-toggle" @click="toggleTheme" :aria-label="themeOverride === 'dark' ? 'Passer au thème clair' : 'Passer au thème sombre'" type="button">
+            <i :class="themeOverride === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars'"></i>
+        </button>
         <div class="login-ambient" aria-hidden="true">
             <span class="login-orbit login-orbit-a"><span class="login-orb login-orb-a"></span></span>
             <span class="login-orbit login-orbit-b"><span class="login-orb login-orb-b"></span></span>
@@ -83,61 +120,56 @@ const login = async () => {
             <span class="login-orbit login-orbit-h"><span class="login-orb login-orb-h"></span></span>
         </div>
 
-        <div class="container login-shell">
-            <div class="row justify-content-center">
-                <div class="col-12 col-sm-10 col-md-8 col-lg-6 col-xl-5 login-panel-col">
-                    <div class="card login-card shadow-lg border-0">
-                        <div class="card-body p-4 p-lg-5">
-                            <div class="text-center mb-4">
-                                <img src="/logo.png" alt="Application logo" class="login-logo">
-                                <p class="login-app-name mt-3 mb-2">{{ appName }}</p>
-                            </div>
+        <div class="login-container">
+            <!-- Côté gauche : Visuel immersif (visible uniquement sur grand écran) -->
+            <div class="login-visual d-none d-lg-flex flex-column justify-content-center align-items-center text-center p-5">
+                <div class="login-visual-content">
+                    <img src="/logo.png" alt="Application logo" class="login-visual-logo mb-4">
+                    <h2 class="login-visual-title m-0">{{ appName }}</h2>
+                </div>
+            </div>
 
-                            <h1 class="h5 fw-semibold text-center mb-2">{{ $t('auth.button') }}</h1>
-                            <p class="text-body-secondary text-center mb-4">{{ $t('auth.message') }}</p>
-
-                            <form @submit.prevent="login" novalidate>
-                                <div class="mb-3">
-                                    <label for="username" class="form-label fw-medium">{{ $t('global.username')
-                                    }}</label>
-                                    <div class="input-group input-group-lg">
-                                        <span class="input-group-text login-input-icon" aria-hidden="true">
-                                            <i class="bi bi-person"></i>
-                                        </span>
-                                        <input id="username" v-model="username" type="text" class="form-control"
-                                            name="username" autocomplete="username" :placeholder="$t('global.username')"
-                                            :disabled="isLoading" required autofocus>
-                                    </div>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label for="password" class="form-label fw-medium">{{ $t('global.password')
-                                    }}</label>
-                                    <div class="input-group input-group-lg">
-                                        <span class="input-group-text login-input-icon" aria-hidden="true">
-                                            <i class="bi bi-key"></i>
-                                        </span>
-                                        <input id="password" v-model="password" type="password" class="form-control"
-                                            name="password" autocomplete="current-password"
-                                            :placeholder="$t('global.password')" :disabled="isLoading" required>
-                                    </div>
-                                </div>
-
-                                <div class="d-grid">
-                                    <button class="btn btn-primary btn-lg" type="submit" :disabled="isLoading">
-                                        <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"
-                                            role="status" aria-hidden="true"></span>
-                                        {{ $t('auth.button') }}
-                                    </button>
-                                </div>
-
-                                <div v-if="errorMessage" class="alert alert-danger mt-3 mb-0" role="alert"
-                                    aria-live="polite">
-                                    {{ errorMessage }}
-                                </div>
-                            </form>
-                        </div>
+            <!-- Côté droit : Formulaire de connexion -->
+            <div class="login-form-container d-flex align-items-center justify-content-center p-4 p-md-5">
+                <div class="login-form-box w-100">
+                    <div class="text-center d-lg-none mb-4">
+                        <img src="/logo.png" alt="Application logo" class="login-logo mb-2">
+                        <h2 class="h4 fw-bold">{{ appName }}</h2>
                     </div>
+
+                    <h1 class="h3 fw-bold mb-4">{{ $t('auth.button') }}</h1>
+
+                    <form @submit.prevent="login" novalidate>
+                        <div class="form-floating mb-3 login-field">
+                            <i class="bi bi-person login-field-icon"></i>
+                            <input id="username" v-model="username" type="text" class="form-control"
+                                name="username" autocomplete="username" placeholder=" "
+                                :disabled="isLoading" required autofocus>
+                            <label for="username">{{ $t('global.username') }}</label>
+                        </div>
+
+                        <div class="form-floating mb-4 login-field">
+                            <i class="bi bi-key login-field-icon"></i>
+                            <input id="password" v-model="password" type="password" class="form-control"
+                                name="password" autocomplete="current-password" placeholder=" "
+                                :disabled="isLoading" required>
+                            <label for="password">{{ $t('global.password') }}</label>
+                        </div>
+
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-lg btn-login py-3" type="submit" :disabled="isLoading">
+                                <span v-if="isLoading" class="spinner-border spinner-border-sm me-2"
+                                    role="status" aria-hidden="true"></span>
+                                <span class="btn-text">{{ $t('auth.button') }}</span>
+                                <i class="bi bi-arrow-right ms-2 btn-icon"></i>
+                            </button>
+                        </div>
+
+                        <div v-if="errorMessage" class="alert alert-danger mt-4 mb-0" role="alert"
+                            aria-live="polite">
+                            {{ errorMessage }}
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
