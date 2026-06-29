@@ -42,7 +42,7 @@
     "languageEnglish": "English",
     "languageFrench": "French",
     "theme": "Theme",
-    "defaultPreview": "Default",
+    "defaultPreview": "System theme",
     "password": "New password",
     "passwordrepeat": "Confirm new password",
     "passwordmismatch": "Passwords do not match",

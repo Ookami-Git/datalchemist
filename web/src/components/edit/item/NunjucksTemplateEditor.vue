@@ -1,6 +1,7 @@
 <script setup>
 import { computed, inject, reactive, watch } from 'vue';
 import Codemirror from 'codemirror-editor-vue3';
+import { useActiveTheme } from '../../../utils/useActiveTheme.js';
 import 'codemirror/addon/display/placeholder.js';
 import 'codemirror/addon/mode/multiplex';
 import 'codemirror/addon/edit/matchbrackets.js';
@@ -55,9 +56,11 @@ watch(() => props.placeholder, (placeholder) => {
   cmOptions.placeholder = placeholder;
 });
 
-watch(parameters || (() => null), () => {
-  cmOptions.theme = parameters?.value?.theme === 'dark' ? 'material' : 'default';
-}, { deep: true, immediate: true });
+const { activeTheme } = useActiveTheme(parameters);
+
+watch(activeTheme, (theme) => {
+  cmOptions.theme = theme === 'dark' ? 'material' : 'default';
+}, { immediate: true });
 </script>
 
 <template>

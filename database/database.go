@@ -28,7 +28,6 @@ func Init() error {
 		{Name: "name", Value: "datalchemist"},
 		{Name: "lang", Value: "en"},
 		{Name: "menu", Value: ""},
-		{Name: "theme", Value: "light"},
 		{Name: "bg_color_light", Value: "#8e72ad"},
 		{Name: "bg_color2_light", Value: "#5e82c0"},
 		{Name: "bg_color_dark", Value: "#6a11cb"},

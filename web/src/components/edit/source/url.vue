@@ -1,6 +1,7 @@
 <script setup>
 import { computed, inject, ref, reactive, watch } from "vue";
 import Codemirror from "codemirror-editor-vue3";
+import { useActiveTheme } from '../../../utils/useActiveTheme.js';
 import "codemirror/addon/display/placeholder.js";
 import "codemirror/mode/javascript/javascript.js";
 import 'codemirror/mode/jinja2/jinja2';
@@ -96,9 +97,11 @@ const removeHeader = (index) => {
 
 const hasHeaders = computed(() => source.value.parameters.url.headers.length > 0);
 
-watch(parameters, () => {
-  cmOptions.theme = parameters.value.theme === "dark" ? "material" : "default";
-}, { deep: true, immediate: true });
+const { activeTheme } = useActiveTheme(parameters);
+
+watch(activeTheme, (theme) => {
+  cmOptions.theme = theme === "dark" ? "material" : "default";
+}, { immediate: true });
 </script>
 
 <template>

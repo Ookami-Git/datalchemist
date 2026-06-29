@@ -6,6 +6,7 @@ import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
 import he from 'he';
 import { setDataTablesLanguage } from '@/utils/dataTables.js';
+import { useActiveTheme } from '@/utils/useActiveTheme.js';
 // --- DataTables & Dépendances ---
 import jQuery from "jquery";
 import jszip from 'jszip';
@@ -19,6 +20,7 @@ import loading from '../loading.vue';
 const parameters = inject('parameters');
 const resizeWidget = inject('resizeWidget', null);
 const globalSearch = inject('enableGlobalSearch', null);
+const { getActiveTheme } = useActiveTheme(parameters);
 
 // --- Nunjucks Environment & Filtres personnalisés ---
 import { registerNunjucksFilters } from '@/utils/nunjucksFilters.js';
@@ -205,7 +207,7 @@ watch(
         );
       }
 
-      mermaid.initialize({ theme: parameters.value.theme });
+      mermaid.initialize({ theme: getActiveTheme() });
       await mermaid.run();
       if (canceled || currentCycle !== renderCycle) return;
 

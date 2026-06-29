@@ -3,6 +3,7 @@ import { ref, onBeforeUnmount, onMounted, provide, watch, inject, getCurrentInst
 import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import VueCookies from 'vue-cookies';
 import navbar from './components/navbar/navbar.vue'
+import { useActiveTheme } from './utils/useActiveTheme.js';
 
 const route = useRoute();
 const skipNextRouteTransition = ref(false);
@@ -140,9 +141,12 @@ const fetchUser = () => {
     });
 };
 
+const { getActiveTheme } = useActiveTheme(parameters);
+
 const updateBodyStyle = () => {
-  const backgroundA = parameters.value['bg_color_' + parameters.value.theme] || '';
-  const backgroundB = parameters.value['bg_color2_' + parameters.value.theme] || backgroundA;
+  const activeTheme = getActiveTheme();
+  const backgroundA = parameters.value['bg_color_' + activeTheme] || '';
+  const backgroundB = parameters.value['bg_color2_' + activeTheme] || backgroundA;
   const gradient = `linear-gradient(to right, ${backgroundA}, ${backgroundB})`;
 
   // Apply dynamic background on app container instead of document body canvas.
@@ -183,18 +187,21 @@ watch(showUnsavedModal, (visible) => {
 watch(parameters, () => {
   updateBodyStyle()
   i18n.global.locale.value = parameters.value.lang;
-  // Ajoute ou met à jour l'attribut data-bs-theme sur la balise <html>
-  if (parameters.value.theme) {
-    document.documentElement.setAttribute('data-bs-theme', parameters.value.theme);
-  }
+  // Applique le thème effectif (celui de l'utilisateur ou, à défaut, celui du système)
+  document.documentElement.setAttribute('data-bs-theme', getActiveTheme());
 }, { deep: true })
+
+let systemThemeMediaQuery = null;
 
 onMounted(() => {
   fetchParameters();
-  // Applique le thème au chargement initial
-  if (parameters.value.theme) {
-    document.documentElement.setAttribute('data-bs-theme', parameters.value.theme);
-  }
+
+  // Listener sur le thème système : si l'utilisateur est en "default", on suit les préférences OS.
+  systemThemeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  systemThemeMediaQuery.addEventListener('change', () => {
+    updateBodyStyle();
+    document.documentElement.setAttribute('data-bs-theme', getActiveTheme());
+  });
 });
 
 watch(route, () => {
@@ -215,6 +222,11 @@ watch(route, () => {
 
 onBeforeUnmount(() => {
   document.body.classList.remove('modal-open');
+
+  if (systemThemeMediaQuery) {
+    systemThemeMediaQuery.removeEventListener('change', () => {});
+    systemThemeMediaQuery = null;
+  }
 
   if (resolvePendingUnsavedDecision) {
     resolvePendingUnsavedDecision(false);

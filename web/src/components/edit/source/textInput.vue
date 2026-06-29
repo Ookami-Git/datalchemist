@@ -1,6 +1,7 @@
 <script setup>
 import { inject, watch, reactive } from "vue";
 import Codemirror from "codemirror-editor-vue3";
+import { useActiveTheme } from '../../../utils/useActiveTheme.js';
 // placeholder
 import "codemirror/addon/display/placeholder.js";
 // language
@@ -56,16 +57,11 @@ const cmOptions = reactive({
     }
 });
 
-watch(parameter, () => {
-    switch (parameter.value.theme) {
-        case "dark":
-            cmOptions.theme = "material"
-            break;
-        default:
-            cmOptions.theme = "default"
-            break;
-    }
-}, { deep: true, immediate: true });
+const { activeTheme } = useActiveTheme(parameter);
+
+watch(activeTheme, (theme) => {
+    cmOptions.theme = theme === "dark" ? "material" : "default";
+}, { immediate: true });
 
 watch(() => source.value.type, () => {
     cmOptions.mode = "jinja2-" + source.value.type;

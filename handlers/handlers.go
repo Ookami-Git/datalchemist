@@ -132,6 +132,7 @@ func ParametersUpdate(c *gin.Context) {
 
 func ParametersGet(c *gin.Context) {
 	Parameters := database.ParametersGet()
+	Parameters["theme"] = "default"
 	user_id, err := token.ExtractTokenID(c)
 
 	if err == nil {
@@ -172,7 +173,7 @@ func ParametersGet(c *gin.Context) {
 		}
 	} else {
 		Parameters = map[string]interface{}{
-			"theme":           Parameters["theme"],
+			"theme":           "default",
 			"bg_color_light":  Parameters["bg_color_light"],
 			"bg_color2_light": Parameters["bg_color2_light"],
 			"bg_color_dark":   Parameters["bg_color_dark"],

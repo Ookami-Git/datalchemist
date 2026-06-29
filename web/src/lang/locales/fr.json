@@ -42,7 +42,7 @@
     "languageEnglish": "Anglais",
     "languageFrench": "Français",
     "theme": "Thème",
-    "defaultPreview": "Par défaut",
+    "defaultPreview": "Thème système",
     "password": "Nouveau mot de passe",
     "passwordrepeat": "Confirmer le nouveau mot de passe",
     "passwordmismatch": "Les mots de passe ne correspondent pas",
