@@ -1,12 +1,13 @@
 <script setup>
 import { computed, ref, inject, unref } from 'vue';
 import axios from 'axios';
-import { RouterLink } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
 import { templateCatalog } from '@/templates/catalog.js';
 import {
   createVisualItemParameters,
-  serializeVisualItemParameters
+  serializeVisualItemParameters,
+  parseItemParameters
 } from '@/utils/itemTemplate.js';
 
 const sources = ref(null)
@@ -38,6 +39,11 @@ const ToDelete = ref({
   id: null,
   name: null
 })
+
+// Navigation & Search
+const route = useRoute()
+const activeTab = ref(route.query.tab || 'sources')
+const searchQuery = ref('')
 
 // Ajout de la variable d'état pour l'erreur API
 const apiError = ref(null)
@@ -79,6 +85,109 @@ const types = [
     "name": "Secret"
   },
 ]
+
+// Helper to convert collections safely
+const getCollectionArray = (collection) => {
+  if (!collection) return [];
+  return Array.isArray(collection) ? collection : Object.values(collection);
+};
+
+// Filtered lists for each tab
+const filteredSources = computed(() => {
+  const list = getCollectionArray(sources.value);
+  if (!searchQuery.value) return list;
+  const q = searchQuery.value.toLowerCase().trim();
+  return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
+});
+
+const filteredItems = computed(() => {
+  const list = getCollectionArray(items.value);
+  if (!searchQuery.value) return list;
+  const q = searchQuery.value.toLowerCase().trim();
+  return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
+});
+
+const filteredViews = computed(() => {
+  const list = getCollectionArray(views.value);
+  if (!searchQuery.value) return list;
+  const q = searchQuery.value.toLowerCase().trim();
+  return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
+});
+
+const filteredSecrets = computed(() => {
+  const list = getCollectionArray(secrets.value);
+  if (!searchQuery.value) return list;
+  const q = searchQuery.value.toLowerCase().trim();
+  return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
+});
+
+// Parsers for item details
+const getSourceDetails = (source) => {
+  if (!source.json) return { type: 'Inconnu', details: 'Pas de configuration' };
+  try {
+    const parsed = JSON.parse(source.json);
+    const srcType = parsed.src || 'file';
+    const dataType = parsed.type || 'json';
+    
+    const srcLabels = {
+      file: 'Fichier',
+      url: 'URL',
+      database: 'Base de données',
+      text: 'Texte',
+      execute: 'Exécution'
+    };
+    
+    let details = '';
+    if (srcType === 'file') {
+      details = parsed.path ? parsed.path.split('/').pop() : 'Fichier local';
+    } else if (srcType === 'url') {
+      details = parsed.path ? parsed.path.replace(/^https?:\/\//, '').split('/')[0] : 'URL externe';
+    } else if (srcType === 'database') {
+      details = dataType.toUpperCase();
+    } else if (srcType === 'text') {
+      details = 'Statique';
+    }
+    
+    return {
+      type: srcLabels[srcType] || srcType,
+      format: dataType.toUpperCase(),
+      details: details
+    };
+  } catch (e) {
+    return { type: 'Source', details: 'Config non parsable' };
+  }
+};
+
+const getItemDetails = (item) => {
+  const parsed = parseItemParameters(item.parameters);
+  if (parsed.mode === 'visual') {
+    const template = templateCatalog.find(t => t.key === parsed.templateKey);
+    return {
+      isVisual: true,
+      label: 'Visuel',
+      templateName: template ? template.name : parsed.templateKey
+    };
+  }
+  return {
+    isVisual: false,
+    label: 'Libre',
+    templateName: 'HTML / JS libre'
+  };
+};
+
+const getViewDetails = (view) => {
+  if (!view.parameters) return { itemsCount: 0 };
+  try {
+    const parsed = JSON.parse(view.parameters);
+    if (Array.isArray(parsed)) {
+      return { itemsCount: parsed.length };
+    }
+    if (parsed && Array.isArray(parsed.items)) {
+      return { itemsCount: parsed.items.length };
+    }
+  } catch (e) {}
+  return { itemsCount: 0 };
+};
 
 function getAddModalHeaderClass(type) {
   switch (type) {
@@ -144,6 +253,7 @@ function AddToDA(type) {
         NewName.value = null
         NewSecretValue.value = null
         fetchSecrets()
+        activeTab.value = 'secrets'
       })
       .catch(function (error) {
         apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
@@ -171,12 +281,15 @@ function AddToDA(type) {
       switch (type) {
         case 'view':
           fetchViews()
+          activeTab.value = 'views'
           break;
         case 'item':
           fetchItems()
+          activeTab.value = 'items'
           break;
         case 'source':
           fetchSources()
+          activeTab.value = 'sources'
           break;
       }
     })
@@ -211,7 +324,7 @@ function DeleteFromDA(type, id) {
 }
 
 const fetchSources = async () => {
-  axios.get(`${apiUrl}/sources`)
+  axios.get(`${apiUrl}/sources?full=true`)
     .then(function (response) {
       sources.value = response.data;
     })
@@ -222,7 +335,7 @@ const fetchSources = async () => {
 };
 
 const fetchItems = async () => {
-  axios.get(`${apiUrl}/items`)
+  axios.get(`${apiUrl}/items?full=true`)
     .then(function (response) {
       items.value = response.data;
     })
@@ -305,266 +418,383 @@ fetchSecrets()
     </div>
   </div>
 
-  <section class="admin-edit-page container-fluid px-0 py-1 py-lg-2">
-    <div class="d-flex flex-column gap-3 gap-xxl-4">
-      <header class="card admin-edit-hero shadow-sm">
-        <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center gap-3">
-          <div class="admin-edit-hero-icon">
-            <i class="bi bi-vector-pen"></i>
+  <section class="modern-edit-page container-fluid py-4 px-3 px-lg-4">
+    <!-- Hero Banner with Gradient Grid -->
+    <header class="modern-hero mb-4">
+      <div class="hero-bg-glow"></div>
+      <div class="hero-content d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-4">
+        <div class="d-flex align-items-center gap-3">
+          <div class="hero-icon-wrapper">
+            <i class="bi bi-vector-pen text-white"></i>
           </div>
-          <div class="flex-grow-1">
-            <p class="admin-edit-kicker mb-1">{{ $t('menu.edit') }}</p>
-            <h4 class="mb-1">{{ $t('menu.edit') }}</h4>
-            <p class="mb-0 text-secondary">{{ $t('edit.subtitle') }}</p>
-          </div>
-          <div class="d-flex gap-2 flex-wrap justify-content-lg-end">
-            <span class="badge rounded-pill admin-edit-state-chip text-bg-info">
-              <i class="bi bi-grid-3x3-gap-fill me-1"></i>
-              {{ $t('edit.total') }}: {{ totalEntries }}
-            </span>
-            <span class="badge rounded-pill admin-edit-state-chip"
-              :class="canManageSecrets ? 'text-bg-success' : 'text-bg-warning'">
-              <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
-              {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
-            </span>
-            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-source">{{ $t('edit.sources') }}: {{
-              sourcesCount }}</span>
-            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-item">{{ $t('edit.items') }}: {{
-              itemsCount
-            }}</span>
-            <span class="badge rounded-pill admin-edit-state-chip admin-edit-chip-view">{{ $t('edit.views') }}: {{
-              viewsCount
-            }}</span>
-            <span v-if="showSecretsPanel" class="badge rounded-pill admin-edit-state-chip text-bg-secondary">{{
-              $t('edit.secrets') }}: {{ secretsCount }}</span>
+          <div>
+            <span class="hero-badge text-uppercase">{{ $t('menu.edit') }}</span>
+            <h1 class="hero-title h3 mb-1 text-white">Espace de Configuration</h1>
+            <p class="hero-subtitle mb-0">{{ $t('edit.subtitle') }}</p>
           </div>
         </div>
-      </header>
+        
+        <!-- Status chips -->
+        <div class="d-flex flex-wrap gap-2">
+          <div class="status-pill badge-primary">
+            <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+            {{ totalEntries }} éléments au total
+          </div>
+          <div class="status-pill" :class="canManageSecrets ? 'badge-success' : 'badge-warning'">
+            <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
+            {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+          </div>
+        </div>
+      </div>
+    </header>
 
-      <div
-        :class="['row', 'g-3', 'g-xxl-4', showSecretsPanel ? 'row-cols-1 row-cols-lg-2 row-cols-xxl-4' : 'row-cols-1 row-cols-md-2 row-cols-xxl-3']">
-        <div class="col" v-if="showSecretsPanel">
-          <article class="card admin-edit-panel admin-edit-panel-secrets shadow-sm">
-            <div class="card-body p-0 d-flex flex-column">
-              <div
-                class="admin-edit-panel-head px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <div>
-                  <h5 class="admin-edit-panel-title mb-0">{{ $t('edit.secrets', 'Secrets') }}</h5>
-                  <p class="small text-secondary mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
-                </div>
-                <button v-if="canManageSecrets" type="button" class="btn btn-success btn-sm" :title="$t('edit.add')"
-                  data-bs-toggle="modal" data-bs-target="#addsecret">
-                  <i class="bi bi-plus-lg"></i>
-                </button>
-                <button v-else type="button" class="btn btn-secondary btn-sm" :title="$t('edit.add')" disabled>
-                  <i class="bi bi-plus-lg"></i>
-                </button>
-              </div>
-
-              <div class="table-responsive admin-edit-table-wrap">
-                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="secrets">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="col-2">ID</th>
-                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
-                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="table-group-divider">
-                    <tr v-if="secretsCount === 0">
-                      <td colspan="3" class="text-center text-secondary py-4">-</td>
-                    </tr>
-                    <tr v-for="row in secrets" :key="row.id">
-                      <th scope="row">{{ row.id }}</th>
-                      <td>{{ row.name }}</td>
-                      <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary"
-                            :title="canManageSecrets ? $t('global.edit', 'Modifier') : $t('edit.secrets_edit_disabled')"
-                            :disabled="!canManageSecrets" @click="BeginEditSecret(row)"
-                            :data-bs-toggle="canManageSecrets ? 'modal' : null"
-                            :data-bs-target="canManageSecrets ? '#editsecret' : null">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
-                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret">
-                            <i class="bi bi-trash3"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+    <!-- Interactive Statistics / Tab Selector Cards -->
+    <div class="row g-3 mb-4">
+      <!-- Sources Card Selector -->
+      <div class="col-6 col-md-3">
+        <button @click="activeTab = 'sources'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'sources' }">
+          <div class="card-inner border-source">
+            <div class="card-header-icon bg-source-soft">
+              <i class="bi bi-plug-fill text-source"></i>
             </div>
-          </article>
+            <div class="card-data">
+              <span class="card-count text-source">{{ sourcesCount }}</span>
+              <span class="card-label text-muted">{{ $t('edit.sources') }}</span>
+            </div>
+            <div class="card-indicator bg-source"></div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Items Card Selector -->
+      <div class="col-6 col-md-3">
+        <button @click="activeTab = 'items'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'items' }">
+          <div class="card-inner border-item">
+            <div class="card-header-icon bg-item-soft">
+              <i class="bi bi-box-seam-fill text-item"></i>
+            </div>
+            <div class="card-data">
+              <span class="card-count text-item">{{ itemsCount }}</span>
+              <span class="card-label text-muted">{{ $t('edit.items') }}</span>
+            </div>
+            <div class="card-indicator bg-item"></div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Views Card Selector -->
+      <div class="col-6 col-md-3">
+        <button @click="activeTab = 'views'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'views' }">
+          <div class="card-inner border-view">
+            <div class="card-header-icon bg-view-soft">
+              <i class="bi bi-grid-1x2-fill text-view"></i>
+            </div>
+            <div class="card-data">
+              <span class="card-count text-view">{{ viewsCount }}</span>
+              <span class="card-label text-muted">{{ $t('edit.views') }}</span>
+            </div>
+            <div class="card-indicator bg-view"></div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Secrets Card Selector -->
+      <div v-if="showSecretsPanel" class="col-6 col-md-3">
+        <button @click="activeTab = 'secrets'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'secrets' }">
+          <div class="card-inner border-secret">
+            <div class="card-header-icon bg-secret-soft">
+              <i class="bi bi-shield-lock-fill text-secret"></i>
+            </div>
+            <div class="card-data">
+              <span class="card-count text-secret">{{ secretsCount }}</span>
+              <span class="card-label text-muted">{{ $t('edit.secrets') }}</span>
+            </div>
+            <div class="card-indicator bg-secret"></div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="card main-workspace-card shadow-sm">
+      <div class="card-header bg-transparent py-3 px-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <!-- Tab Label & Description -->
+        <div>
+          <h2 class="h5 mb-1 d-flex align-items-center gap-2">
+            <span v-if="activeTab === 'sources'" class="text-source">🔌 {{ $t('edit.sources') }}</span>
+            <span v-else-if="activeTab === 'items'" class="text-item">📦 {{ $t('edit.items') }}</span>
+            <span v-else-if="activeTab === 'views'" class="text-view">👁️ {{ $t('edit.views') }}</span>
+            <span v-else-if="activeTab === 'secrets'" class="text-secret">🔑 {{ $t('edit.secrets') }}</span>
+          </h2>
+          <p class="small text-muted mb-0">
+            <span v-if="activeTab === 'sources'">{{ $t('edit.source_hint') }}</span>
+            <span v-else-if="activeTab === 'items'">{{ $t('edit.item_hint') }}</span>
+            <span v-else-if="activeTab === 'views'">{{ $t('edit.view_hint') }}</span>
+            <span v-else-if="activeTab === 'secrets'">{{ $t('edit.secrets_sources_hint') }}</span>
+          </p>
         </div>
 
-        <div class="col">
-          <article class="card admin-edit-panel admin-edit-panel-source shadow-sm">
-            <div class="card-body p-0 d-flex flex-column">
-              <div
-                class="admin-edit-panel-head admin-edit-panel-head-source px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <div>
-                  <h5 class="admin-edit-panel-title admin-edit-panel-title-source mb-0">{{ $t('edit.sources') }}</h5>
-                  <p class="small text-secondary mb-0">{{ $t('edit.source_hint') }}</p>
-                </div>
-                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
-                  data-bs-target="#addsource">
-                  <i class="bi bi-plus-lg"></i>
-                </button>
-              </div>
+        <!-- Controls (Search + Add) -->
+        <div class="d-flex align-items-center gap-3 w-100 w-md-auto">
+          <!-- Search input -->
+          <div class="search-input-wrapper flex-grow-1">
+            <i class="bi bi-search search-icon"></i>
+            <input 
+              type="text" 
+              class="form-control search-input" 
+              :placeholder="'Rechercher...'"
+              v-model="searchQuery"
+            />
+            <button v-if="searchQuery" @click="searchQuery = ''" class="btn btn-link search-clear-btn p-0">
+              <i class="bi bi-x-circle-fill text-muted"></i>
+            </button>
+          </div>
 
-              <div class="table-responsive admin-edit-table-wrap">
-                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="sources">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="col-2">ID</th>
-                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
-                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="table-group-divider">
-                    <tr v-if="sourcesCount === 0">
-                      <td colspan="3" class="text-center text-secondary py-4">-</td>
-                    </tr>
-                    <tr v-for="row in sources" :key="row.id">
-                      <th scope="row">{{ row.id }}</th>
-                      <td>{{ row.name }}</td>
-                      <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                            @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
-                          <button type="button" class="btn btn-outline-primary btn-sm"
-                            :title="$t('global.preview', 'Aperçu')" @click="openSourcePreview(row.id, row.name)">
-                            <i class="bi bi-eye-fill"></i>
-                          </button>
-                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
-                            <i class="bi bi-trash3"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+          <!-- Add Button -->
+          <button 
+            v-if="activeTab !== 'secrets' || canManageSecrets"
+            type="button" 
+            class="btn btn-add d-flex align-items-center gap-2"
+            :class="'btn-' + activeTab"
+            data-bs-toggle="modal" 
+            :data-bs-target="'#add' + (activeTab === 'sources' ? 'source' : activeTab === 'items' ? 'item' : activeTab === 'views' ? 'view' : 'secret')"
+          >
+            <i class="bi bi-plus-lg"></i>
+            <span class="d-none d-sm-inline">{{ $t('edit.add') }}</span>
+          </button>
+          <button 
+            v-else 
+            type="button" 
+            class="btn btn-secondary d-flex align-items-center gap-2" 
+            disabled
+          >
+            <i class="bi bi-plus-lg"></i>
+            <span class="d-none d-sm-inline">{{ $t('edit.add') }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card-body px-4 pb-4 pt-2">
+        <!-- Sources Tab Content -->
+        <div v-if="activeTab === 'sources'">
+          <div v-if="filteredSources.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+            <div v-for="row in filteredSources" :key="row.id" class="col">
+              <div class="item-card hover-source">
+                <div class="item-card-body d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3 min-w-0">
+                    <div class="item-icon bg-source-soft">
+                      <i class="bi bi-plug-fill text-source"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
+                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                      </div>
+                      <!-- Source type & details -->
+                      <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge bg-source-soft text-source font-weight-bold small-badge">
+                          {{ getSourceDetails(row).type }}
+                        </span>
+                        <span v-if="getSourceDetails(row).details" class="text-muted small-text text-truncate max-w-160" :title="getSourceDetails(row).details">
+                          • {{ getSourceDetails(row).details }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
+                    <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
+                      @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-preview" :title="$t('global.preview')"
+                      @click="openSourcePreview(row.id, row.name)">
+                      <i class="bi bi-eye-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
+                      @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
-          </article>
+          </div>
+          <!-- Empty State -->
+          <div v-else class="empty-state py-5">
+            <div class="empty-icon bg-source-soft mb-3">
+              <i class="bi bi-plug-fill text-source fs-2"></i>
+            </div>
+            <h4 class="h5 mb-1">Aucune source trouvée</h4>
+            <p class="text-muted small mb-3">Commencez par ajouter une source de données pour l'exploiter dans vos objets.</p>
+            <button type="button" class="btn btn-source d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addsource">
+              <i class="bi bi-plus-lg"></i> Créer une source
+            </button>
+          </div>
         </div>
 
-        <div class="col">
-          <article class="card admin-edit-panel admin-edit-panel-item shadow-sm">
-            <div class="card-body p-0 d-flex flex-column">
-              <div
-                class="admin-edit-panel-head admin-edit-panel-head-item px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <div>
-                  <h5 class="admin-edit-panel-title admin-edit-panel-title-item mb-0">{{ $t('edit.items') }}</h5>
-                  <p class="small text-secondary mb-0">{{ $t('edit.item_hint') }}</p>
+        <!-- Items Tab Content -->
+        <div v-if="activeTab === 'items'">
+          <div v-if="filteredItems.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+            <div v-for="row in filteredItems" :key="row.id" class="col">
+              <div class="item-card hover-item">
+                <div class="item-card-body d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3 min-w-0">
+                    <div class="item-icon bg-item-soft">
+                      <i class="bi bi-box-seam-fill text-item"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
+                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                      </div>
+                      <!-- Item Template details -->
+                      <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge small-badge" :class="getItemDetails(row).isVisual ? 'bg-primary-soft text-primary' : 'bg-secondary-soft text-secondary'">
+                          {{ getItemDetails(row).label }}
+                        </span>
+                        <span class="text-muted small-text text-truncate max-w-160" :title="getItemDetails(row).templateName">
+                          • {{ getItemDetails(row).templateName }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
+                    <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
+                      @click="$router.push({ name: 'edititem', params: { itemid: row.id } })">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <RouterLink type="button" class="btn btn-action btn-action-preview" :title="$t('global.preview')"
+                      :to="{ name: 'item', params: { itemid: row.id } }" target="_blank">
+                      <i class="bi bi-eye-fill"></i>
+                    </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
+                      @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
-                  data-bs-target="#additem">
-                  <i class="bi bi-plus-lg"></i>
-                </button>
-              </div>
-
-              <div class="table-responsive admin-edit-table-wrap">
-                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="items">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="col-2">ID</th>
-                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
-                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="table-group-divider">
-                    <tr v-if="itemsCount === 0">
-                      <td colspan="3" class="text-center text-secondary py-4">-</td>
-                    </tr>
-                    <tr v-for="row in items" :key="row.id">
-                      <th scope="row">{{ row.id }}</th>
-                      <td>{{ row.name }}</td>
-                      <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                            @click="$router.push({ name: 'edititem', params: { itemid: row.id } })">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
-                          <RouterLink type="button" class="btn btn-outline-primary"
-                            :title="$t('global.preview', 'Voir')" :to="{ name: 'item', params: { itemid: row.id } }"
-                            target="_blank">
-                            <i class="bi bi-eye-fill"></i>
-                          </RouterLink>
-                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem">
-                            <i class="bi bi-trash3"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
-          </article>
+          </div>
+          <!-- Empty State -->
+          <div v-else class="empty-state py-5">
+            <div class="empty-icon bg-item-soft mb-3">
+              <i class="bi bi-box-seam-fill text-item fs-2"></i>
+            </div>
+            <h4 class="h5 mb-1">Aucun objet trouvé</h4>
+            <p class="text-muted small mb-3">Créez un objet pour modéliser, transformer et préparer vos données.</p>
+            <button type="button" class="btn btn-item d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#additem">
+              <i class="bi bi-plus-lg"></i> Créer un objet
+            </button>
+          </div>
         </div>
 
-        <div class="col">
-          <article class="card admin-edit-panel admin-edit-panel-view shadow-sm">
-            <div class="card-body p-0 d-flex flex-column">
-              <div
-                class="admin-edit-panel-head admin-edit-panel-head-view px-3 px-lg-4 py-3 d-flex align-items-center justify-content-between gap-2">
-                <div>
-                  <h5 class="admin-edit-panel-title admin-edit-panel-title-view mb-0">{{ $t('edit.views') }}</h5>
-                  <p class="small text-secondary mb-0">{{ $t('edit.view_hint') }}</p>
+        <!-- Views Tab Content -->
+        <div v-if="activeTab === 'views'">
+          <div v-if="filteredViews.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+            <div v-for="row in filteredViews" :key="row.id" class="col">
+              <div class="item-card hover-view">
+                <div class="item-card-body d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3 min-w-0">
+                    <div class="item-icon bg-view-soft">
+                      <i class="bi bi-grid-1x2-fill text-view"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
+                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                      </div>
+                      <!-- View Items count -->
+                      <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+                        <span class="badge bg-view-soft text-view small-badge">
+                          <i class="bi bi-box-seam me-1"></i>{{ getViewDetails(row).itemsCount }} objet(s)
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
+                    <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
+                      @click="$router.push({ name: 'editview', params: { viewid: row.id } })">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <RouterLink type="button" class="btn btn-action btn-action-preview" :title="$t('global.preview')"
+                      :to="{ name: 'view', params: { viewid: row.id } }" target="_blank">
+                      <i class="bi bi-eye-fill"></i>
+                    </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
+                      @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
                 </div>
-                <button type="button" class="btn btn-success btn-sm" :title="$t('edit.add')" data-bs-toggle="modal"
-                  data-bs-target="#addview">
-                  <i class="bi bi-plus-lg"></i>
-                </button>
-              </div>
-
-              <div class="table-responsive admin-edit-table-wrap">
-                <table class="table table-hover align-middle mb-0 admin-edit-table" v-if="views">
-                  <thead>
-                    <tr>
-                      <th scope="col" class="col-2">ID</th>
-                      <th scope="col" class="col-7">{{ $t('edit.name') }}</th>
-                      <th scope="col" class="col-3 text-end">{{ $t('edit.actions') }}</th>
-                    </tr>
-                  </thead>
-                  <tbody class="table-group-divider">
-                    <tr v-if="viewsCount === 0">
-                      <td colspan="3" class="text-center text-secondary py-4">-</td>
-                    </tr>
-                    <tr v-for="row in views" :key="row.id">
-                      <th scope="row">{{ row.id }}</th>
-                      <td>{{ row.name }}</td>
-                      <td class="text-end">
-                        <div class="btn-group btn-group-sm" role="group">
-                          <button type="button" class="btn btn-outline-primary" :title="$t('global.edit', 'Editer')"
-                            @click="$router.push({ name: 'editview', params: { viewid: row.id } })">
-                            <i class="bi bi-pencil-square"></i>
-                          </button>
-                          <RouterLink type="button" class="btn btn-outline-primary"
-                            :title="$t('global.preview', 'Voir')" :to="{ name: 'view', params: { viewid: row.id } }"
-                            target="_blank">
-                            <i class="bi bi-eye-fill"></i>
-                          </RouterLink>
-                          <button type="button" class="btn btn-outline-danger" :title="$t('global.remove', 'Supprimer')"
-                            @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview">
-                            <i class="bi bi-trash3"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
               </div>
             </div>
-          </article>
+          </div>
+          <!-- Empty State -->
+          <div v-else class="empty-state py-5">
+            <div class="empty-icon bg-view-soft mb-3">
+              <i class="bi bi-grid-1x2-fill text-view fs-2"></i>
+            </div>
+            <h4 class="h5 mb-1">Aucune vue trouvée</h4>
+            <p class="text-muted small mb-3">Créez une vue pour afficher de magnifiques tableaux de bord ou rapports.</p>
+            <button type="button" class="btn btn-view d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addview">
+              <i class="bi bi-plus-lg"></i> Créer une vue
+            </button>
+          </div>
+        </div>
+
+        <!-- Secrets Tab Content -->
+        <div v-if="activeTab === 'secrets'">
+          <div v-if="filteredSecrets.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
+            <div v-for="row in filteredSecrets" :key="row.id" class="col">
+              <div class="item-card hover-secret">
+                <div class="item-card-body d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-3 min-w-0">
+                    <div class="item-icon bg-secret-soft">
+                      <i class="bi bi-shield-lock-fill text-secret"></i>
+                    </div>
+                    <div class="min-w-0">
+                      <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
+                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                      </div>
+                      <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+                        <span class="text-muted small-text">••••••••</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
+                    <button type="button" class="btn btn-action btn-action-edit"
+                      :title="canManageSecrets ? $t('global.edit') : $t('edit.secrets_edit_disabled')"
+                      :disabled="!canManageSecrets" @click="BeginEditSecret(row)"
+                      :data-bs-toggle="canManageSecrets ? 'modal' : null"
+                      :data-bs-target="canManageSecrets ? '#editsecret' : null">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
+                      @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret">
+                      <i class="bi bi-trash3-fill"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Empty State -->
+          <div v-else class="empty-state py-5">
+            <div class="empty-icon bg-secret-soft mb-3">
+              <i class="bi bi-shield-lock-fill text-secret fs-2"></i>
+            </div>
+            <h4 class="h5 mb-1">Aucun secret trouvé</h4>
+            <p class="text-muted small mb-3">Stockez de manière sécurisée vos clés d'API, mots de passe et jetons d'accès.</p>
+            <button v-if="canManageSecrets" type="button" class="btn btn-secret d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addsecret">
+              <i class="bi bi-plus-lg"></i> Ajouter un secret
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -575,18 +805,18 @@ fetchSecrets()
     :class="['modal', 'fade', 'admin-edit-modern-modal', 'admin-edit-add-modal', { 'admin-edit-secret-create-modal': type.type === 'secret' }]"
     :id="'add' + type.type" tabindex="-1" :aria-labelledby="'addModalLabel-' + type.type" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header" :class="getAddModalHeaderClass(type.type)">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0" :class="getAddModalHeaderClass(type.type)">
           <template v-if="type.type === 'secret'">
             <div class="admin-edit-modal-title-wrap">
               <span class="admin-edit-modal-icon admin-edit-modal-icon-secret" aria-hidden="true">
                 <i class="bi bi-shield-lock-fill"></i>
               </span>
               <div>
-                <h1 class="modal-title fs-5 mb-0" :id="'addModalLabel-' + type.type">{{
+                <h1 class="modal-title fs-5 mb-0 text-white" :id="'addModalLabel-' + type.type">{{
                   $t('edit.modal_add_secret_title')
                 }}</h1>
-                <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
+                <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
               </div>
             </div>
           </template>
@@ -595,69 +825,69 @@ fetchSecrets()
               <i :class="getAddModalIcon(type.type)"></i>
             </span>
             <div>
-              <h1 class="modal-title fs-5 mb-0" :id="'addModalLabel-' + type.type">{{ $t('edit.add') }} : {{
+              <h1 class="modal-title fs-5 mb-0 text-white" :id="'addModalLabel-' + type.type">{{ $t('edit.add') }} : {{
                 type.name
               }}</h1>
-              <p class="admin-edit-modal-subtitle mb-0">{{ $t(getAddModalSubtitleKey(type.type)) }}</p>
+              <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t(getAddModalSubtitleKey(type.type)) }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
-        <div class="modal-body">
+        <div class="modal-body p-4">
           <template v-if="type.type === 'secret'">
-            <p class="admin-edit-secret-note mb-3">
+            <p class="admin-edit-secret-note mb-4">
               <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_add_secret_note') }}
             </p>
             <div class="mb-3">
-              <label :for="'InputSecretName-' + type.type" class="form-label">{{ $t('edit.name') }}</label>
-              <input type="text" class="form-control" :id="'InputSecretName-' + type.type" v-model="NewName"
+              <label :for="'InputSecretName-' + type.type" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
+              <input type="text" class="form-control form-control-modern" :id="'InputSecretName-' + type.type" v-model="NewName"
                 autocomplete="off">
-              <div class="form-text">{{ $t('edit.modal_add_secret_name_help') }}</div>
+              <div class="form-text text-muted">{{ $t('edit.modal_add_secret_name_help') }}</div>
             </div>
             <div class="mb-0">
-              <label :for="'InputSecretValue-' + type.type" class="form-label">{{ $t('edit.secret_value') }}</label>
-              <input type="password" class="form-control" :id="'InputSecretValue-' + type.type" v-model="NewSecretValue"
+              <label :for="'InputSecretValue-' + type.type" class="form-label fw-semibold">{{ $t('edit.secret_value') }}</label>
+              <input type="password" class="form-control form-control-modern" :id="'InputSecretValue-' + type.type" v-model="NewSecretValue"
                 autocomplete="new-password">
-              <div class="form-text">{{ $t('edit.modal_add_secret_value_help') }}</div>
+              <div class="form-text text-muted">{{ $t('edit.modal_add_secret_value_help') }}</div>
             </div>
           </template>
           <template v-else>
-            <p class="admin-edit-add-note mb-3">
+            <p class="admin-edit-add-note mb-4">
               <i class="bi bi-stars me-2" aria-hidden="true"></i>{{ $t('edit.modal_add_generic_note') }}
             </p>
             <div class="mb-0">
-              <label :for="'InputName-' + type.type" class="form-label">{{ $t('edit.name') }}</label>
-              <input type="text" class="form-control" :id="'InputName-' + type.type" v-model="NewName"
+              <label :for="'InputName-' + type.type" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
+              <input type="text" class="form-control form-control-modern" :id="'InputName-' + type.type" v-model="NewName"
                 autocomplete="off">
-              <div class="form-text">{{ $t('edit.modal_add_generic_name_help') }}</div>
+              <div class="form-text text-muted">{{ $t('edit.modal_add_generic_name_help') }}</div>
             </div>
-            <div v-if="type.type === 'item'" class="mt-3">
-              <label class="form-label">{{ $t('edit.item_creation.type_label') }}</label>
-              <div class="row g-2">
+            <div v-if="type.type === 'item'" class="mt-4">
+              <label class="form-label fw-semibold mb-3">{{ $t('edit.item_creation.type_label') }}</label>
+              <div class="row g-3">
                 <div class="col-12 col-md-6">
-                  <label class="border rounded-3 p-3 h-100 d-flex gap-2"
-                    :class="NewItemMode === 'free' ? 'border-primary bg-primary-subtle' : 'bg-body'">
+                  <label class="border rounded-3 p-3 h-100 d-flex gap-2 cursor-pointer template-choice-box"
+                    :class="NewItemMode === 'free' ? 'active-primary' : ''">
                     <input class="form-check-input mt-1" type="radio" value="free" v-model="NewItemMode">
                     <span>
                       <span class="d-block fw-semibold">{{ $t('edit.item_creation.free') }}</span>
-                      <span class="d-block small text-secondary">{{ $t('edit.item_creation.free_help') }}</span>
+                      <span class="d-block small text-muted mt-1">{{ $t('edit.item_creation.free_help') }}</span>
                     </span>
                   </label>
                 </div>
                 <div class="col-12 col-md-6">
-                  <label class="border rounded-3 p-3 h-100 d-flex gap-2"
-                    :class="NewItemMode === 'visual' ? 'border-primary bg-primary-subtle' : 'bg-body'">
+                  <label class="border rounded-3 p-3 h-100 d-flex gap-2 cursor-pointer template-choice-box"
+                    :class="NewItemMode === 'visual' ? 'active-primary' : ''">
                     <input class="form-check-input mt-1" type="radio" value="visual" v-model="NewItemMode">
                     <span>
                       <span class="d-block fw-semibold">{{ $t('edit.item_creation.visual') }}</span>
-                      <span class="d-block small text-secondary">{{ $t('edit.item_creation.visual_help') }}</span>
+                      <span class="d-block small text-muted mt-1">{{ $t('edit.item_creation.visual_help') }}</span>
                     </span>
                   </label>
                 </div>
               </div>
-              <div v-if="NewItemMode === 'visual'" class="mt-3">
-                <label for="InputItemTemplate" class="form-label">{{ $t('edit.item_creation.template_label') }}</label>
-                <select id="InputItemTemplate" class="form-select" v-model="NewItemTemplateKey">
+              <div v-if="NewItemMode === 'visual'" class="mt-4">
+                <label for="InputItemTemplate" class="form-label fw-semibold">{{ $t('edit.item_creation.template_label') }}</label>
+                <select id="InputItemTemplate" class="form-select form-select-modern" v-model="NewItemTemplateKey">
                   <option v-for="template in templateCatalog" :key="`${template.key}:${template.major}`"
                     :value="template.key">
                     {{ template.name }}
@@ -667,11 +897,11 @@ fetchSecrets()
             </div>
           </template>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+        <div class="modal-footer border-0 p-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
           }}</button>
-          <button type="button" class="btn"
-            :class="type.type === 'secret' ? 'btn-primary admin-edit-modal-primary' : 'btn-primary'"
+          <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow"
+            :class="type.type === 'secret' ? 'admin-edit-modal-primary' : ''"
             @click="AddToDA(type.type)" data-bs-dismiss="modal">{{
               $t('edit.add') }}</button>
         </div>
@@ -684,91 +914,551 @@ fetchSecrets()
     class="modal fade admin-edit-modern-modal admin-edit-delete-modal" :id="'delete' + type.type" tabindex="-1"
     :aria-labelledby="'deleteModalLabel-' + type.type" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header admin-edit-modal-header-danger">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0 bg-danger text-white">
           <div class="admin-edit-modal-title-wrap">
-            <span class="admin-edit-modal-icon admin-edit-modal-icon-danger" aria-hidden="true">
-              <i class="bi bi-trash3-fill"></i>
+            <span class="admin-edit-modal-icon bg-white-10" aria-hidden="true">
+              <i class="bi bi-trash3-fill text-white"></i>
             </span>
             <div>
-              <h1 class="modal-title fs-5 mb-0" :id="'deleteModalLabel-' + type.type">{{ $t('global.remove') }} : {{
+              <h1 class="modal-title fs-5 mb-0 text-white" :id="'deleteModalLabel-' + type.type">{{ $t('global.remove') }} : {{
                 type.name }}</h1>
-              <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.modal_delete_subtitle') }}</p>
+              <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.modal_delete_subtitle') }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
-        <div class="modal-body">
-          <p class="admin-edit-delete-warning mb-3">
+        <div class="modal-body p-4">
+          <p class="admin-edit-delete-warning mb-4">
             <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_delete_warning')
             }}
           </p>
-          <div class="admin-edit-delete-summary">
-            <div class="admin-edit-delete-row">
-              <span class="admin-edit-delete-label">{{ $t('edit.modal_delete_type') }}</span>
-              <span class="admin-edit-delete-value">{{ type.name }}</span>
+          <div class="admin-edit-delete-summary p-3 bg-light rounded-3">
+            <div class="admin-edit-delete-row mb-2">
+              <span class="admin-edit-delete-label text-muted small">{{ $t('edit.modal_delete_type') }}</span>
+              <span class="admin-edit-delete-value fw-semibold">{{ type.name }}</span>
             </div>
-            <div class="admin-edit-delete-row">
-              <span class="admin-edit-delete-label">ID</span>
+            <div class="admin-edit-delete-row mb-2">
+              <span class="admin-edit-delete-label text-muted small">ID</span>
               <span class="admin-edit-delete-value"><code>{{ ToDelete.id || '-' }}</code></span>
             </div>
             <div class="admin-edit-delete-row">
-              <span class="admin-edit-delete-label">{{ $t('edit.name') }}</span>
-              <span class="admin-edit-delete-value">{{ ToDelete.name || '-' }}</span>
+              <span class="admin-edit-delete-label text-muted small">{{ $t('edit.name') }}</span>
+              <span class="admin-edit-delete-value fw-semibold text-truncate max-w-200">{{ ToDelete.name || '-' }}</span>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+        <div class="modal-footer border-0 p-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
           }}</button>
-          <button type="button" class="btn btn-danger admin-edit-delete-btn"
+          <button type="button" class="btn btn-danger px-4 rounded-pill admin-edit-delete-btn"
             @click="DeleteFromDA(type.type, ToDelete.id)" data-bs-dismiss="modal">{{ $t('global.remove') }}</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Model for EDIT -->
+  <!-- Model for EDIT SECRET -->
   <div class="modal fade admin-edit-modern-modal admin-edit-edit-secret-modal" id="editsecret" tabindex="-1"
     aria-labelledby="editSecretModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content">
-        <div class="modal-header admin-edit-modal-header-soft">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0 bg-secret text-white">
           <div class="admin-edit-modal-title-wrap">
-            <span class="admin-edit-modal-icon admin-edit-modal-icon-secret" aria-hidden="true">
-              <i class="bi bi-pencil-square"></i>
+            <span class="admin-edit-modal-icon bg-white-10" aria-hidden="true">
+              <i class="bi bi-pencil-square text-white"></i>
             </span>
             <div>
-              <h1 class="modal-title fs-5 mb-0" id="editSecretModalLabel">{{ $t('edit.modal_edit_secret_title') }}</h1>
-              <p class="admin-edit-modal-subtitle mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
+              <h1 class="modal-title fs-5 mb-0 text-white" id="editSecretModalLabel">{{ $t('edit.modal_edit_secret_title') }}</h1>
+              <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
         </div>
-        <div class="modal-body">
-          <p class="admin-edit-secret-note mb-3">
+        <div class="modal-body p-4">
+          <p class="admin-edit-secret-note mb-4">
             <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_edit_secret_note') }}
           </p>
           <div class="mb-3">
-            <label for="EditSecretName" class="form-label">{{ $t('edit.name') }}</label>
-            <input type="text" class="form-control" id="EditSecretName" v-model="EditSecret.name">
-            <div class="form-text">{{ $t('edit.modal_edit_secret_name_help') }}</div>
+            <label for="EditSecretName" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
+            <input type="text" class="form-control form-control-modern" id="EditSecretName" v-model="EditSecret.name">
+            <div class="form-text text-muted">{{ $t('edit.modal_edit_secret_name_help') }}</div>
           </div>
           <div class="mb-0">
-            <label for="EditSecretValue" class="form-label">{{ $t('edit.secret_value') }}</label>
-            <input type="password" class="form-control" id="EditSecretValue" v-model="EditSecret.secret">
-            <div class="form-text">{{ $t('edit.modal_edit_secret_value_help') }}</div>
+            <label for="EditSecretValue" class="form-label fw-semibold">{{ $t('edit.secret_value') }}</label>
+            <input type="password" class="form-control form-control-modern" id="EditSecretValue" v-model="EditSecret.secret">
+            <div class="form-text text-muted">{{ $t('edit.modal_edit_secret_value_help') }}</div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ $t('global.cancel')
+        <div class="modal-footer border-0 p-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
           }}</button>
-          <button type="button" class="btn btn-primary admin-edit-modal-primary" :disabled="!canManageSecrets"
+          <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow" :disabled="!canManageSecrets"
             @click="UpdateSecret" data-bs-dismiss="modal">{{
               $t('global.edit', 'Modifier') }}</button>
         </div>
       </div>
     </div>
   </div>
+
   <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName" @close="isPreviewOpen = false" />
 </template>
+
+<style scoped lang="scss">
+/* Colors & Variables */
+.modern-edit-page {
+  --edit-color-source: #10b981;
+  --edit-color-source-rgb: 16, 185, 129;
+  --edit-color-item: #3b82f6;
+  --edit-color-item-rgb: 59, 130, 246;
+  --edit-color-view: #f59e0b;
+  --edit-color-view-rgb: 245, 158, 11;
+  --edit-color-secret: #8b5cf6;
+  --edit-color-secret-rgb: 139, 92, 246;
+  
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--bs-body-color);
+}
+
+.text-source { color: var(--edit-color-source) !important; }
+.text-item { color: var(--edit-color-item) !important; }
+.text-view { color: var(--edit-color-view) !important; }
+.text-secret { color: var(--edit-color-secret) !important; }
+
+.bg-source { background-color: var(--edit-color-source) !important; }
+.bg-item { background-color: var(--edit-color-item) !important; }
+.bg-view { background-color: var(--edit-color-view) !important; }
+.bg-secret { background-color: var(--edit-color-secret) !important; }
+
+.border-source { border-color: var(--edit-color-source) !important; }
+.border-item { border-color: var(--edit-color-item) !important; }
+.border-view { border-color: var(--edit-color-view) !important; }
+.border-secret { border-color: var(--edit-color-secret) !important; }
+
+/* Soft background accents */
+.bg-source-soft { background-color: rgba(var(--edit-color-source-rgb), 0.1) !important; }
+.bg-item-soft { background-color: rgba(var(--edit-color-item-rgb), 0.1) !important; }
+.bg-view-soft { background-color: rgba(var(--edit-color-view-rgb), 0.1) !important; }
+.bg-secret-soft { background-color: rgba(var(--edit-color-secret-rgb), 0.1) !important; }
+
+.bg-primary-soft { background-color: rgba(59, 130, 246, 0.1) !important; }
+.bg-secondary-soft { background-color: rgba(108, 117, 125, 0.1) !important; }
+
+/* Hero Banner */
+.modern-hero {
+  position: relative;
+  border-radius: 1.25rem;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 2.25rem 2.5rem;
+  overflow: hidden;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hero-bg-glow {
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+  pointer-events: none;
+  filter: blur(40px);
+}
+
+.hero-icon-wrapper {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+}
+
+.hero-badge {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  color: #818cf8;
+  display: inline-block;
+  margin-bottom: 0.25rem;
+}
+
+.hero-title {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+/* Status Pills */
+.status-pill {
+  padding: 0.5rem 0.85rem;
+  border-radius: 50rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.badge-primary {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+}
+.badge-success {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+.badge-warning {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+/* Stat Card Selectors */
+.stat-select-card {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.2s;
+  
+  &:hover {
+    transform: translateY(-3px);
+  }
+}
+
+.card-inner {
+  position: relative;
+  background: var(--bs-card-bg, #ffffff);
+  border: 1px solid var(--bs-border-color);
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.card-header-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.card-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.card-count {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.card-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.card-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0px;
+  transition: height 0.2s ease;
+}
+
+/* Active State for Stat Cards */
+.stat-select-card.active .card-inner {
+  border-width: 1.5px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+.stat-select-card.active .card-indicator {
+  height: 4px;
+}
+
+/* Workspace Container */
+.main-workspace-card {
+  border-radius: 1.25rem;
+  border: 1px solid var(--bs-border-color);
+  background: var(--bs-card-bg, #ffffff);
+}
+
+/* Search Bar */
+.search-input-wrapper {
+  position: relative;
+  max-width: 320px;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--bs-secondary-color);
+  pointer-events: none;
+  font-size: 0.9rem;
+}
+
+.search-input {
+  padding-left: 2.5rem;
+  padding-right: 2.2rem;
+  border-radius: 50rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--bs-border-color);
+  background-color: var(--bs-tertiary-bg);
+  transition: all 0.2s;
+  
+  &:focus {
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    border-color: #6366f1;
+    background-color: var(--bs-body-bg);
+  }
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: none;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover i {
+    color: var(--bs-body-color) !important;
+  }
+}
+
+/* Add Buttons with custom colors */
+.btn-add {
+  border-radius: 50rem;
+  font-weight: 600;
+  padding: 0.5rem 1.25rem;
+  color: white;
+  transition: all 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.btn-sources {
+  background-color: var(--edit-color-source);
+  border-color: var(--edit-color-source);
+  &:hover { background-color: #0d9488; border-color: #0d9488; }
+}
+
+.btn-items {
+  background-color: var(--edit-color-item);
+  border-color: var(--edit-color-item);
+  &:hover { background-color: #2563eb; border-color: #2563eb; }
+}
+
+.btn-views {
+  background-color: var(--edit-color-view);
+  border-color: var(--edit-color-view);
+  &:hover { background-color: #d97706; border-color: #d97706; }
+}
+
+.btn-secrets {
+  background-color: var(--edit-color-secret);
+  border-color: var(--edit-color-secret);
+  &:hover { background-color: #7c3aed; border-color: #7c3aed; }
+}
+
+/* Compact Modern Item Cards */
+.item-card {
+  position: relative;
+  border-radius: 0.85rem;
+  border: 1px solid var(--bs-border-color);
+  background: var(--bs-body-bg);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.item-card-body {
+  padding: 0.75rem 1rem;
+}
+
+.item-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.item-title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-size: 0.925rem;
+}
+
+.small-id {
+  font-size: 0.675rem;
+  letter-spacing: 0.05em;
+}
+
+.small-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-weight: 700;
+}
+
+.small-text {
+  font-size: 0.725rem;
+}
+
+.max-w-160 {
+  max-width: 160px;
+}
+
+/* Action Buttons */
+.btn-action {
+  width: 1.85rem;
+  height: 1.85rem;
+  padding: 0;
+  border-radius: 0.45rem;
+  border: 1px solid var(--bs-border-color);
+  background: var(--bs-body-bg);
+  color: var(--bs-secondary-color);
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  
+  &:hover {
+    background-color: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
+  }
+}
+
+.btn-action-edit:hover {
+  border-color: var(--edit-color-item);
+  color: var(--edit-color-item);
+  background-color: rgba(var(--edit-color-item-rgb), 0.06);
+}
+
+.btn-action-preview:hover {
+  border-color: var(--edit-color-source);
+  color: var(--edit-color-source);
+  background-color: rgba(var(--edit-color-source-rgb), 0.06);
+}
+
+.btn-action-delete:hover {
+  border-color: var(--bs-danger);
+  background-color: rgba(var(--bs-danger-rgb), 0.08);
+  color: var(--bs-danger);
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Modern Modals */
+.form-control-modern, .form-select-modern {
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--bs-border-color);
+  
+  &:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  }
+}
+
+.template-choice-box {
+  transition: all 0.2s ease;
+  border: 1.5px solid var(--bs-border-color);
+  
+  &.active-primary {
+    border-color: var(--edit-color-item);
+    background-color: rgba(var(--edit-color-item-rgb), 0.04);
+  }
+  
+  &:hover:not(.active-primary) {
+    background-color: var(--bs-tertiary-bg);
+  }
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.bg-white-10 {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.max-w-200 {
+  max-width: 200px;
+}
+
+/* Theme support for dark mode */
+[data-bs-theme='dark'] {
+  .modern-hero {
+    background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
+    border-color: rgba(255, 255, 255, 0.03);
+  }
+  
+  .card-inner {
+    background: rgba(30, 41, 59, 0.45);
+    backdrop-filter: blur(10px);
+  }
+  
+  .item-card {
+    background: rgba(30, 41, 59, 0.35);
+    backdrop-filter: blur(8px);
+  }
+}
+</style>

@@ -215,13 +215,15 @@ func ViewData(c *gin.Context) {
 }
 
 func SourceList(c *gin.Context) {
-	views, err := database.SourceList()
+	full := c.Query("full") == "true"
+	views, err := database.SourceList(full)
 	checkErr(err, c)
 	c.JSON(200, views)
 }
 
 func ItemList(c *gin.Context) {
-	views, err := database.ItemList()
+	full := c.Query("full") == "true"
+	views, err := database.ItemList(full)
 	checkErr(err, c)
 	c.JSON(200, views)
 }

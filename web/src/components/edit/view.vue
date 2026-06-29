@@ -202,7 +202,7 @@ onMounted(async () => {
 
           <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-1">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
-              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit' }" active-class="active">
+              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit', query: { tab: 'views' } }" active-class="active">
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
               <RouterLink v-if="viewInfo" type="button" class="btn btn-outline-info btn-sm"
