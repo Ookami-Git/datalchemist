@@ -82,14 +82,12 @@ onMounted(() => {
             :class="item.autoResize ? 'auto-resize-enabled' : 'auto-resize-disabled'" :gs-x="item.x" :gs-y="item.y"
             :gs-w="item.w" :gs-h="item.h" :gs-id="item.id" :id="item.id">
             <div class="grid-stack-item-content card">
-                <div>
-                    <div v-if="item.title" class="card-header widget-card-header" v-html="item.title"></div>
-                    <div class="card-body">
-                        <Item v-if="dataNunjucks" :data="dataNunjucks"
-                            :itemDescribe="props.viewItems[`i${item.itemid}`]" />
-                        <div v-else>
-                            <placeHolder />
-                        </div>
+                <div v-if="item.title" class="card-header widget-card-header" v-html="item.title"></div>
+                <div class="card-body">
+                    <Item v-if="dataNunjucks" :data="dataNunjucks"
+                        :itemDescribe="props.viewItems[`i${item.itemid}`]" />
+                    <div v-else>
+                        <placeHolder />
                     </div>
                 </div>
             </div>
@@ -98,7 +96,8 @@ onMounted(() => {
 </template>
 
 <style scoped>
-:deep(.grid-stack-item-content) {
-    background-color: var(--bs-tertiary-bg);
+/* Gridstack custom spacing */
+.grid-stack {
+    margin-top: 10px;
 }
 </style>
