@@ -129,6 +129,7 @@
       "actions": {
         "add": "Add item",
         "addFirst": "Add first item",
+        "dropAtEnd": "Drop here to add to the end",
         "addSubmenu": "Add submenu",
         "removeSubmenu": "Remove submenu",
         "addSubitem": "Add link",

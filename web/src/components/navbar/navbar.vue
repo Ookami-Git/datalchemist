@@ -189,21 +189,21 @@ const toggleSidebar = () => {
 
             <RouterLink v-if="parameter.isAdmin"
               class="btn btn-outline-secondary sidebar-action d-flex align-items-center gap-2"
-              :class="{ 'justify-content-center': !showSidebarText }"
-              :to="{ name: 'admin', params: { page: 'global' } }" active-class="active" :title="$t('menu.admin')">
-              <i class="bi bi-gear-fill"></i>
-              <transition name="sidebar-text">
-                <span v-if="showSidebarText">{{ $t('menu.admin') }}</span>
-              </transition>
-            </RouterLink>
-
-            <RouterLink v-if="parameter.isAdmin"
-              class="btn btn-outline-secondary sidebar-action d-flex align-items-center gap-2"
               :class="{ 'justify-content-center': !showSidebarText }" :to="{ name: 'edit' }" active-class="active"
               :title="$t('menu.edit')">
               <i class="bi bi-vector-pen"></i>
               <transition name="sidebar-text">
                 <span v-if="showSidebarText">{{ $t('menu.edit') }}</span>
+              </transition>
+            </RouterLink>
+
+            <RouterLink v-if="parameter.isAdmin"
+              class="btn btn-outline-secondary sidebar-action d-flex align-items-center gap-2"
+              :class="{ 'justify-content-center': !showSidebarText }"
+              :to="{ name: 'admin', params: { page: 'global' } }" active-class="active" :title="$t('menu.admin')">
+              <i class="bi bi-gear-fill"></i>
+              <transition name="sidebar-text">
+                <span v-if="showSidebarText">{{ $t('menu.admin') }}</span>
               </transition>
             </RouterLink>
 

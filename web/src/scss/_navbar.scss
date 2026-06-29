@@ -357,11 +357,11 @@
   width: 1.2rem;
   text-align: center;
   font-size: 1.1rem;
-  transition: transform 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar-navbar .sidebar-action:hover i {
-  transform: scale(1.1);
+.sidebar-navbar:not(.is-collapsed) .sidebar-action:hover i {
+  transform: translateX(2px);
 }
 
 /* Save button styling in sidebar */
