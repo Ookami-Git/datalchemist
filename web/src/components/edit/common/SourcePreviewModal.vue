@@ -37,6 +37,7 @@ const copied = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const loadedSourceConfig = ref(null);
+const loadTime = ref(null);
 
 const effectiveSourceConfig = computed(() => props.sourceConfig || loadedSourceConfig.value);
 const detectedGetVariables = computed(() => extractGetVariableNames(effectiveSourceConfig.value));
@@ -72,10 +73,13 @@ const fetchSourceData = async () => {
   loading.value = true;
   error.value = null;
   formattedJson.value = '';
+  loadTime.value = null;
+  const startTime = performance.now();
   try {
     const response = await axios.get(`${apiUrl}/data/source/${props.sourceId}`, {
       params: previewQueryParams.value
     });
+    loadTime.value = Math.round(performance.now() - startTime);
     formattedJson.value = JSON.stringify(response.data, null, 2);
   } catch (err) {
     console.error(err);
@@ -114,6 +118,7 @@ watch(() => props.sourceId, () => {
   loadedSourceConfig.value = null;
   previewQueryInput.value = '';
   previewQueryParams.value = {};
+  loadTime.value = null;
 });
 
 watch(() => props.show, async (newVal) => {
@@ -150,6 +155,9 @@ onBeforeUnmount(() => {
               {{ $t('global.preview', 'Aperçu') }}
               <span class="badge bg-secondary font-monospace ms-2" v-if="sourceId">#{{ sourceId }}</span>
               <span class="text-secondary small ms-1" v-if="sourceName">({{ sourceName }})</span>
+              <span class="badge text-bg-info ms-2" v-if="loadTime !== null">
+                <i class="bi bi-stopwatch me-1"></i>{{ loadTime }} ms
+              </span>
             </span>
           </h5>
           <div class="d-flex align-items-center gap-2 flex-wrap">
