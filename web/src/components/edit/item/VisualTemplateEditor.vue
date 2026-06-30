@@ -1351,36 +1351,111 @@ function selectConditionKey(field, ruleIndex, keyName) {
 
 .visual-template-section {
   overflow: hidden;
+  border: 1px solid var(--dc-border-subtle) !important;
+  border-radius: 12px;
+  background: var(--bs-body-bg);
+  transition: var(--dc-transition-smooth);
 }
 
-.visual-template-section-toggle,
-.visual-template-section-summary {
+.visual-template-section:hover {
+  border-color: var(--dc-hover-border) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+}
+
+.visual-template-section-toggle {
   cursor: pointer;
+  transition: var(--dc-transition-fast);
 }
 
-.visual-template-section-summary::-webkit-details-marker {
-  display: none;
+.visual-template-section-toggle:hover {
+  background-color: var(--bs-tertiary-bg) !important;
 }
 
 .visual-template-section-icon {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   color: var(--bs-primary);
-  background: rgba(var(--bs-primary-rgb), 0.1);
+  background: rgba(var(--bs-primary-rgb), 0.08);
+  border-radius: 10px;
   flex: 0 0 auto;
+  font-size: 1.1rem;
+  transition: var(--dc-transition-fast);
+}
+
+.visual-template-section-toggle:hover .visual-template-section-icon {
+  background: var(--dc-accent-gradient);
+  color: #fff;
+  transform: scale(1.05);
 }
 
 .visual-template-field-group + .visual-template-field-group {
-  margin-top: 1rem;
+  margin-top: 1.5rem;
+  border-top: 1px dashed var(--dc-border-subtle);
+  padding-top: 1.5rem;
 }
 
 .visual-template-field-group-title {
-  margin-bottom: 0.5rem;
-  font-size: 0.78rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
   font-weight: 700;
   color: var(--bs-secondary-color);
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
+.visual-template-field-group-title::after {
+  content: '';
+  flex: 1 1 auto;
+  height: 1px;
+  background: var(--dc-border-subtle);
+}
+
+/* Rule cards styling (threshold and conditions) */
+:deep(.visual-template-rule-card) {
+  border: 1px solid var(--dc-border-subtle) !important;
+  background: rgba(var(--bs-tertiary-bg-rgb), 0.3) !important;
+  border-radius: 10px !important;
+  transition: var(--dc-transition-smooth);
+}
+
+:deep(.visual-template-rule-card:hover) {
+  border-color: var(--dc-hover-border) !important;
+  background: rgba(var(--bs-tertiary-bg-rgb), 0.5) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+:deep(.visual-template-rule-drag-handle) {
+  cursor: grab;
+  color: var(--bs-secondary-color);
+  opacity: 0.5;
+  transition: var(--dc-transition-fast);
+  padding: 0.25rem;
+}
+
+:deep(.visual-template-rule-drag-handle:hover) {
+  opacity: 1;
+  color: var(--bs-primary);
+}
+
+:deep(.visual-template-rule-card.dragging) {
+  opacity: 0.4;
+  border-style: dashed !important;
+}
+
+/* Custom inputs styling inside visual editor */
+:deep(.form-control),
+:deep(.form-select) {
+  border-radius: 8px;
+  border-color: var(--dc-border-subtle);
+  transition: var(--dc-transition-fast);
+}
+
+:deep(.form-control:focus),
+:deep(.form-select:focus) {
+  border-color: rgba(59, 130, 246, 0.55) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
 </style>

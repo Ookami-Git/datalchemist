@@ -373,37 +373,37 @@ onBeforeUnmount(() => {
   <section class="admin-edit-item-page container-fluid px-0 py-1 py-lg-2">
     <div class="d-flex flex-column gap-3 gap-xxl-4">
       <header class="card admin-edit-item-hero shadow-sm">
-        <div class="card-body p-3 p-lg-3 d-flex flex-column gap-2">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <div class="admin-edit-item-hero-icon">
-              <i class="bi bi-braces-asterisk"></i>
+        <div class="card-body p-3 p-lg-4 d-flex flex-column gap-3">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+              <div class="admin-edit-item-hero-icon">
+                <i class="bi bi-braces-asterisk"></i>
+              </div>
+              <div class="admin-edit-item-title-wrap">
+                <p class="admin-edit-item-kicker mb-0">{{ $t('menu.edit') }}</p>
+                <h5 class="mb-0 fw-bold text-gradient">{{ $t('edititem.header') }}</h5>
+                <p class="mb-0 small text-secondary">{{ $t('edititem.subtitle') }}</p>
+              </div>
             </div>
-            <div class="admin-edit-item-title-wrap me-auto">
-              <p class="admin-edit-item-kicker mb-0">{{ $t('menu.edit') }}</p>
-              <h5 class="mb-0">{{ $t('edititem.header') }}</h5>
-              <p class="mb-0 small text-secondary">{{ $t('edititem.subtitle') }}</p>
-            </div>
-            <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-info">
-              <i class="bi bi-hash me-1"></i>{{ ItemInfo.id }}
+            <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip py-2 px-3">
+              <i class="bi bi-hash me-1 text-primary"></i>{{ ItemInfo.id }}
             </span>
           </div>
 
-          <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-1">
-            <div class="d-flex align-items-center gap-2 flex-shrink-0">
-              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit', query: { tab: 'items' } }" active-class="active">
-                <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
+          <div class="row g-3 align-items-center">
+            <div class="col-12 col-md-auto d-flex align-items-center gap-2">
+              <RouterLink type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" :to="{ name: 'edit', query: { tab: 'items' } }" active-class="active">
+                <i class="bi bi-arrow-left"></i><span>{{ $t('menu.edit') }}</span>
               </RouterLink>
-              <button type="button" class="btn btn-outline-info btn-sm" @click="openPreview"
+              <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" @click="openPreview"
                 :title="$t('edititem.preview_local_hint')" :disabled="!ItemInfo">
-                <i class="bi bi-eye me-1"></i>{{ $t('edititem.preview') }}
-                <i class="bi bi-pencil-square ms-1 opacity-75" aria-hidden="true"></i>
-                <span class="visually-hidden">{{ $t('edititem.preview_local_hint') }}</span>
+                <i class="bi bi-eye"></i><span>{{ $t('edititem.preview') }}</span>
               </button>
             </div>
 
-            <div class="flex-grow-1" v-if="ItemInfo">
-              <div class="input-group input-group-sm admin-edit-item-name-input">
-                <span class="input-group-text"><i class="bi bi-tag"></i></span>
+            <div class="col-12 col-md" v-if="ItemInfo">
+              <div class="input-group admin-edit-item-name-input-modern shadow-xs">
+                <span class="input-group-text"><i class="bi bi-tag-fill text-secondary"></i></span>
                 <input id="item-name-input" type="text" class="form-control" :placeholder="$t('edit.name')"
                   :aria-label="$t('edit.name')" :value="ItemInfo.name"
                   @input="updateItemName($event.target.value)">
@@ -443,18 +443,25 @@ onBeforeUnmount(() => {
 
           <article v-else class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
-              <div class="admin-edit-item-panel-head px-3 px-lg-4 py-3">
-                <ul class="nav nav-pills admin-edit-item-tabs" id="myTab" role="tablist">
+              <div class="admin-edit-item-panel-head px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
+                <ul class="nav nav-tabs admin-edit-item-tabs border-0" id="myTab" role="tablist">
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-tab-pane"
-                      type="button" role="tab" aria-controls="html-tab-pane" aria-selected="true">HTML</button>
+                    <button class="nav-link active d-flex align-items-center gap-2 py-2 px-3 border-0" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-tab-pane"
+                      type="button" role="tab" aria-controls="html-tab-pane" aria-selected="true">
+                      <i class="bi bi-filetype-html text-danger fs-5"></i>
+                      <span class="fw-medium">template.html</span>
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="javascript-tab" data-bs-toggle="tab"
+                    <button class="nav-link d-flex align-items-center gap-2 py-2 px-3 border-0" id="javascript-tab" data-bs-toggle="tab"
                       data-bs-target="#javascript-tab-pane" type="button" role="tab" aria-controls="javascript-tab-pane"
-                      aria-selected="false">JavaScript</button>
+                      aria-selected="false">
+                      <i class="bi bi-filetype-js text-warning fs-5"></i>
+                      <span class="fw-medium">script.js</span>
+                    </button>
                   </li>
                 </ul>
+                <span class="badge text-secondary bg-body-tertiary border font-monospace small px-2 py-1">Mode Libre</span>
               </div>
 
               <div class="tab-content admin-edit-item-editor-stage" id="code-tab-content" v-if="parameter?.name">
