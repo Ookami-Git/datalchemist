@@ -68,7 +68,7 @@ export const compactTable = createTemplateDefinition({
     { key: 'scrollX', type: 'select', section: 'options', group: 'columns', options: booleanOptions, help: 'Active le défilement horizontal.' },
     { key: 'fixedColumnsLeft', type: 'number', section: 'options', group: 'columns', dependsOn: 'scrollX', placeholder: '0', help: 'Nombre de colonnes figées à gauche.' },
     { key: 'fixedColumnsRight', type: 'number', section: 'options', group: 'columns', dependsOn: 'scrollX', placeholder: '0', help: 'Nombre de colonnes figées à droite.' },
-    { key: 'rowGroupColumn', type: 'number', section: 'options', group: 'rows', placeholder: '0', help: 'Index de colonne à regrouper, en partant de 1. 0 désactive le regroupement.' },
+    { key: 'rowGroupColumn', type: 'datatable-column-select', section: 'options', group: 'rows', placeholder: 'Désactivé', help: 'Colonne à regrouper. Sélectionnez une colonne pour activer le regroupement de lignes.' },
     { key: 'selectRows', type: 'select', section: 'options', group: 'rows', options: booleanOptions, help: 'Permet la sélection de lignes.' },
     { key: 'scroller', type: 'select', section: 'options', group: 'rows', exclusiveWith: 'paging', options: booleanOptions, help: 'Optimise l’affichage des grandes listes.' },
     { key: 'stateSave', type: 'select', section: 'options', group: 'state', options: booleanOptions, help: 'Mémorise recherche, tri, page et colonnes dans le navigateur.' },
@@ -107,7 +107,7 @@ export const compactTable = createTemplateDefinition({
     scroller: 'false',
     fixedColumnsLeft: 0,
     fixedColumnsRight: 0,
-    rowGroupColumn: 0,
+    rowGroupColumn: '',
     orderColumn: 1,
     orderDirection: 'asc',
     globalVariables: '',
@@ -142,7 +142,7 @@ export const compactTable = createTemplateDefinition({
       scroller: booleanOption(config.scroller, this.defaults.scroller),
       fixedColumnsLeft: integerOption(config.fixedColumnsLeft, this.defaults.fixedColumnsLeft, 0),
       fixedColumnsRight: integerOption(config.fixedColumnsRight, this.defaults.fixedColumnsRight, 0),
-      rowGroupColumn: integerOption(config.rowGroupColumn, this.defaults.rowGroupColumn, 0),
+      rowGroupColumn: String(config.rowGroupColumn ?? this.defaults.rowGroupColumn).trim(),
       orderColumn: String(config.orderColumn ?? this.defaults.orderColumn).trim() || String(this.defaults.orderColumn),
       orderDirection,
       globalVariables: normalizeTemplateVariables(config.globalVariables),
@@ -207,7 +207,16 @@ export const compactTable = createTemplateDefinition({
     const orderColumnIndex = namedOrderColumnIndex >= 0
       ? namedOrderColumnIndex
       : Math.max((Number.isFinite(numericOrderColumn) ? numericOrderColumn : 1) - 1, 0);
-    const rowGroupColumnIndex = normalized.rowGroupColumn > 0 ? normalized.rowGroupColumn - 1 : null;
+
+    const numericRowGroupColumn = Number.parseInt(normalized.rowGroupColumn, 10);
+    const namedRowGroupColumnIndex = parsedColumns.findIndex((column) => (
+      String(column?.key ?? '') === normalized.rowGroupColumn ||
+      String(column?.label ?? '') === normalized.rowGroupColumn
+    ));
+    const rowGroupColumnIndex = namedRowGroupColumnIndex >= 0
+      ? namedRowGroupColumnIndex
+      : (Number.isFinite(numericRowGroupColumn) && numericRowGroupColumn > 0 ? numericRowGroupColumn - 1 : null);
+
     const fixedColumns = scrollX && (normalized.fixedColumnsLeft || normalized.fixedColumnsRight)
       ? {
            leftColumns: normalized.fixedColumnsLeft,
@@ -269,6 +278,8 @@ export const compactTable = createTemplateDefinition({
     }
     if (rowGroupColumnIndex !== null) {
       dataTableOptions.rowGroup = { dataSrc: rowGroupColumnIndex };
+    } else {
+      dataTableOptions.rowGroup = false;
     }
     const itemTokenSeed = context.item?.id || context.item?.name
       ? { id: context.item?.id ?? '', name: context.item?.name ?? '' }
@@ -277,6 +288,7 @@ export const compactTable = createTemplateDefinition({
     const optionsJson = JSON.stringify(dataTableOptions);
     const orderColumnJson = JSON.stringify(normalized.orderColumn);
     const orderDirectionJson = JSON.stringify(normalized.orderDirection);
+    const rowGroupColumnJson = JSON.stringify(normalized.rowGroupColumn);
     const searchPanesColumnsJson = JSON.stringify(searchPanes && !searchPanesAutomatic ? searchPanesColumns : []);
     const globalSetup = compileTemplateVariables(normalized.globalVariables);
     const loopSetup = compileTemplateVariables(normalized.loopVariables, normalized.globalVariables, 'loop');
@@ -323,6 +335,7 @@ export const compactTable = createTemplateDefinition({
       javascript: `const dataTableOptions = ${optionsJson};
 const dataTableOrderColumn = ${orderColumnJson};
 const dataTableOrderDirection = ${orderDirectionJson};
+const dataTableRowGroupColumn = ${rowGroupColumnJson};
 const dataTableSearchPanesColumns = ${searchPanesColumnsJson};
 if (dataTableOptions.buttons?.includes('excel') && DataTable.Buttons?.jszip) {
   DataTable.Buttons.jszip(jszip);
@@ -374,6 +387,24 @@ document.querySelectorAll('table[data-dc-datatable="${tableToken}"]').forEach((t
     if (headerIndex >= 0) {
       tableOptions.order = [[headerIndex, dataTableOrderDirection]];
     }
+  }
+  if (dataTableRowGroupColumn && !/^[1-9]\\d*$/.test(String(dataTableRowGroupColumn))) {
+    const normalizedGroupColumn = String(dataTableRowGroupColumn).trim().toLowerCase();
+    const columnAliases = {
+      key: ['key', 'clé'],
+      value: ['value', 'valeur']
+    };
+    const expectedHeaders = columnAliases[normalizedGroupColumn] || [normalizedGroupColumn];
+    const headerIndex = Array.from(table.querySelectorAll('thead th')).findIndex((header) => (
+      expectedHeaders.includes(header.textContent.trim().toLowerCase())
+    ));
+    if (headerIndex >= 0) {
+      tableOptions.rowGroup = { dataSrc: headerIndex };
+    } else {
+      tableOptions.rowGroup = false;
+    }
+  } else if (!dataTableRowGroupColumn) {
+    tableOptions.rowGroup = false;
   }
   new DataTable(table, tableOptions);
   if (!dataTableOptions.scrollX) {

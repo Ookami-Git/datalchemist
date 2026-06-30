@@ -386,6 +386,9 @@ function dataTableColumnOptions(field) {
 
 function getDataTableColumnSelectValue(field) {
   const currentValue = getFieldDisplayValue(field);
+  if (!currentValue || currentValue === '0' || currentValue === 'null' || currentValue === 'undefined') {
+    return '';
+  }
   const configuredOptions = configuredDataTableColumnOptions();
   const options = configuredOptions.length > 0 ? configuredOptions : detectedDataTableColumnOptions.value;
 
@@ -876,13 +879,18 @@ function selectConditionKey(field, ruleIndex, keyName) {
                   <option v-if="dataTableColumnOptions(field).length === 0" value="">
                     Configurez les colonnes du tableau
                   </option>
-                  <option
-                    v-for="option in dataTableColumnOptions(field)"
-                    :key="option.value"
-                    :value="option.value"
-                  >
-                    {{ option.label }}
-                  </option>
+                  <template v-else>
+                    <option v-if="field.allowEmpty || field.placeholder" value="">
+                      {{ field.placeholder || 'Aucun' }}
+                    </option>
+                    <option
+                      v-for="option in dataTableColumnOptions(field)"
+                      :key="option.value"
+                      :value="option.value"
+                    >
+                      {{ option.label }}
+                    </option>
+                  </template>
                 </select>
 
                 <div

@@ -54,6 +54,7 @@ const previewModalBodyClass = 'item-preview-modal-open';
 // Preview modal
 const showPreview = ref(false);
 const showTemplatePicker = ref(false);
+const showConvertConfirmModal = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const previewReloadToken = ref(0);
@@ -125,6 +126,7 @@ function handlePreviewKeydown(event) {
   if (event.key !== 'Escape') return;
   if (showPreview.value) closePreview();
   if (showTemplatePicker.value) closeTemplatePicker();
+  if (showConvertConfirmModal.value) showConvertConfirmModal.value = false;
 }
 const code = ref("<!-- HTML Code -->");
 const codeJs = ref("// Javascript Code");
@@ -196,22 +198,23 @@ function switchEditorMode(mode) {
   }
 
   if (mode === FREE_ITEM_MODE && editorMode.value === VISUAL_ITEM_MODE) {
-    if (!window.confirm(i18n.global.t('edititem.templates.convert_confirm'))) {
-      return;
-    }
-
-    const compiled = compiledVisualTemplate.value;
-    code.value = compiled?.template || code.value;
-    codeJs.value = compiled?.javascript || codeJs.value;
-    rawParameters.value = '';
+    showConvertConfirmModal.value = true;
   }
+}
 
-  editorMode.value = mode;
+function confirmFreeMode() {
+  const compiled = compiledVisualTemplate.value;
+  code.value = compiled?.template || code.value;
+  codeJs.value = compiled?.javascript || codeJs.value;
+  rawParameters.value = '';
+
+  editorMode.value = FREE_ITEM_MODE;
   refreshSaveStatus();
   nextTick(() => {
     bindTabListeners();
     refreshCodeMirror();
   });
+  showConvertConfirmModal.value = false;
 }
 
 function selectVisualTemplate(key) {
@@ -345,8 +348,8 @@ function bindTabListeners() {
   });
 }
 
-watch([showPreview, showTemplatePicker], ([isPreviewOpen, isTemplatePickerOpen]) => {
-  document.body.classList.toggle(previewModalBodyClass, isPreviewOpen || isTemplatePickerOpen);
+watch([showPreview, showTemplatePicker, showConvertConfirmModal], ([isPreviewOpen, isTemplatePickerOpen, isConvertConfirmOpen]) => {
+  document.body.classList.toggle(previewModalBodyClass, isPreviewOpen || isTemplatePickerOpen || isConvertConfirmOpen);
 });
 
 onMounted(async () => {
@@ -583,4 +586,34 @@ onBeforeUnmount(() => {
 
   <TemplatePickerModal :open="showTemplatePicker" :selected-key="visualTemplateMeta.templateKey"
     @close="closeTemplatePicker" @select="selectVisualTemplate" />
+
+  <!-- Modal Conversion Libre -->
+  <div v-if="showConvertConfirmModal" class="modal fade show" tabindex="-1" role="dialog" aria-modal="true"
+    style="display: block; z-index: 1050;" @click.self="showConvertConfirmModal = false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header border-0 bg-body-tertiary">
+          <h5 class="modal-title d-flex align-items-center gap-2 fw-bold text-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ $t('edititem.templates.convert_to_free') }}</span>
+          </h5>
+          <button type="button" class="btn-close" aria-label="Close" @click="showConvertConfirmModal = false"></button>
+        </div>
+        <div class="modal-body py-4">
+          <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.5;">
+            {{ $t('edititem.templates.convert_confirm') }}
+          </p>
+        </div>
+        <div class="modal-footer border-0 bg-body-tertiary">
+          <button type="button" class="btn btn-light btn-sm px-3 rounded-pill" @click="showConvertConfirmModal = false">
+            {{ $t('global.cancel') }}
+          </button>
+          <button type="button" class="btn btn-danger btn-sm px-3 rounded-pill" @click="confirmFreeMode">
+            {{ $t('global.yes') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showConvertConfirmModal" class="modal-backdrop fade show" style="z-index: 1040;"></div>
 </template>
