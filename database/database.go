@@ -28,7 +28,6 @@ func Init() error {
 		{Name: "name", Value: "datalchemist"},
 		{Name: "lang", Value: "en"},
 		{Name: "menu", Value: ""},
-		{Name: "theme", Value: "light"},
 		{Name: "bg_color_light", Value: "#8e72ad"},
 		{Name: "bg_color2_light", Value: "#5e82c0"},
 		{Name: "bg_color_dark", Value: "#6a11cb"},
@@ -211,7 +210,7 @@ func ViewList() ([]models.Views, error) {
 	return Views, err
 }
 
-func ItemList() ([]models.Items, error) {
+func ItemList(full bool) ([]models.Items, error) {
 	var Items []models.Items
 
 	db, err := OpenGorm()
@@ -219,14 +218,20 @@ func ItemList() ([]models.Items, error) {
 		return Items, err
 	}
 
-	query := db.Table("items").Select("id, name").Order("id")
+	query := db.Table("items")
+	if full {
+		query = query.Select("id, name, parameters")
+	} else {
+		query = query.Select("id, name")
+	}
+	query = query.Order("id")
 
 	err = query.Scan(&Items).Error
 
 	return Items, err
 }
 
-func SourceList() ([]models.Sources, error) {
+func SourceList(full bool) ([]models.Sources, error) {
 	var Sources []models.Sources
 
 	db, err := OpenGorm()
@@ -234,7 +239,13 @@ func SourceList() ([]models.Sources, error) {
 		return Sources, err
 	}
 
-	query := db.Table("sources").Select("id, name").Order("id")
+	query := db.Table("sources")
+	if full {
+		query = query.Select("id, name, json")
+	} else {
+		query = query.Select("id, name")
+	}
+	query = query.Order("id")
 
 	err = query.Scan(&Sources).Error
 

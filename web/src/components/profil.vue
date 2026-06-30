@@ -18,7 +18,7 @@ const languageOptions = [
 ]
 
 const themeOptions = [
-    { id: 'default', labelKey: 'profil.defaultPreview', icon: 'bi bi-magic' },
+    { id: 'default', labelKey: 'profil.defaultPreview', icon: 'bi bi-display' },
     { id: 'light', labelKey: 'admin.global.light', icon: 'bi bi-brightness-high-fill' },
     { id: 'dark', labelKey: 'admin.global.dark', icon: 'bi bi-moon-stars-fill' },
 ]

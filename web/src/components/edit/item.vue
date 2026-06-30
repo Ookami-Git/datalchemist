@@ -1,13 +1,29 @@
 <script setup>
-import { computed, ref, inject, watch, onMounted, onBeforeUnmount, provide } from "vue";
+import { computed, ref, inject, watch, onMounted, onBeforeUnmount, nextTick, provide } from "vue";
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 
 import HtmlEditor from "./item/HtmlEditor.vue";
 import JSEditor from "./item/JavascriptEditor.vue";
+import VisualTemplateEditor from "./item/VisualTemplateEditor.vue";
+import TemplatePickerModal from "./item/TemplatePickerModal.vue";
 import Helpers from "./item/Helpers.vue";
 import sources from "./common/sources.vue";
 import Preview from '../view/preview.vue';
+import { compileTemplateDefinition, templateCatalog } from '@/templates/catalog.js';
+import {
+  extractGetVariableNames,
+  formatGetQuery,
+  mergeGetVariableDefaults,
+  parseGetQuery
+} from '@/utils/getVariables.js';
+import {
+  createVisualItemParameters,
+  parseItemParameters,
+  serializeVisualItemParameters,
+  FREE_ITEM_MODE,
+  VISUAL_ITEM_MODE
+} from '@/utils/itemTemplate.js';
 
 const props = defineProps({
   itemid: [String, Number]
@@ -21,12 +37,14 @@ const save = inject('save');
 const apiUrl = inject('apiUrl');
 save.value.safe();
 const parameter = inject('parameters');
+const i18n = inject('i18n');
 
 const ItemInfo = ref(null);
 const initialState = ref({
   name: '',
   template: '',
-  javascript: ''
+  javascript: '',
+  parameters: ''
 });
 
 const isLoading = ref(false);
@@ -35,71 +53,176 @@ const previewModalBodyClass = 'item-preview-modal-open';
 
 // Preview modal
 const showPreview = ref(false);
+const showTemplatePicker = ref(false);
+const showConvertConfirmModal = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const previewReloadToken = ref(0);
+const previewLoadTime = ref(null);
+const sourceListVersion = ref(0);
+const previewSourceConfigs = ref([]);
 
-function parsePreviewQuery(input) {
-  const raw = `${input || ''}`.trim();
-  if (!raw) {
-    return {};
-  }
-
-  const normalized = raw.startsWith('?') ? raw.slice(1) : raw;
-  const searchParams = new URLSearchParams(normalized);
-  const parsed = {};
-
-  for (const [key, value] of searchParams.entries()) {
-    if (!key) {
-      continue;
+function normalizePreviewQuery(params = {}) {
+  return mergeGetVariableDefaults(
+    detectedGetVariables.value,
+    {
+      ...sourceGetDefaults.value,
+      ...params
     }
-
-    if (Object.prototype.hasOwnProperty.call(parsed, key)) {
-      const current = parsed[key];
-      parsed[key] = Array.isArray(current) ? [...current, value] : [current, value];
-    } else {
-      parsed[key] = value;
-    }
-  }
-
-  return parsed;
+  );
 }
 
 function applyPreviewQueryFromInput() {
-  previewQueryParams.value = parsePreviewQuery(previewQueryInput.value);
+  previewQueryParams.value = normalizePreviewQuery(parseGetQuery(previewQueryInput.value));
+  previewQueryInput.value = formatGetQuery(previewQueryParams.value);
 }
 
-function openPreview() {
-  applyPreviewQueryFromInput();
+async function loadPreviewSourceConfigs() {
+  if (!itemid) return;
+
+  try {
+    const sourcesRes = await axios.get(`${apiUrl}/item/sources/${itemid}`);
+    const linkedSources = sourcesRes.data || [];
+    const details = await Promise.all(linkedSources.map(async (source) => {
+      try {
+        const res = await axios.get(`${apiUrl}/source/${source.id}`);
+        return res.data?.json ? JSON.parse(res.data.json) : null;
+      } catch {
+        return null;
+      }
+    }));
+    previewSourceConfigs.value = details.filter(Boolean);
+  } catch (error) {
+    previewSourceConfigs.value = [];
+    console.error('Unable to load linked source configs for preview', error);
+  }
+}
+
+async function openPreview() {
+  await loadPreviewSourceConfigs();
+  previewQueryParams.value = normalizePreviewQuery();
+  previewQueryInput.value = formatGetQuery(previewQueryParams.value);
+  previewLoadTime.value = null;
   previewReloadToken.value += 1;
   showPreview.value = true;
 }
 
 function closePreview() { showPreview.value = false; }
+function closeTemplatePicker() { showTemplatePicker.value = false; }
+
+function handleSourceChange() {
+  sourceListVersion.value += 1;
+  previewSourceConfigs.value = [];
+  loadPreviewSourceConfigs();
+}
 
 function reloadPreview() {
   applyPreviewQueryFromInput();
+  previewLoadTime.value = null;
   previewReloadToken.value += 1;
 }
 
 function handlePreviewKeydown(event) {
-  if (event.key === 'Escape' && showPreview.value) {
-    closePreview();
-  }
+  if (event.key !== 'Escape') return;
+  if (showPreview.value) closePreview();
+  if (showTemplatePicker.value) closeTemplatePicker();
+  if (showConvertConfirmModal.value) showConvertConfirmModal.value = false;
 }
 const code = ref("<!-- HTML Code -->");
 const codeJs = ref("// Javascript Code");
+const rawParameters = ref('');
+const editorMode = ref(FREE_ITEM_MODE);
+const visualTemplateMeta = ref(createVisualItemParameters());
 
 provide('codeHtml', code);
 provide('codeJs', codeJs);
 
 const previewItem = computed(() => ({
-  template: code.value,
-  javascript: codeJs.value
+  id: ItemInfo.value?.id,
+  name: ItemInfo.value?.name,
+  template: effectiveTemplate.value,
+  javascript: effectiveJavascript.value,
+  parameters: parametersForSave.value
 }));
+
+const parametersForSave = computed(() => editorMode.value === VISUAL_ITEM_MODE
+  ? serializeVisualItemParameters(visualTemplateMeta.value)
+  : rawParameters.value);
+const sourceGetDefaults = computed(() => previewSourceConfigs.value.reduce((defaults, sourceConfig) => ({
+  ...defaults,
+  ...(sourceConfig?.getDefaults || {})
+}), {}));
+const detectedGetVariables = computed(() => {
+  const names = new Set([
+    ...extractGetVariableNames(effectiveTemplate.value),
+    ...extractGetVariableNames(effectiveJavascript.value),
+    ...extractGetVariableNames(parametersForSave.value)
+  ]);
+
+  previewSourceConfigs.value.forEach((sourceConfig) => {
+    extractGetVariableNames(sourceConfig).forEach((name) => names.add(name));
+  });
+
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
+});
 
 const previewQuerySignature = computed(() => JSON.stringify(previewQueryParams.value || {}));
 const previewRenderKey = computed(() => `${previewReloadToken.value}:${previewQuerySignature.value}`);
+const selectedVisualTemplate = computed(() => templateCatalog.find((template) => (
+  template.key === visualTemplateMeta.value?.templateKey &&
+  template.major === Number(visualTemplateMeta.value?.templateMajor)
+)) || null);
+const compiledVisualTemplate = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compileTemplateDefinition(selectedVisualTemplate.value, visualTemplateMeta.value?.config || {}, { item: ItemInfo.value })
+    : null
+));
+const effectiveTemplate = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compiledVisualTemplate.value?.template || ''
+    : code.value
+));
+const effectiveJavascript = computed(() => (
+  editorMode.value === VISUAL_ITEM_MODE
+    ? compiledVisualTemplate.value?.javascript || ''
+    : codeJs.value
+));
+const visualTemplateHelpSections = computed(() => {
+  const sections = selectedVisualTemplate.value?.helpSections || [];
+  return [...new Set(['variables', ...sections, 'icons', 'bootstrap'])];
+});
+
+function switchEditorMode(mode) {
+  if (mode === VISUAL_ITEM_MODE) {
+    return;
+  }
+
+  if (mode === FREE_ITEM_MODE && editorMode.value === VISUAL_ITEM_MODE) {
+    showConvertConfirmModal.value = true;
+  }
+}
+
+function confirmFreeMode() {
+  const compiled = compiledVisualTemplate.value;
+  code.value = compiled?.template || code.value;
+  codeJs.value = compiled?.javascript || codeJs.value;
+  rawParameters.value = '';
+
+  editorMode.value = FREE_ITEM_MODE;
+  refreshSaveStatus();
+  nextTick(() => {
+    bindTabListeners();
+    refreshCodeMirror();
+  });
+  showConvertConfirmModal.value = false;
+}
+
+function selectVisualTemplate(key) {
+  const template = templateCatalog.find((entry) => entry.key === key);
+  if (template) {
+    visualTemplateMeta.value = createVisualItemParameters(template);
+  }
+}
 
 const hasPendingChanges = computed(() => {
   if (!ItemInfo.value) {
@@ -108,10 +231,37 @@ const hasPendingChanges = computed(() => {
 
   return (
     ItemInfo.value.name !== initialState.value.name ||
-    code.value !== initialState.value.template ||
-    codeJs.value !== initialState.value.javascript
+    effectiveTemplate.value !== initialState.value.template ||
+    effectiveJavascript.value !== initialState.value.javascript ||
+    parametersForSave.value !== initialState.value.parameters
   );
 });
+
+function refreshSaveStatus() {
+  if (!ItemInfo.value) {
+    return;
+  }
+
+  if (hasPendingChanges.value) {
+    save.value.status.saveable()
+  } else {
+    save.value.status.show()
+  }
+}
+
+function updateItemName(value) {
+  if (!ItemInfo.value) {
+    return;
+  }
+
+  ItemInfo.value.name = value;
+  refreshSaveStatus();
+}
+
+function updateVisualTemplateMeta(templateMeta) {
+  visualTemplateMeta.value = templateMeta;
+  refreshSaveStatus();
+}
 
 const fetchItem = async () => {
   isLoading.value = true;
@@ -123,11 +273,18 @@ const fetchItem = async () => {
 
     code.value = data.template || '';
     codeJs.value = data.javascript || '';
+    rawParameters.value = data.parameters || '';
+    const parsedParameters = parseItemParameters(rawParameters.value);
+    editorMode.value = parsedParameters.mode;
+    visualTemplateMeta.value = parsedParameters.mode === VISUAL_ITEM_MODE
+      ? parsedParameters
+      : createVisualItemParameters();
     ItemInfo.value = data;
     initialState.value = {
       name: data.name || '',
       template: data.template || '',
-      javascript: data.javascript || ''
+      javascript: data.javascript || '',
+      parameters: data.parameters || ''
     };
   } catch (error) {
     loadError.value = error.response?.data?.message || `Error fetching data for item ${itemid}`;
@@ -150,14 +307,17 @@ function updateItem() {
   axios.post(`${apiUrl}/item`, {
     id: ItemInfo.value.id,
     name: ItemInfo.value.name,
-    template: code.value,
-    javascript: codeJs.value
+    template: effectiveTemplate.value,
+    javascript: effectiveJavascript.value,
+    parameters: parametersForSave.value
   })
     .then(function () {
+      rawParameters.value = parametersForSave.value;
       initialState.value = {
         name: ItemInfo.value.name || '',
-        template: code.value,
-        javascript: codeJs.value
+        template: effectiveTemplate.value,
+        javascript: effectiveJavascript.value,
+        parameters: parametersForSave.value
       };
       save.value.status.show()
     })
@@ -167,17 +327,7 @@ function updateItem() {
     });
 }
 
-watch(hasPendingChanges, (dirty) => {
-  if (!ItemInfo.value || !save.value.show) {
-    return;
-  }
-
-  if (dirty) {
-    save.value.status.saveable()
-  } else {
-    save.value.status.show()
-  }
-});
+watch(hasPendingChanges, () => refreshSaveStatus());
 
 const refreshCodeMirror = () => {
   document.querySelectorAll('.CodeMirror').forEach((el) => {
@@ -188,18 +338,26 @@ const refreshCodeMirror = () => {
 const tabButtons = ref([]);
 const onTabShown = () => refreshCodeMirror();
 
-watch(showPreview, (isOpen) => {
-  document.body.classList.toggle(previewModalBodyClass, isOpen);
-});
-
-onMounted(async () => {
-  await fetchItem();
-  save.value.function = updateItem
-  save.value.status.show()
+function bindTabListeners() {
+  tabButtons.value.forEach((tab) => {
+    tab.removeEventListener('shown.bs.tab', onTabShown);
+  });
   tabButtons.value = Array.from(document.querySelectorAll('[data-bs-toggle="tab"]'));
   tabButtons.value.forEach((tab) => {
     tab.addEventListener('shown.bs.tab', onTabShown);
   });
+}
+
+watch([showPreview, showTemplatePicker, showConvertConfirmModal], ([isPreviewOpen, isTemplatePickerOpen, isConvertConfirmOpen]) => {
+  document.body.classList.toggle(previewModalBodyClass, isPreviewOpen || isTemplatePickerOpen || isConvertConfirmOpen);
+});
+
+onMounted(async () => {
+  await fetchItem();
+  await loadPreviewSourceConfigs();
+  save.value.function = updateItem
+  save.value.status.show()
+  bindTabListeners();
   window.addEventListener('keydown', handlePreviewKeydown);
   refreshCodeMirror();
 })
@@ -218,39 +376,43 @@ onBeforeUnmount(() => {
   <section class="admin-edit-item-page container-fluid px-0 py-1 py-lg-2">
     <div class="d-flex flex-column gap-3 gap-xxl-4">
       <header class="card admin-edit-item-hero shadow-sm">
-        <div class="card-body p-3 p-lg-3 d-flex flex-column gap-2">
-          <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="card-body p-3 p-lg-4 d-flex flex-column gap-3">
+          <div class="d-flex flex-wrap align-items-center gap-3">
             <div class="admin-edit-item-hero-icon">
               <i class="bi bi-braces-asterisk"></i>
             </div>
             <div class="admin-edit-item-title-wrap me-auto">
               <p class="admin-edit-item-kicker mb-0">{{ $t('menu.edit') }}</p>
-              <h5 class="mb-0">{{ $t('edititem.header') }}</h5>
+              <h5 class="mb-0 fw-bold text-gradient">{{ ItemInfo ? ItemInfo.name : $t('edititem.header') }}</h5>
               <p class="mb-0 small text-secondary">{{ $t('edititem.subtitle') }}</p>
             </div>
-            <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-info">
-              <i class="bi bi-hash me-1"></i>{{ ItemInfo.id }}
-            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-light border-subtle">
+                <i class="bi bi-hash me-1"></i>{{ ItemInfo.id }}
+              </span>
+              <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-primary">
+                {{ editorMode === VISUAL_ITEM_MODE ? 'Visual' : 'Code' }}
+              </span>
+            </div>
           </div>
 
-          <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-1">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pt-2 border-top border-subtle">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
-              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit' }" active-class="active">
+              <RouterLink type="button" class="btn btn-light btn-sm px-3 rounded-pill" :to="{ name: 'edit', query: { tab: 'items' } }" active-class="active">
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
-              <button type="button" class="btn btn-outline-info btn-sm" @click="openPreview"
+              <button type="button" class="btn btn-outline-primary btn-sm px-3 rounded-pill" @click="openPreview"
                 :title="$t('edititem.preview_local_hint')" :disabled="!ItemInfo">
-                <i class="bi bi-eye me-1"></i>{{ $t('edititem.preview') }}
-                <i class="bi bi-pencil-square ms-1 opacity-75" aria-hidden="true"></i>
-                <span class="visually-hidden">{{ $t('edititem.preview_local_hint') }}</span>
+                <i class="bi bi-eye-fill me-1"></i>{{ $t('edititem.preview') }}
               </button>
             </div>
 
-            <div class="flex-grow-1" v-if="ItemInfo">
-              <div class="input-group input-group-sm admin-edit-item-name-input">
-                <span class="input-group-text"><i class="bi bi-tag"></i></span>
-                <input id="item-name-input" type="text" class="form-control" :placeholder="$t('edit.name')"
-                  :aria-label="$t('edit.name')" v-model="ItemInfo.name">
+            <div class="flex-grow-1 max-w-md-50" v-if="ItemInfo">
+              <div class="input-group input-group-sm admin-edit-item-name-input-modern">
+                <span class="input-group-text bg-transparent border-end-0 text-secondary"><i class="bi bi-tag"></i></span>
+                <input id="item-name-input" type="text" class="form-control border-start-0 ps-0" :placeholder="$t('edit.name')"
+                  :aria-label="$t('edit.name')" :value="ItemInfo.name"
+                  @input="updateItemName($event.target.value)">
               </div>
             </div>
           </div>
@@ -278,20 +440,34 @@ onBeforeUnmount(() => {
 
       <div v-else class="row g-3 g-xxl-4 align-items-start">
         <div class="col-12 col-xxl-8">
-          <article class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
+
+
+          <VisualTemplateEditor v-if="editorMode === VISUAL_ITEM_MODE" :template-meta="visualTemplateMeta"
+            :item-id="itemid"
+            :source-list-version="sourceListVersion"
+            @update:template-meta="updateVisualTemplateMeta" />
+
+          <article v-else class="card admin-edit-item-panel admin-edit-item-editor-panel shadow-sm">
             <div class="card-body p-0 d-flex flex-column">
-              <div class="admin-edit-item-panel-head px-3 px-lg-4 py-3">
-                <ul class="nav nav-pills admin-edit-item-tabs" id="myTab" role="tablist">
+              <div class="admin-edit-item-panel-head px-3 py-2 d-flex align-items-center justify-content-between border-bottom">
+                <ul class="nav nav-tabs admin-edit-item-tabs border-0" id="myTab" role="tablist">
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-tab-pane"
-                      type="button" role="tab" aria-controls="html-tab-pane" aria-selected="true">HTML</button>
+                    <button class="nav-link active d-flex align-items-center gap-2 py-2 px-3 border-0" id="html-tab" data-bs-toggle="tab" data-bs-target="#html-tab-pane"
+                      type="button" role="tab" aria-controls="html-tab-pane" aria-selected="true">
+                      <i class="bi bi-filetype-html text-danger fs-5"></i>
+                      <span class="fw-medium">template.html</span>
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="javascript-tab" data-bs-toggle="tab"
+                    <button class="nav-link d-flex align-items-center gap-2 py-2 px-3 border-0" id="javascript-tab" data-bs-toggle="tab"
                       data-bs-target="#javascript-tab-pane" type="button" role="tab" aria-controls="javascript-tab-pane"
-                      aria-selected="false">JavaScript</button>
+                      aria-selected="false">
+                      <i class="bi bi-filetype-js text-warning fs-5"></i>
+                      <span class="fw-medium">script.js</span>
+                    </button>
                   </li>
                 </ul>
+                <span class="badge text-secondary bg-body-tertiary border font-monospace small px-2 py-1">Mode Libre</span>
               </div>
 
               <div class="tab-content admin-edit-item-editor-stage" id="code-tab-content" v-if="parameter?.name">
@@ -314,8 +490,36 @@ onBeforeUnmount(() => {
 
         <div class="col-12 col-xxl-4">
           <div class="d-flex flex-column gap-3 admin-edit-item-side">
-            <Helpers />
-            <sources :typeSource="typeSource" :parentId="itemid" />
+            <div v-if="editorMode === VISUAL_ITEM_MODE" class="card admin-edit-item-template-card">
+              <div class="card-body p-2 d-flex flex-column gap-2">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                  <span class="fw-semibold small text-secondary">
+                    <i class="bi bi-layout-text-window-reverse me-1 text-primary"></i>{{ $t('edititem.templates.open') }}
+                  </span>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none admin-edit-item-template-change fw-semibold" 
+                      style="font-size: 0.75rem;" @click="showTemplatePicker = true">
+                      <i class="bi bi-pencil-square me-1"></i>{{ $t('global.edit') }}
+                    </button>
+                    <span class="text-secondary" style="font-size: 0.75rem;">|</span>
+                    <button type="button" class="btn btn-link btn-sm p-0 text-danger text-decoration-none fw-semibold"
+                      style="font-size: 0.75rem;" @click="switchEditorMode(FREE_ITEM_MODE)">
+                      <i class="bi bi-code-slash me-1"></i>{{ $t('edititem.templates.convert_to_free') }}
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="bg-body-tertiary rounded p-2 d-flex align-items-center justify-content-between border" style="border-style: dashed !important;">
+                  <span class="admin-edit-item-template-name text-truncate small fw-semibold" :title="selectedVisualTemplate?.name" style="font-size: 0.85rem;">
+                    {{ selectedVisualTemplate?.name || '-' }}
+                  </span>
+                  <span class="badge text-bg-secondary ms-2 opacity-75">v{{ selectedVisualTemplate?.major || '-' }}</span>
+                </div>
+              </div>
+            </div>
+            <Helpers v-if="editorMode === FREE_ITEM_MODE || visualTemplateHelpSections.length"
+              :sections="editorMode === VISUAL_ITEM_MODE ? visualTemplateHelpSections : null" />
+            <sources :typeSource="typeSource" :parentId="itemid" @source-change="handleSourceChange" />
           </div>
         </div>
       </div>
@@ -336,6 +540,9 @@ onBeforeUnmount(() => {
             <h5 id="item-preview-modal-title" class="modal-title">
               {{ $t('edititem.preview') }}
               <span v-if="ItemInfo?.name" class="admin-edit-item-preview-item-name">- {{ ItemInfo.name }}</span>
+              <span class="badge text-bg-info ms-2" v-if="previewLoadTime !== null">
+                <i class="bi bi-stopwatch me-1"></i>{{ previewLoadTime }} ms
+              </span>
             </h5>
           </div>
 
@@ -359,7 +566,8 @@ onBeforeUnmount(() => {
         <div class="modal-body admin-edit-item-preview-body">
           <div class="admin-edit-item-preview-canvas">
             <Preview v-if="showPreview && ItemInfo" :key="previewRenderKey" :itemid="itemid" :mode="'edit'"
-              :item="previewItem" :preview-query="previewQueryParams" :refresh-token="previewReloadToken" />
+              :item="previewItem" :preview-query="previewQueryParams" :refresh-token="previewReloadToken"
+              @data-loaded="previewLoadTime = $event" />
           </div>
         </div>
 
@@ -375,4 +583,37 @@ onBeforeUnmount(() => {
       </div>
     </div>
   </div>
+
+  <TemplatePickerModal :open="showTemplatePicker" :selected-key="visualTemplateMeta.templateKey"
+    @close="closeTemplatePicker" @select="selectVisualTemplate" />
+
+  <!-- Modal Conversion Libre -->
+  <div v-if="showConvertConfirmModal" class="modal fade show" tabindex="-1" role="dialog" aria-modal="true"
+    style="display: block; z-index: 1050;" @click.self="showConvertConfirmModal = false">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content shadow-lg border-0">
+        <div class="modal-header border-0 bg-body-tertiary">
+          <h5 class="modal-title d-flex align-items-center gap-2 fw-bold text-danger">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>{{ $t('edititem.templates.convert_to_free') }}</span>
+          </h5>
+          <button type="button" class="btn-close" aria-label="Close" @click="showConvertConfirmModal = false"></button>
+        </div>
+        <div class="modal-body py-4">
+          <p class="mb-0 text-secondary" style="font-size: 0.95rem; line-height: 1.5;">
+            {{ $t('edititem.templates.convert_confirm') }}
+          </p>
+        </div>
+        <div class="modal-footer border-0 bg-body-tertiary">
+          <button type="button" class="btn btn-light btn-sm px-3 rounded-pill" @click="showConvertConfirmModal = false">
+            {{ $t('global.cancel') }}
+          </button>
+          <button type="button" class="btn btn-danger btn-sm px-3 rounded-pill" @click="confirmFreeMode">
+            {{ $t('global.yes') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-if="showConvertConfirmModal" class="modal-backdrop fade show" style="z-index: 1040;"></div>
 </template>

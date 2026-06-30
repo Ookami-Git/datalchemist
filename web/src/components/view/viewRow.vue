@@ -22,22 +22,18 @@ const dataNunjucks = inject('data');
     <template v-for="(row, index) in structure.items" :key="index">
         <div class="row view-layout-row">
             <div v-for="(item, indexrow) in row" :key="indexrow" :class="[`col-md-${item.size}`, 'view-layout-col']">
-                <div v-if="dataNunjucks" class="grid-stack-item-content card view-card view-row-card h-100">
-                    <div class="view-grid-item-frame">
-                        <div v-if="item?.title" class="card-header widget-card-header view-card-header"
-                            v-html="item.title"></div>
-                        <div class="card-body view-card-body">
-                            <Item :data="dataNunjucks" :itemDescribe="viewItems[`i${item.itemid}`]" />
-                        </div>
+                <div v-if="dataNunjucks" class="card view-card view-row-card h-100">
+                    <div v-if="item?.title" class="card-header widget-card-header view-card-header"
+                        v-html="item.title"></div>
+                    <div class="card-body view-card-body">
+                        <Item :data="dataNunjucks" :itemDescribe="viewItems[`i${item.itemid}`]" />
                     </div>
                 </div>
-                <div v-else class="grid-stack-item-content card view-card view-row-card h-100" aria-hidden="true">
-                    <div class="view-grid-item-frame">
-                        <div v-if="item.title" class="card-header widget-card-header view-card-header"
-                            v-html="item.title"></div>
-                        <div class="card-body view-card-body">
-                            <placeHolder />
-                        </div>
+                <div v-else class="card view-card view-row-card h-100" aria-hidden="true">
+                    <div v-if="item.title" class="card-header widget-card-header view-card-header"
+                        v-html="item.title"></div>
+                    <div class="card-body view-card-body">
+                        <placeHolder />
                     </div>
                 </div>
             </div>

@@ -7,6 +7,7 @@
 <script setup>
 import { reactive, watch, inject } from 'vue';
 import Codemirror from "codemirror-editor-vue3";
+import { useActiveTheme } from '../../../utils/useActiveTheme.js';
 import "codemirror/mode/javascript/javascript.js";
 import "codemirror/addon/display/placeholder.js";
 
@@ -24,9 +25,11 @@ const cmOptionsJs = reactive({
   lineWrapping: true,
 });
 
-watch(parameters, () => {
-  cmOptionsJs.theme = parameters.value.theme === "dark" ? "material" : "default";
-}, { deep: true, immediate: true });
+const { activeTheme } = useActiveTheme(parameters);
+
+watch(activeTheme, (theme) => {
+  cmOptionsJs.theme = theme === "dark" ? "material" : "default";
+}, { immediate: true });
 </script>
 
 <style scoped>

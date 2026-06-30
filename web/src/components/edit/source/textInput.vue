@@ -1,6 +1,7 @@
 <script setup>
 import { inject, watch, reactive } from "vue";
 import Codemirror from "codemirror-editor-vue3";
+import { useActiveTheme } from '../../../utils/useActiveTheme.js';
 // placeholder
 import "codemirror/addon/display/placeholder.js";
 // language
@@ -56,16 +57,11 @@ const cmOptions = reactive({
     }
 });
 
-watch(parameter, () => {
-    switch (parameter.value.theme) {
-        case "dark":
-            cmOptions.theme = "material"
-            break;
-        default:
-            cmOptions.theme = "default"
-            break;
-    }
-}, { deep: true, immediate: true });
+const { activeTheme } = useActiveTheme(parameter);
+
+watch(activeTheme, (theme) => {
+    cmOptions.theme = theme === "dark" ? "material" : "default";
+}, { immediate: true });
 
 watch(() => source.value.type, () => {
     cmOptions.mode = "jinja2-" + source.value.type;
@@ -73,14 +69,17 @@ watch(() => source.value.type, () => {
 </script>
 
 <template>
-    <div class="mb-3">
-        <div id="TextHelp" class="form-text">{{ $t('editsource.text.helper') }} ( {{ source.type }} | <a
-                href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank">Gonja</a> )
+  <div class="source-text-editor card-inner p-3 rounded-3">
+    <div class="mb-0">
+      <div id="TextHelp" class="form-text mb-3 small text-secondary">
+        <i class="bi bi-info-circle me-1"></i>{{ $t('editsource.text.helper') }} ({{ source.type }} | <a
+          href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank" class="text-decoration-none fw-medium">Gonja</a>)
+      </div>
+      <template v-if="parameter?.name">
+        <div class="source-editor-wrap source-editor-wrap-compact rounded-2 overflow-hidden border border-subtle">
+          <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" />
         </div>
-        <template v-if="parameter?.name">
-            <div class="source-editor-wrap source-editor-wrap-compact">
-                <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" />
-            </div>
-        </template>
+      </template>
     </div>
+  </div>
 </template>

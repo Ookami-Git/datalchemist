@@ -1,4 +1,19 @@
 <script setup>
+import TemplateVariablesReference from '../common/TemplateVariablesReference.vue';
+
+const props = defineProps({
+  sections: { type: Array, default: null },
+  context: {
+    type: String,
+    default: 'item',
+    validator: (value) => ['item', 'source'].includes(value)
+  }
+});
+
+function showSection(section) {
+  return !props.sections?.length || props.sections.includes(section);
+}
+
 // Nunjucks date examples
 const codeDateSyntax = `{{ var_date | date('outputformat','inputformat') }}`
 const codeDateExample1 = `{{ "2022-01-10" | date("DD MMM YYYY") }}\n=> 10 jan 2022`
@@ -49,7 +64,25 @@ const codeMermaid = `<pre class="mermaid"></pre>`
     </div>
     <div class="card-body p-0">
       <div class="accordion accordion-flush" id="item-helpers-accordion">
-        <div class="accordion-item">
+        <div v-if="showSection('variables')" class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-variables-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-variables" aria-expanded="false" aria-controls="item-helper-variables">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">{{ $t('templateVariables.title') }}</span>
+                <span class="badge text-bg-secondary">Template</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-variables" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-variables-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <TemplateVariablesReference :context="props.context" />
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showSection('bootstrap')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-bootstrap-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-bootstrap" aria-expanded="false" aria-controls="item-helper-bootstrap">
@@ -71,7 +104,7 @@ const codeMermaid = `<pre class="mermaid"></pre>`
           </div>
         </div>
 
-        <div class="accordion-item">
+        <div v-if="showSection('icons')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-icons-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-icons" aria-expanded="false" aria-controls="item-helper-icons">
@@ -98,7 +131,7 @@ const codeMermaid = `<pre class="mermaid"></pre>`
           </div>
         </div>
 
-        <div class="accordion-item">
+        <div v-if="showSection('datatables')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-datatables-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-datatables" aria-expanded="false" aria-controls="item-helper-datatables">
@@ -124,7 +157,7 @@ const codeMermaid = `<pre class="mermaid"></pre>`
           </div>
         </div>
 
-        <div class="accordion-item">
+        <div v-if="showSection('mermaid')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-mermaid-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-mermaid" aria-expanded="false" aria-controls="item-helper-mermaid">
@@ -146,7 +179,7 @@ const codeMermaid = `<pre class="mermaid"></pre>`
           </div>
         </div>
 
-        <div class="accordion-item">
+        <div v-if="showSection('nunjucks')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-nunjucks-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-nunjucks" aria-expanded="false" aria-controls="item-helper-nunjucks">
@@ -208,7 +241,7 @@ const codeMermaid = `<pre class="mermaid"></pre>`
           </div>
         </div>
 
-        <div class="accordion-item">
+        <div v-if="showSection('javascript')" class="accordion-item">
           <h2 class="accordion-header" id="item-helper-javascript-heading">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
               data-bs-target="#item-helper-javascript" aria-expanded="false" aria-controls="item-helper-javascript">

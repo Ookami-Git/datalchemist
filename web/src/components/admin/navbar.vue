@@ -98,6 +98,7 @@ const draggingParentIndex = ref(null);
 const dragOverIndex = ref(null);
 const dragOverSubIndex = ref(null);
 const dragOverParentIndex = ref(null);
+const dragOverMainEnd = ref(false);
 
 function clearDragState() {
   draggingIndex.value = null;
@@ -106,6 +107,19 @@ function clearDragState() {
   dragOverIndex.value = null;
   dragOverSubIndex.value = null;
   dragOverParentIndex.value = null;
+  dragOverMainEnd.value = false;
+}
+
+function onMainEndDrop(event) {
+  if (draggingIndex.value !== null) {
+    const item = menuItems.value.splice(draggingIndex.value, 1)[0];
+    menuItems.value.push(item);
+  } else if (draggingParentIndex.value !== null && draggingSubIndex.value !== null) {
+    const sourceParent = menuItems.value[draggingParentIndex.value];
+    const item = sourceParent.subitems.splice(draggingSubIndex.value, 1)[0];
+    menuItems.value.push(item);
+  }
+  clearDragState();
 }
 
 function onDragStart(index, event) {
@@ -164,7 +178,6 @@ function onSubDragOver(parentIndex, subIndex, event) {
 
 function onSubDragLeave(parentIndex, subIndex, event) {
   if (dragOverParentIndex.value === parentIndex && dragOverSubIndex.value === subIndex) {
-    dragOverParentIndex.value = null;
     dragOverSubIndex.value = null;
   }
 }
@@ -180,8 +193,8 @@ function onSubDrop(parentIndex, subIndex, event) {
   } else if (draggingIndex.value !== null) {
     const item = menuItems.value[draggingIndex.value];
     if (item.subitems) return;
-    menuItems.value.splice(draggingIndex.value, 1);
     const targetParent = menuItems.value[parentIndex];
+    menuItems.value.splice(draggingIndex.value, 1);
     if (!targetParent.subitems) targetParent.subitems = [];
     targetParent.subitems.splice(subIndex, 0, item);
   }
@@ -201,7 +214,6 @@ function onSubListDragOver(parentIndex, event) {
 
 function onSubListDragLeave(event) {
   if (dragOverSubIndex.value === -1) {
-    dragOverParentIndex.value = null;
     dragOverSubIndex.value = null;
   }
 }
@@ -346,7 +358,7 @@ onMounted(() => {
                 </button>
               </div>
 
-              <div class="admin-navbar-visual-editor flex-grow-1 p-3">
+              <div class="admin-navbar-visual-editor flex-grow-1 p-3" @dragover="dragOverParentIndex = null">
                 <div v-if="loadError" class="alert alert-warning mb-3" role="alert">
                   <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ $t('admin.navbar.error.load') }}
                   <div class="small mt-1">{{ loadError }}</div>
@@ -456,7 +468,33 @@ onMounted(() => {
                           <i class="bi bi-trash"></i>
                         </button>
                       </div>
+
+                      <!-- Placeholder to drop at the end -->
+                      <div
+                        v-if="dragOverParentIndex === index && (draggingIndex !== null || (draggingParentIndex !== null && draggingParentIndex !== index))"
+                        class="admin-navbar-subitem-placeholder"
+                        :class="{ 'drag-over': dragOverSubIndex === -1 }"
+                        @dragover.prevent.stop="onSubListDragOver(index, $event)"
+                        @dragleave.stop="onSubListDragLeave"
+                        @drop.stop="onSubListDrop(index, $event)"
+                      >
+                        <i class="bi bi-plus-circle-dotted me-1"></i>
+                        <span>{{ $t('admin.navbar.actions.dropAtEnd') }}</span>
+                      </div>
                     </div>
+                  </div>
+
+                  <!-- Placeholder to drop at the end of the main menu -->
+                  <div
+                    v-if="draggingSubIndex !== null && draggingParentIndex !== null"
+                    class="admin-navbar-main-placeholder"
+                    :class="{ 'drag-over': dragOverMainEnd }"
+                    @dragover.prevent="dragOverMainEnd = true"
+                    @dragleave="dragOverMainEnd = false"
+                    @drop="onMainEndDrop($event)"
+                  >
+                    <i class="bi bi-plus-circle-dotted me-1"></i>
+                    <span>{{ $t('admin.navbar.actions.dropAtEnd') }}</span>
                   </div>
                 </div>
 

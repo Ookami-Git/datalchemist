@@ -1,11 +1,12 @@
 <script setup>
 // --- Imports Vue & Libs ---
-import { ref, inject, watch, nextTick, onBeforeUnmount } from 'vue';
+import { computed, ref, inject, watch, nextTick, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import nunjucks from 'nunjucks';
 import mermaid from 'mermaid';
 import he from 'he';
 import { setDataTablesLanguage } from '@/utils/dataTables.js';
+import { useActiveTheme } from '@/utils/useActiveTheme.js';
 // --- DataTables & Dépendances ---
 import jQuery from "jquery";
 import jszip from 'jszip';
@@ -19,9 +20,11 @@ import loading from '../loading.vue';
 const parameters = inject('parameters');
 const resizeWidget = inject('resizeWidget', null);
 const globalSearch = inject('enableGlobalSearch', null);
+const { getActiveTheme } = useActiveTheme(parameters);
 
 // --- Nunjucks Environment & Filtres personnalisés ---
 import { registerNunjucksFilters } from '@/utils/nunjucksFilters.js';
+import { resolveItemRenderDefinition } from '@/utils/itemTemplate.js';
 if (!window.nunjucksEnv) {
   window.nunjucksEnv = new nunjucks.Environment();
   registerNunjucksFilters(window.nunjucksEnv);
@@ -40,8 +43,10 @@ const fetchError = ref(null);
 const itemRoot = ref(null);
 let renderCycle = 0;
 
+const resolvedItemDescribe = computed(() => resolveItemRenderDefinition(props.itemDescribe));
+
 function canRenderTemplateWithData() {
-  return Boolean(props.data && props.itemDescribe?.template?.trim());
+  return Boolean(props.data && resolvedItemDescribe.value?.template?.trim());
 }
 
 function cleanupDataTables() {
@@ -83,8 +88,8 @@ function cleanupDataTables() {
 // --- Rendu Nunjucks ---
 const renderItem = async () => {
   try {
-    if (props.data && props.itemDescribe.template?.trim()) {
-      renderedItem.value = nunjucksEnv.renderString(props.itemDescribe.template, props.data);
+    if (props.data && resolvedItemDescribe.value?.template?.trim()) {
+      renderedItem.value = nunjucksEnv.renderString(resolvedItemDescribe.value.template, props.data);
     } else {
       renderedItem.value = `<div class="text-warning">No content available for this item.</div>`;
     }
@@ -176,7 +181,7 @@ watch(
     fetchError.value = null;
     renderedItem.value = null;
 
-    const itemid = props.itemDescribe?.itemid || route.params.itemid;
+    const itemid = resolvedItemDescribe.value?.itemid || route.params.itemid;
     const canRenderDataTemplate = canRenderTemplateWithData();
 
     try {
@@ -195,14 +200,14 @@ watch(
       if (canceled || currentCycle !== renderCycle) return;
 
       // --- JS dynamique ---
-      if (props.itemDescribe?.javascript?.trim()) {
+      if (resolvedItemDescribe.value?.javascript?.trim()) {
         runDynamicJs(
-          nunjucksEnv.renderString(props.itemDescribe.javascript, props.data),
+          nunjucksEnv.renderString(resolvedItemDescribe.value.javascript, props.data),
           { jQuery, DataTable, itemData: props.data, itemid, jszip, pdfmake, pdfFonts }
         );
       }
 
-      mermaid.initialize({ theme: parameters.value.theme });
+      mermaid.initialize({ theme: getActiveTheme() });
       await mermaid.run();
       if (canceled || currentCycle !== renderCycle) return;
 
@@ -237,7 +242,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="card-body">
         <h5 class="card-title placeholder-glow">
-          <span>Unable to load item: {{ props.itemDescribe?.itemid || route.params.itemid }}</span>
+          <span>Unable to load item: {{ resolvedItemDescribe?.itemid || route.params.itemid }}</span>
         </h5>
       </div>
     </div>

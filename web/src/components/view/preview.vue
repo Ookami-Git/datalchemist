@@ -5,6 +5,9 @@ import { useRoute } from 'vue-router';
 import View from '../view.vue';
 import loading from '../view/loading.vue';
 import axios from 'axios';
+import { effectiveGetQuery } from '@/utils/getVariables.js';
+
+const emit = defineEmits(['data-loaded']);
 
 const props = defineProps({
     mode: {
@@ -40,7 +43,8 @@ const apiUrl = inject('apiUrl');
 
 
 async function fetchRealData(itemid) {
-    const requestConfig = { params: props.previewQuery || {} };
+    const requestConfig = { params: effectiveGetQuery(props.previewQuery, route.query) };
+    const startTime = performance.now();
 
     try {
         if (props.mode === 'edit' && props.item) {
@@ -70,6 +74,7 @@ async function fetchRealData(itemid) {
             }
             viewData.value = data;
             provide('data', ref(viewData.value));
+            emit('data-loaded', Math.round(performance.now() - startTime));
             return;
         }
         // Sinon, mode normal (saved)
@@ -93,6 +98,7 @@ async function fetchRealData(itemid) {
         };
         viewData.value = dataRes.data;
         provide('data', ref(viewData.value));
+        emit('data-loaded', Math.round(performance.now() - startTime));
     } catch (e) {
         viewStructure.value = {
             version: 1,
@@ -113,7 +119,7 @@ onMounted(() => {
     }
 });
 
-watch(() => [props.mode, props.itemid, props.item, props.refreshToken, JSON.stringify(props.previewQuery || {}), route.params.id, route.params.itemid], () => {
+watch(() => [props.mode, props.itemid, props.item, props.refreshToken, JSON.stringify(props.previewQuery || {}), route.fullPath], () => {
     const id = props.itemid || route.params.id || route.params.itemid;
     if (id) {
         fetchRealData(id);

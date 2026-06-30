@@ -27,8 +27,7 @@ const hasUnsavedChanges = computed(() => {
 });
 
 const isLdapEnabled = computed(() => parameter.value?.ldap === true || parameter.value?.ldap === 'true');
-const isThemeLight = computed(() => parameter.value?.theme === 'light');
-const isThemeDark = computed(() => parameter.value?.theme === 'dark');
+
 
 function cloneParameters(data) {
     return JSON.parse(JSON.stringify(data));
@@ -159,28 +158,7 @@ onMounted(async () => {
                             <h5 class="panel-title">{{ $t('admin.global.bg') }}</h5>
 
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label d-block">{{ $t('admin.global.theme') }}</label>
-                                    <div class="theme-toggle"
-                                        :class="{ 'is-light': isThemeLight, 'is-dark': isThemeDark }" role="group"
-                                        :aria-label="$t('admin.global.theme')">
-                                        <span class="theme-toggle-glider" aria-hidden="true"></span>
-                                        <button type="button" class="theme-toggle-btn"
-                                            :class="{ 'is-active': isThemeLight }" :aria-pressed="isThemeLight"
-                                            @click="parameter.theme = 'light'">
-                                            <i class="bi bi-brightness-high-fill"></i>
-                                            <span>{{ $t('admin.global.light') }}</span>
-                                        </button>
-                                        <button type="button" class="theme-toggle-btn"
-                                            :class="{ 'is-active': isThemeDark }" :aria-pressed="isThemeDark"
-                                            @click="parameter.theme = 'dark'">
-                                            <i class="bi bi-moon-stars-fill"></i>
-                                            <span>{{ $t('admin.global.dark') }}</span>
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
+                                <div class="col-12">
                                     <label class="form-label d-block">{{ $t('admin.global.lang') }}</label>
                                     <div class="language-toggle" role="group" :aria-label="$t('admin.global.lang')">
                                         <button v-for="language in languageOptions" :key="language.id" type="button"

@@ -182,53 +182,62 @@ onMounted(async () => {
   <section class="admin-edit-view-page container-fluid px-0 py-1 py-lg-2">
     <div class="d-flex flex-column gap-3 gap-xxl-4">
       <header class="card admin-edit-view-hero shadow-sm">
-        <div class="card-body p-3 p-lg-3 d-flex flex-column gap-2">
-          <div class="d-flex flex-wrap align-items-center gap-2">
+        <div class="card-body p-3 p-lg-4 d-flex flex-column gap-3">
+          <div class="d-flex flex-wrap align-items-center gap-3">
             <div class="admin-edit-view-hero-icon">
               <i class="bi bi-columns-gap"></i>
             </div>
             <div class="admin-edit-view-title-wrap me-auto">
               <p class="admin-edit-view-kicker mb-0">{{ $t('menu.edit') }}</p>
-              <h5 class="mb-0">{{ $t('editview.header') }}</h5>
+              <h5 class="mb-0 fw-bold text-gradient">{{ viewInfo ? viewInfo.name : $t('editview.header') }}</h5>
               <p class="mb-0 small text-secondary">{{ $t('editview.subtitle') }}</p>
             </div>
-            <span v-if="viewInfo" class="badge rounded-pill admin-edit-view-state-chip text-bg-info">
-              <i class="bi bi-hash me-1"></i>{{ viewInfo.id }}
-            </span>
-            <span class="badge rounded-pill admin-edit-view-state-chip text-bg-primary">{{ $t(modeLabelKey) }}</span>
-            <span class="badge rounded-pill admin-edit-view-state-chip text-bg-secondary">{{ itemsCount }} {{
-              $t('editview.item') }}</span>
+            <div class="d-flex align-items-center gap-2">
+              <span v-if="viewInfo" class="badge rounded-pill admin-edit-view-state-chip text-bg-light border-subtle">
+                <i class="bi bi-hash me-1"></i>{{ viewInfo.id }}
+              </span>
+              <span class="badge rounded-pill admin-edit-view-state-chip text-bg-primary">
+                <i class="bi" :class="viewMode === 2 ? 'bi-grid-3x3-gap-fill' : 'bi-list-ul'"></i> {{ $t(modeLabelKey) }}
+              </span>
+              <span class="badge rounded-pill admin-edit-view-state-chip text-bg-secondary">
+                {{ itemsCount }} {{ $t('editview.item') }}
+              </span>
+            </div>
           </div>
 
-          <div class="d-flex flex-column flex-xl-row align-items-xl-center gap-2 mt-1">
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pt-2 border-top border-subtle">
             <div class="d-flex align-items-center gap-2 flex-shrink-0">
-              <RouterLink type="button" class="btn btn-secondary btn-sm" :to="{ name: 'edit' }" active-class="active">
+              <RouterLink type="button" class="btn btn-light btn-sm px-3 rounded-pill" :to="{ name: 'edit', query: { tab: 'views' } }" active-class="active">
                 <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
-              <RouterLink v-if="viewInfo" type="button" class="btn btn-outline-info btn-sm"
+              <RouterLink v-if="viewInfo" type="button" class="btn btn-outline-primary btn-sm px-3 rounded-pill"
                 :title="$t('global.preview_saved_hint')" :to="{ name: 'view', params: { viewid: viewInfo.id } }"
                 target="_blank">
                 <i class="bi bi-eye-fill me-1"></i>{{ $t('global.preview') }}
               </RouterLink>
-              <button type="button" class="btn btn-outline-primary btn-sm" @click="openJsonModal">
+              <button type="button" class="btn btn-outline-secondary btn-sm px-3 rounded-pill" @click="openJsonModal">
                 <i class="bi bi-code-slash me-1"></i>JSON
               </button>
             </div>
 
-            <div class="flex-grow-1" v-if="viewInfo">
-              <div class="input-group input-group-sm admin-edit-view-name-input">
-                <span class="input-group-text"><i class="bi bi-tag"></i></span>
-                <input type="text" class="form-control" :placeholder="$t('edit.name')" :aria-label="$t('edit.name')"
+            <div class="flex-grow-1 max-w-md-50" v-if="viewInfo">
+              <div class="input-group input-group-sm admin-edit-view-name-input-modern">
+                <span class="input-group-text bg-transparent border-end-0 text-secondary"><i class="bi bi-tag"></i></span>
+                <input type="text" class="form-control border-start-0 ps-0" :placeholder="$t('edit.name')" :aria-label="$t('edit.name')"
                   v-model="viewInfo.name">
               </div>
             </div>
 
-            <div class="input-group input-group-sm admin-edit-view-mode-group">
-              <span class="input-group-text">{{ $t('editview.mode') }}</span>
-              <select v-model="viewMode" class="form-select">
-                <option :value="2">{{ $t('editview.mode_grid') }}</option>
-                <option :value="1">{{ $t('editview.mode_row') }}</option>
-              </select>
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+              <span class="small text-secondary fw-semibold">{{ $t('editview.mode') }}</span>
+              <div class="btn-group btn-group-sm rounded-pill p-1 bg-body-tertiary border border-subtle" role="group">
+                <button type="button" class="btn rounded-pill px-3 py-1 border-0" :class="viewMode === 2 ? 'btn-primary shadow-sm' : 'btn-light text-secondary bg-transparent'" @click="viewMode = 2">
+                  <i class="bi bi-grid-3x3-gap-fill me-1"></i>{{ $t('editview.mode_grid') }}
+                </button>
+                <button type="button" class="btn rounded-pill px-3 py-1 border-0" :class="viewMode === 1 ? 'btn-primary shadow-sm' : 'btn-light text-secondary bg-transparent'" @click="viewMode = 1">
+                  <i class="bi bi-list-ul me-1"></i>{{ $t('editview.mode_row') }}
+                </button>
+              </div>
             </div>
           </div>
         </div>

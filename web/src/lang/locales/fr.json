@@ -1,385 +1,498 @@
 {
-    "global": {
-        "apply": "Appliquer",
-        "cancel": "Annuler",
-        "close": "Fermer",
-        "username": "Nom d'utilisateur",
-        "password": "Mot de passe",
-        "yes": "Oui",
-        "no": "Non",
-        "groups": "Groupes",
-        "add": "Ajouter",
-        "remove": "Supprimer",
-        "copy": "Copier",
-        "copied": "Copié",
-        "edit": "Modifier",
-        "preview": "Aperçu",
-        "preview_saved_hint": "Aperçu de la version sauvegardée",
-        "error": {
-            "unknown": "Erreur inconnue",
-            "fetch_sources": "Erreur lors de la récupération des sources",
-            "fetch_items": "Erreur lors de la récupération des objets",
-            "fetch_views": "Erreur lors de la récupération des vues",
-            "fetch_secrets": "Erreur lors de la récupération des secrets"
-        }
-    },
-    "auth": {
-        "message": "Veuillez saisir votre identifiant et mot de passe",
-        "button": "Connexion"
-    },
-    "menu": {
-        "profil": "Mon compte",
-        "logout": "Déconnexion",
-        "admin": "Paramètres",
-        "edit": "Édition",
-        "search": "Filtrer tableaux",
-        "clearsearch": "Effacer le filtre"
-    },
-    "profil": {
-        "header": "Mon compte",
-        "parameters": "Paramètres",
-        "language": "Langue",
-        "languageEnglish": "Anglais",
-        "languageFrench": "Français",
-        "theme": "Thème",
-        "defaultPreview": "Par défaut",
-        "password": "Nouveau mot de passe",
-        "passwordrepeat": "Confirmer le nouveau mot de passe",
-        "passwordmismatch": "Les mots de passe ne correspondent pas",
-        "savesuccess": "Profil sauvegardé avec succès",
-        "save": "Sauvegarder les modifications"
-    },
-    "admin": {
-        "header": "Paramètres",
-        "global": {
-            "header": "Général",
-            "pending": "Modifications en attente",
-            "synced": "Tout est sauvegardé",
-            "name": "Nom",
-            "theme": "Thème",
-            "lang": "Langue",
-            "bg": "Arrière plan",
-            "dark": "Sombre",
-            "light": "Clair",
-            "ldap": {
-                "header": "Configurer authentification LDAP",
-                "enable": "Activer",
-                "skipverify": "Ignorer la validité du certificat",
-                "server": "Serveur",
-                "port": "Port",
-                "basedn": "Base DN",
-                "login": "Champ de l'identifiant",
-                "user": "Utilisateur",
-                "password": "Mot de passe"
-            },
-            "defaultview": "Accueil"
-        },
-        "navbar": {
-            "header": "Barre de navigation",
-            "subtitle": "Configurez la structure du menu et ses liens",
-            "status": {
-                "valid": "Le menu est prêt à être enregistré",
-                "invalid": "Le menu contient des erreurs"
-            },
-            "editor": {
-                "title": "Éditeur de navigation",
-                "help": "Ajoutez, organisez et configurez les éléments du menu, puis enregistrez vos modifications."
-            },
-            "guide": {
-                "title": "Référence rapide",
-                "resources": "Liens utiles",
-                "example": "Exemple",
-                "visualHelp": "Les changements sont enregistrés au format compatible avec votre menu existant. Ajoutez un sous-menu pour regrouper des liens sur un seul niveau."
-            },
-            "empty": "Votre barre de navigation ne contient encore aucun élément.",
-            "untitled": "Élément sans titre",
-            "item": {
-                "divider": "Séparateur"
-            },
-            "types": {
-                "link": "Lien",
-                "submenu": "Sous-menu",
-                "divider": "Séparateur"
-            },
-            "destinations": {
-                "internal": "Interne",
-                "external": "Externe",
-                "chooseView": "Choisir une vue…",
-                "custom": "Autre chemin interne"
-            },
-            "preview": {
-                "title": "Aperçu en direct",
-                "help": "Reflète immédiatement les modifications non enregistrées."
-            },
-            "fields": {
-                "name": "Libellé",
-                "namePlaceholder": "Ex. Tableau de bord",
-                "link": "Lien",
-                "linkPlaceholder": "Ex. /view/home ou https://…",
-                "type": "Type d'entrée",
-                "destination": "Destination",
-                "view": "Vue interne",
-                "externalUrl": "Adresse externe",
-                "icon": "Icône",
-                "divider": "Séparateur",
-                "external": "Lien externe",
-                "newtab": "Ouvrir dans un nouvel onglet"
-            },
-            "submenu": { "title": "Sous-menu" },
-            "actions": {
-                "add": "Ajouter un élément",
-                "addFirst": "Ajouter le premier élément",
-                "addSubmenu": "Ajouter un sous-menu",
-                "removeSubmenu": "Retirer le sous-menu",
-                "addSubitem": "Ajouter un lien",
-                "makeLink": "Transformer en lien",
-                "order": "Réorganiser l'élément"
-            },
-            "resources": {
-                "bootstrapIcons": "Bootstrap Icons",
-                "fontAwesome": "Font Awesome"
-            },
-            "rules": {
-                "name": "Libellé affiché dans la navigation",
-                "link": "Destination interne (/view/...) ou URL externe",
-                "icon": "Classe CSS d'icône (exemple: bi bi-grid)",
-                "subitems": "Liste d'entrées enfant (un seul niveau)",
-                "external": "Indique un lien externe à l'application",
-                "divider": "Ajoute un séparateur visuel",
-                "newtab": "Ouvre le lien dans un nouvel onglet"
-            },
-            "error": {
-                "load": "La configuration actuelle du menu n'a pas pu être lue. Vous pouvez créer une nouvelle liste.",
-                "yaml":"Le code YAML comporte des erreurs de syntaxe",
-                "req-name":"La clé \"name\" est requise",
-                "req-boolean":"La valeur doit être un booléen (true/false)",
-                "req-array":"La valeur doit être un tableau YAML",
-                "req-string":"La valeur doit être de type texte",
-                "subitems":"L'imbrication de \"subitems\" n'est pas supportée",
-                "unknown-key":"La clé suivante n'est pas supportée"
-            }
-        },
-        "users": {
-            "header": "Utilisateurs",
-            "subtitle": "Gérez les comptes, le type d'authentification et les groupes",
-            "total": "Utilisateurs",
-            "tablehint": "Modifiez les profils, assignez les groupes et supprimez les comptes inutiles",
-            "user": "Utilisateur",
-            "type": "Type de connexion",
-            "groups": "Groupes",
-            "actions": "Actions",
-            "adduser": "Ajouter l'utilisateur",
-            "usernameexists": "Ce nom d'utilisateur existe déjà",
-            "nogroup": "Aucun groupe sélectionné",
-            "local": "Local",
-            "ldap": "LDAP",
-            "edituser": "Modifier l'utilisateur",
-            "changegroups": "Modifier les groupes",
-            "deleteuser": "Supprimer l'utilisateur",
-            "preview": "Prévisualisation de l'utilisateur",
-            "password":"Mot de passe",
-            "askdelete": "Êtes-vous sûr de vouloir supprimer l'utilisateur"
-        },
-        "groups": {
-            "header": "Groupes",
-            "subtitle": "Administrez les groupes et leurs descriptions",
-            "total": "Groupes",
-            "tablehint": "Créez, modifiez ou supprimez les groupes disponibles",
-            "name": "Nom du groupe",
-            "description": "Description",
-            "addgroup": "Ajouter le groupe",
-            "editgroup": "Modifier le groupe",
-            "deletegroup": "Supprimer le groupe",
-            "nameexists": "Ce nom de groupe existe déjà",
-            "askdelete": "Êtes-vous sûr de vouloir supprimer le groupe"
-        },
-        "acl": {
-            "header": "Contrôle d'accès",
-            "subtitle": "Définissez quelles vues sont publiques ou réservées à des groupes",
-            "total": "Vues",
-            "protectedcount": "Protégées",
-            "tablehint": "Activez la protection d'une vue puis choisissez les groupes autorisés",
-            "view": "Vue",
-            "status": "État",
-            "groupsallow": "Groupes autorisés",
-            "actions": "Actions",
-            "protected": "Protégée",
-            "public": "Publique",
-            "toggleprotection": "Activer ou désactiver la protection",
-            "allowgroups": "Autoriser des groupes"
-        }
-    },
-    "edit": {
-        "sources": "Sources",
-        "items": "Objets",
-        "views": "Vues",
-        "name": "Nom",
-        "actions": "Actions",
-        "subtitle": "Gérez les sources, objets, vues et secrets",
-        "total": "Entrées",
-        "add": "Ajouter",
-        "secrets": "Secrets",
-        "source_hint": "Définit les connecteurs de données (API, fichiers, BDD)",
-        "item_hint": "Construit les objets à partir des sources",
-        "view_hint": "Assemble les objets pour l'affichage final",
-        "secrets_sources_hint": "Utilisés dans les templates de sources (backend)",
-        "modal_add_secret_title": "Ajouter un secret",
-        "modal_add_secret_note": "Le secret est chiffré côté backend et utilisable dans les templates de sources.",
-        "modal_add_secret_name_help": "Nom de référence utilisé dans vos templates de source",
-        "modal_add_secret_value_help": "Valeur sensible chiffrée en base",
-        "modal_add_generic_note": "Cet élément sera disponible dès l'enregistrement.",
-        "modal_add_generic_name_help": "Utilisez un nom explicite et unique",
-        "modal_edit_secret_title": "Modifier le secret",
-        "modal_edit_secret_note": "Les changements sont chiffrés côté backend.",
-        "modal_edit_secret_name_help": "Nom de référence utilisé dans vos templates de source",
-        "modal_edit_secret_value_help": "Nouvelle valeur chiffrée en base",
-        "modal_delete_subtitle": "Suppression définitive",
-        "modal_delete_warning": "Cette action est irréversible.",
-        "modal_delete_type": "Élément",
-        "secrets_edit_disabled": "Édition des secrets désactivée",
-        "secrets_state_enabled": "Secrets activés",
-        "secrets_state_disabled": "Secrets désactivés",
-        "secret_value": "Valeur du secret"
-    },
-    "edititem": {
-        "header": "Objet",
-        "subtitle": "Modifiez le template HTML, le script JavaScript et les sources associées à cet objet",
-        "loading": "Chargement de l'objet...",
-        "loaderror": "Impossible de charger cet objet",
-        "retry": "Réessayer",
-        "preview": "Aperçu",
-        "preview_local": "Aperçu local",
-        "preview_local_hint": "Inclut les modifications non sauvegardées",
-        "preview_query_label": "Variables GET",
-        "preview_query_placeholder": "var=value&lang=fr",
-        "preview_reload": "Recharger",
-        "global": {
-            "syntax": "Syntaxe",
-            "examples": "Exemples",
-            "documentation": "Documentation intégrée",
-            "docsbytype": "Une documentation dédiée est disponible dans chaque section"
-        },
-        "bootstrap": {
-            "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
-        },
-        "icons": {
-            "header": "Icônes",
-            "description": "Utilisez les icônes de Font Awesome ou Bootstrap pour afficher les objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
-        },
-        "datatable": {
-            "description": "DataTables permet d'ajouter facilement la recherche, le tri, l'export et la pagination à vos tableaux HTML. Pour utiliser le thème Bootstrap, ajoutez la classe 'table'. Référez-vous à la documentation pour des exemples et plus d'informations."
-        },
-        "mermaid": {
-            "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez-vous à la documentation pour plus d'informations."
-        },
-        "nunjucks": {
-            "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez-vous à la documentation pour plus d'informations.",
-            "customfilter": "Filtres additionnels",
-            "date": {
-                "description": "Permet de manipuler le format des dates."
-            },
-            "find": {
-                "description": "Permet de rechercher une valeur dans un tableau d'objets et remonte le premier objet qui correspond."
-            },
-            "fromjson": {
-                "description": "Permet de convertir une chaîne de caractère JSON en objet."
-            },
-            "setattribute":{
-                "description": "Permet de modifier un attribut d'un objet."
-            },
-            "split": {
-                "description": "Permet de découper une chaîne de caractères en tableau selon un séparateur."
-            }
-        },
-        "javascript": {
-            "description": "Le code JavaScript est exécuté après le code HTML et peut utiliser Nunjucks. Il est important de noter que chaque objet datalchemist peut contenir son propre code JavaScript associé, il est donc recommandé d'éviter les conflits potentiels avec les autres objets en utilisant des noms de variables ou de fonctions uniques et en minimisant l'impact sur l'environnement global."
-        }
-    },
-    "editsource": {
-        "type": {
-            "file": "Fichier",
-            "url": "URL",
-            "execute": "Exécuter une commande ou un script",
-            "database": "Base de données",
-            "text": "Création"
-        },
-        "header": "Source",
-        "subtitle": "Configurez le type de source, son format et sa logique de récupération",
-        "loading": "Chargement de la source...",
-        "loaderror": "Impossible de charger cette source",
-        "retry": "Réessayer",
-        "config_title": "Configuration",
-        "config_help": "Définissez le connecteur, le format de sortie et les paramètres associés",
-        "secrets_hint": "Secrets disponibles dans les templates de source (traitement backend) :",
-        "type_label": "Type",
-        "format": "Format",
-        "database": {
-            "connection": "Chaîne de connexion à la base de données",
-            "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaîne de connexion.",
-            "query": "Requête SQL"
-        },
-        "file": {
-            "path": "Chemin",
-            "helper": "Chemin du fichier sur le serveur où est executé datalchemist."
-        },
-        "execute": {
-            "path": "Commande ou script",
-            "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format sélectionné."
-        },
-        "url": {
-            "skipverify": "Ignorer la validité du certificat SSL",
-            "proxy": "Proxy",
-            "authentication": "Authentification (Basic Auth)",
-            "enable": "Activer",
-            "username": "Nom d'utilisateur",
-            "password": "Mot de passe",
-            "ak": "Clé d'accès",
-            "sk": "Clé secrète",
-            "region": "Région",
-            "service": "Service",
-            "headers": "En-têtes",
-            "method": "Méthode",
-            "data": "Donnée (corps de la requête)",
-            "key": "Clé",
-            "value": "Valeur"
-        },
-        "text": {
-            "helper": "Saisir l'objet dans le langage sélectionné. La syntaxe JINJA est valable."
-        },
-        "loop": "Boucle",
-        "loopinfo": "Plus d'informations"
-    },
-    "editview": {
-        "header": "Vue",
-        "subtitle": "Composez votre vue en mode grille ou rangée et ajustez sa structure visuelle",
-        "loading": "Chargement de la vue...",
-        "loaderror": "Impossible de charger cette vue",
-        "retry": "Réessayer",
-        "config_title": "Éditeur de mise en page",
-        "config_help": "Ajoutez des objets, ajustez leur taille et organisez les lignes/colonnes",
-        "mode": "Mode",
-        "mode_grid": "Grille",
-        "mode_row": "Rangée",
-        "header_item": "En-tête",
-        "size": "Taille",
-        "item": "Objet",
-        "addrow": "Ajouter rangée",
-        "additem": "Ajouter objet",
-        "removerow": "Supprimer rangée",
-        "removeitem": "Supprimer l'objet",
-        "float": "Flottant",
-        "resize": "Dimensionnement ajusté"
-    },
-    "home": {
-        "welcome": "Bienvenue sur Datalchemist",
-        "header": "Page d'accueil",
-        "message": "Si vous avez une vue par défaut configurée dans les paramètres, vous serez redirigé vers celle-ci. Sinon, vous pouvez explorer l'application à partir d'ici"
-    },
-    "save": {
-        "label": "Sauvegarder",
-        "nosave": "Voulez-vous vraiment quitter sans sauvegarder les modifications ?",
-        "modalTitle": "Modifications non sauvegardées",
-        "stay": "Rester sur la page",
-        "leave": "Quitter sans sauvegarder"
+  "global": {
+    "apply": "Appliquer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "yes": "Oui",
+    "no": "Non",
+    "groups": "Groupes",
+    "add": "Ajouter",
+    "remove": "Supprimer",
+    "copy": "Copier",
+    "copied": "Copié",
+    "edit": "Modifier",
+    "preview": "Aperçu",
+    "preview_saved_hint": "Aperçu de la version sauvegardée",
+    "no_headers_hint": "Aucun en-tête configuré",
+    "error": {
+      "unknown": "Erreur inconnue",
+      "fetch_sources": "Erreur lors de la récupération des sources",
+      "fetch_items": "Erreur lors de la récupération des objets",
+      "fetch_views": "Erreur lors de la récupération des vues",
+      "fetch_secrets": "Erreur lors de la récupération des secrets"
     }
+  },
+  "auth": {
+    "message": "Veuillez saisir votre identifiant et mot de passe",
+    "button": "Connexion"
+  },
+  "menu": {
+    "profil": "Mon compte",
+    "logout": "Déconnexion",
+    "admin": "Paramètres",
+    "edit": "Édition",
+    "search": "Filtrer tableaux",
+    "clearsearch": "Effacer le filtre"
+  },
+  "profil": {
+    "header": "Mon compte",
+    "parameters": "Paramètres",
+    "language": "Langue",
+    "languageEnglish": "Anglais",
+    "languageFrench": "Français",
+    "theme": "Thème",
+    "defaultPreview": "Thème système",
+    "password": "Nouveau mot de passe",
+    "passwordrepeat": "Confirmer le nouveau mot de passe",
+    "passwordmismatch": "Les mots de passe ne correspondent pas",
+    "savesuccess": "Profil sauvegardé avec succès",
+    "save": "Sauvegarder les modifications"
+  },
+  "admin": {
+    "header": "Paramètres",
+    "global": {
+      "header": "Général",
+      "pending": "Modifications en attente",
+      "synced": "Tout est sauvegardé",
+      "name": "Nom",
+      "theme": "Thème",
+      "lang": "Langue",
+      "bg": "Arrière plan",
+      "dark": "Sombre",
+      "light": "Clair",
+      "ldap": {
+        "header": "Configurer authentification LDAP",
+        "enable": "Activer",
+        "skipverify": "Ignorer la validité du certificat",
+        "server": "Serveur",
+        "port": "Port",
+        "basedn": "Base DN",
+        "login": "Champ de l'identifiant",
+        "user": "Utilisateur",
+        "password": "Mot de passe"
+      },
+      "defaultview": "Accueil"
+    },
+    "navbar": {
+      "header": "Barre de navigation",
+      "subtitle": "Configurez la structure du menu et ses liens",
+      "status": {
+        "valid": "Le menu est prêt à être enregistré",
+        "invalid": "Le menu contient des erreurs"
+      },
+      "editor": {
+        "title": "Éditeur de navigation",
+        "help": "Ajoutez, organisez et configurez les éléments du menu, puis enregistrez vos modifications."
+      },
+      "guide": {
+        "title": "Référence rapide",
+        "resources": "Liens utiles",
+        "example": "Exemple",
+        "visualHelp": "Les changements sont enregistrés au format compatible avec votre menu existant. Ajoutez un sous-menu pour regrouper des liens sur un seul niveau."
+      },
+      "empty": "Votre barre de navigation ne contient encore aucun élément.",
+      "untitled": "Élément sans titre",
+      "item": {
+        "divider": "Séparateur"
+      },
+      "types": {
+        "link": "Lien",
+        "submenu": "Sous-menu",
+        "divider": "Séparateur"
+      },
+      "destinations": {
+        "internal": "Interne",
+        "external": "Externe",
+        "chooseView": "Choisir une vue…",
+        "custom": "Autre chemin interne"
+      },
+      "preview": {
+        "title": "Aperçu en direct",
+        "help": "Reflète immédiatement les modifications non enregistrées."
+      },
+      "fields": {
+        "name": "Libellé",
+        "namePlaceholder": "Ex. Tableau de bord",
+        "link": "Lien",
+        "linkPlaceholder": "Ex. /view/home ou https://…",
+        "type": "Type d'entrée",
+        "destination": "Destination",
+        "view": "Vue interne",
+        "externalUrl": "Adresse externe",
+        "icon": "Icône",
+        "divider": "Séparateur",
+        "external": "Lien externe",
+        "newtab": "Ouvrir dans un nouvel onglet"
+      },
+      "submenu": { "title": "Sous-menu" },
+      "actions": {
+        "add": "Ajouter un élément",
+        "addFirst": "Ajouter le premier élément",
+        "dropAtEnd": "Déposer ici pour ajouter à la fin",
+        "addSubmenu": "Ajouter un sous-menu",
+        "removeSubmenu": "Retirer le sous-menu",
+        "addSubitem": "Ajouter un lien",
+        "makeLink": "Transformer en lien",
+        "order": "Réorganiser l'élément"
+      },
+      "resources": {
+        "bootstrapIcons": "Bootstrap Icons",
+        "fontAwesome": "Font Awesome"
+      },
+      "rules": {
+        "name": "Libellé affiché dans la navigation",
+        "link": "Destination interne (/view/...) ou URL externe",
+        "icon": "Classe CSS d'icône (exemple: bi bi-grid)",
+        "subitems": "Liste d'entrées enfant (un seul niveau)",
+        "external": "Indique un lien externe à l'application",
+        "divider": "Ajoute un séparateur visuel",
+        "newtab": "Ouvre le lien dans un nouvel onglet"
+      },
+      "error": {
+        "load": "La configuration actuelle du menu n'a pas pu être lue. Vous pouvez créer une nouvelle liste.",
+        "yaml": "Le code YAML comporte des erreurs de syntaxe",
+        "req-name": "La clé \"name\" est requise",
+        "req-boolean": "La valeur doit être un booléen (true/false)",
+        "req-array": "La valeur doit être un tableau YAML",
+        "req-string": "La valeur doit être de type texte",
+        "subitems": "L'imbrication de \"subitems\" n'est pas supportée",
+        "unknown-key": "La clé suivante n'est pas supportée"
+      }
+    },
+    "users": {
+      "header": "Utilisateurs",
+      "subtitle": "Gérez les comptes, le type d'authentification et les groupes",
+      "total": "Utilisateurs",
+      "tablehint": "Modifiez les profils, assignez les groupes et supprimez les comptes inutiles",
+      "user": "Utilisateur",
+      "type": "Type de connexion",
+      "groups": "Groupes",
+      "actions": "Actions",
+      "adduser": "Ajouter l'utilisateur",
+      "usernameexists": "Ce nom d'utilisateur existe déjà",
+      "nogroup": "Aucun groupe sélectionné",
+      "local": "Local",
+      "ldap": "LDAP",
+      "edituser": "Modifier l'utilisateur",
+      "changegroups": "Modifier les groupes",
+      "deleteuser": "Supprimer l'utilisateur",
+      "preview": "Prévisualisation de l'utilisateur",
+      "password": "Mot de passe",
+      "askdelete": "Êtes-vous sûr de vouloir supprimer l'utilisateur"
+    },
+    "groups": {
+      "header": "Groupes",
+      "subtitle": "Administrez les groupes et leurs descriptions",
+      "total": "Groupes",
+      "tablehint": "Créez, modifiez ou supprimez les groupes disponibles",
+      "name": "Nom du groupe",
+      "description": "Description",
+      "addgroup": "Ajouter le groupe",
+      "editgroup": "Modifier le groupe",
+      "deletegroup": "Supprimer le groupe",
+      "nameexists": "Ce nom de groupe existe déjà",
+      "askdelete": "Êtes-vous sûr de vouloir supprimer le groupe"
+    },
+    "acl": {
+      "header": "Contrôle d'accès",
+      "subtitle": "Définissez quelles vues sont publiques ou réservées à des groupes",
+      "total": "Vues",
+      "protectedcount": "Protégées",
+      "tablehint": "Activez la protection d'une vue puis choisissez les groupes autorisés",
+      "view": "Vue",
+      "status": "État",
+      "groupsallow": "Groupes autorisés",
+      "actions": "Actions",
+      "protected": "Protégée",
+      "public": "Publique",
+      "toggleprotection": "Activer ou désactiver la protection",
+      "allowgroups": "Autoriser des groupes"
+    }
+  },
+  "edit": {
+    "sources": "Sources",
+    "items": "Objets",
+    "views": "Vues",
+    "name": "Nom",
+    "actions": "Actions",
+    "subtitle": "Gérez les sources, objets, vues et secrets",
+    "total": "Entrées",
+    "add": "Ajouter",
+    "secrets": "Secrets",
+    "source_hint": "Définit les connecteurs de données (API, fichiers, BDD)",
+    "item_hint": "Construit les objets à partir des sources",
+    "item_creation": {
+      "type_label": "Type d'objet",
+      "free": "Objet libre",
+      "free_help": "Éditez le HTML et le JavaScript après la création.",
+      "visual": "Objet depuis un template",
+      "visual_help": "Configurez un template visuel sans écrire de code.",
+      "template_label": "Template visuel"
+    },
+    "view_hint": "Assemble les objets pour l'affichage final",
+    "secrets_sources_hint": "Utilisés dans les templates de sources (backend)",
+    "modal_add_secret_title": "Ajouter un secret",
+    "modal_add_secret_note": "Le secret est chiffré côté backend et utilisable dans les templates de sources.",
+    "modal_add_secret_name_help": "Nom de référence utilisé dans vos templates de source",
+    "modal_add_secret_value_help": "Valeur sensible chiffrée en base",
+    "modal_add_generic_note": "Cet élément sera disponible dès l'enregistrement.",
+    "modal_add_generic_name_help": "Utilisez un nom explicite et unique",
+    "modal_edit_secret_title": "Modifier le secret",
+    "modal_edit_secret_note": "Les changements sont chiffrés côté backend.",
+    "modal_edit_secret_name_help": "Nom de référence utilisé dans vos templates de source",
+    "modal_edit_secret_value_help": "Nouvelle valeur chiffrée en base",
+    "modal_delete_subtitle": "Suppression définitive",
+    "modal_delete_warning": "Cette action est irréversible.",
+    "modal_delete_type": "Élément",
+    "secrets_edit_disabled": "Édition des secrets désactivée",
+    "secrets_state_enabled": "Secrets activés",
+    "secrets_state_disabled": "Secrets désactivés",
+    "secret_value": "Valeur du secret"
+  },
+  "templateVariables": {
+    "title": "Variables disponibles",
+    "context": {
+      "item": "Référence centralisée pour les templates d'objet et les données des sources liées.",
+      "source": "Référence centralisée pour les templates de source, les dépendances et les boucles."
+    },
+    "scope": {
+      "items_sources": "Objets / sources",
+      "sources_only": "Sources",
+      "source_loop": "Boucle source",
+      "object_loop": "Boucle objet",
+      "template_variables": "Variables template"
+    },
+    "sid": "Accède aux données d'une source liée par son identifiant. La clé commence par s suivi de l'id de la source.",
+    "sn": "Accède aux données d'une source liée par son nom. Utilisez la notation entre crochets si le nom contient des espaces ou des caractères spéciaux.",
+    "get": "Contient les paramètres GET de l'URL courante. Chaque clé renvoie une liste de valeurs.",
+    "var": "Accède aux variables globales calculées dans le template visuel.",
+    "var_loop": "Accède aux variables calculées à l’intérieur de la boucle courante du template visuel.",
+    "secret": "Accède à un secret chiffré dans un template de source. Le filtre secret déchiffre la valeur côté backend.",
+    "source_item": "Disponible uniquement dans une source avec une boucle. Représente l'élément courant de la collection parcourue.",
+    "value": "Dans une boucle de template objet, contient la valeur courante.",
+    "key": "Dans une boucle de template objet, contient l'index ou la clé de la valeur courante.",
+    "object_item": "Dans une boucle de template objet, contient l'objet courant. Ce n'est pas la variable item des boucles de source.",
+    "note": "Les chemins après ces variables suivent la structure réelle des données retournées par les sources."
+  },
+  "getVariables": {
+    "title": "Valeurs par défaut des variables GET",
+    "help": "Ces valeurs servent uniquement aux aperçus et aux éditeurs.",
+    "source_title": "Variables GET de la source",
+    "source_help": "Valeurs sauvegardées avec la source et utilisées par défaut dans les aperçus et les éditeurs.",
+    "object_variable_title": "Variables GET",
+    "object_variable_help": "Surcharge locale pour cette variable d'objet. Par défaut, la valeur de la source est utilisée.",
+    "default_placeholder": "Valeur par défaut"
+  },
+  "edititem": {
+    "header": "Objet",
+    "subtitle": "Modifiez le template HTML, le script JavaScript et les sources associées à cet objet",
+    "loading": "Chargement de l'objet...",
+    "loaderror": "Impossible de charger cet objet",
+    "retry": "Réessayer",
+    "preview": "Aperçu",
+    "preview_local": "Aperçu local",
+    "preview_local_hint": "Inclut les modifications non sauvegardées",
+    "preview_query_label": "Variables GET",
+    "preview_query_placeholder": "var=value&lang=fr",
+    "preview_reload": "Recharger",
+    "templates": {
+      "open": "Templates",
+      "title": "Bibliothèque de templates",
+      "subtitle": "Choisissez un template, puis renseignez ses données.",
+      "choose": "Choisir un template",
+      "demo": "Aperçu",
+      "unavailable": "Ce template n'est plus disponible. Choisissez-en un autre.",
+      "use": "Utiliser ce template",
+      "selected": "Template sélectionné",
+      "change": "Changer de template",
+      "convert_to_free": "Convertir en mode libre",
+      "convert_confirm": "Convertir cet objet en mode libre va générer le HTML et le JavaScript depuis le template actuel. Après sauvegarde, il ne sera plus possible de revenir au mode template. Continuer ?"
+    },
+    "visual": {
+      "configuration": "Configuration des données",
+      "template_placeholder": "{'{{ total_revenue }} €'}",
+      "data_path_placeholder": "items",
+      "options_section": "Options & Fonctionnalités",
+      "fields": {
+        "title": "Titre",
+        "value": "Valeur",
+        "subtitle": "Sous-titre",
+        "accent": "Couleur",
+        "colorRules": "Règles de couleur",
+        "statusColorRules": "Règles de couleur",
+        "trend": "Tendance",
+        "badge": "Badge",
+        "current": "Valeur actuelle",
+        "target": "Objectif",
+        "percent": "Pourcentage",
+        "unit": "Unité",
+        "items": "Collection",
+        "columns": "Colonnes du tableau",
+        "labelField": "Champ libellé",
+        "detailField": "Champ détail",
+        "badgeField": "Champ badge",
+        "firstHeader": "Première colonne",
+        "firstField": "Champ première colonne",
+        "secondHeader": "Deuxième colonne",
+        "secondField": "Champ deuxième colonne",
+        "dateField": "Champ date",
+        "pageLength": "Lignes par page",
+        "searching": "Recherche",
+        "ordering": "Tri",
+        "paging": "Pagination",
+        "info": "Informations",
+        "responsive": "Responsive",
+        "buttons": "Boutons",
+        "searchBuilder": "Recherche avancée",
+        "searchPanes": "Panneaux de filtre",
+        "searchPanesAutomatic": "Automatique",
+        "searchPanesThreshold": "Seuil de tolérance",
+        "searchPanesColumns": "Colonnes filtrables",
+        "colReorder": "Réordonner les colonnes",
+        "fixedHeader": "En-tête fixe",
+        "stateSave": "Mémoriser l'état",
+        "selectRows": "Sélection de lignes",
+        "scrollX": "Scroll horizontal",
+        "scroller": "Scroller",
+        "fixedColumnsLeft": "Colonnes figées à gauche",
+        "fixedColumnsRight": "Colonnes figées à droite",
+        "rowGroupColumn": "Colonne de regroupement",
+        "orderColumn": "Colonne de tri",
+        "orderDirection": "Sens du tri",
+        "globalVariables": "Variables globales",
+        "loopVariables": "Variables de boucle"
+      }
+    },
+    "mode_label": "Mode d'édition",
+    "global": {
+      "syntax": "Syntaxe",
+      "examples": "Exemples",
+      "documentation": "Documentation intégrée",
+      "docsbytype": "Une documentation dédiée est disponible dans chaque section"
+    },
+    "bootstrap": {
+      "description": "Utilisez les classes bootstrap dans votre code HTML pour unifier et personnaliser le rendu visuel de vos objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
+    },
+    "icons": {
+      "header": "Icônes",
+      "description": "Utilisez les icônes de Font Awesome ou Bootstrap pour afficher les objets. La documentation contient de nombreux exemples pour chaque type de rendu souhaité."
+    },
+    "datatable": {
+      "description": "DataTables permet d'ajouter facilement la recherche, le tri, l'export et la pagination à vos tableaux HTML. Pour utiliser le thème Bootstrap, ajoutez la classe 'table'. Référez-vous à la documentation pour des exemples et plus d'informations."
+    },
+    "mermaid": {
+      "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez-vous à la documentation pour plus d'informations."
+    },
+    "nunjucks": {
+      "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez-vous à la documentation pour plus d'informations.",
+      "customfilter": "Filtres additionnels",
+      "date": {
+        "description": "Permet de manipuler le format des dates."
+      },
+      "find": {
+        "description": "Permet de rechercher une valeur dans un tableau d'objets et remonte le premier objet qui correspond."
+      },
+      "fromjson": {
+        "description": "Permet de convertir une chaîne de caractère JSON en objet."
+      },
+      "setattribute": {
+        "description": "Permet de modifier un attribut d'un objet."
+      },
+      "split": {
+        "description": "Permet de découper une chaîne de caractères en tableau selon un séparateur."
+      }
+    },
+    "javascript": {
+      "description": "Le code JavaScript est exécuté après le code HTML et peut utiliser Nunjucks. Il est important de noter que chaque objet datalchemist peut contenir son propre code JavaScript associé, il est donc recommandé d'éviter les conflits potentiels avec les autres objets en utilisant des noms de variables ou de fonctions uniques et en minimisant l'impact sur l'environnement global."
+    }
+  },
+  "editsource": {
+    "type": {
+      "file": "Fichier",
+      "url": "URL",
+      "execute": "Exécuter une commande ou un script",
+      "database": "Base de données",
+      "text": "Création"
+    },
+    "header": "Source",
+    "subtitle": "Configurez le type de source, son format et sa logique de récupération",
+    "loading": "Chargement de la source...",
+    "loaderror": "Impossible de charger cette source",
+    "retry": "Réessayer",
+    "config_title": "Configuration",
+    "config_help": "Définissez le connecteur, le format de sortie et les paramètres associés",
+    "secrets_hint": "Secrets disponibles dans les templates de source (traitement backend) :",
+    "type_label": "Type",
+    "format": "Format",
+    "database": {
+      "connection": "Chaîne de connexion à la base de données",
+      "helper": "Voir l'aide à droite pour plus d'informations sur la syntaxe de la chaîne de connexion.",
+      "query": "Requête SQL"
+    },
+    "file": {
+      "path": "Chemin",
+      "helper": "Chemin du fichier sur le serveur où est executé datalchemist."
+    },
+    "execute": {
+      "path": "Commande ou script",
+      "helper": "Commande ou script qui sera exécuté par l'application. La sortie standard doit correspondre au format sélectionné."
+    },
+    "url": {
+      "skipverify": "Ignorer la validité du certificat SSL",
+      "proxy": "Proxy",
+      "authentication": "Authentification (Basic Auth)",
+      "enable": "Activer",
+      "username": "Nom d'utilisateur",
+      "password": "Mot de passe",
+      "ak": "Clé d'accès",
+      "sk": "Clé secrète",
+      "region": "Région",
+      "service": "Service",
+      "headers": "En-têtes",
+      "method": "Méthode",
+      "data": "Donnée (corps de la requête)",
+      "key": "Clé",
+      "value": "Valeur"
+    },
+    "text": {
+      "helper": "Saisir l'objet dans le langage sélectionné. La syntaxe JINJA est valable."
+    },
+    "loop": "Boucle",
+    "loopinfo": "Plus d'informations"
+  },
+  "editview": {
+    "header": "Vue",
+    "subtitle": "Composez votre vue en mode grille ou rangée et ajustez sa structure visuelle",
+    "loading": "Chargement de la vue...",
+    "loaderror": "Impossible de charger cette vue",
+    "retry": "Réessayer",
+    "config_title": "Éditeur de mise en page",
+    "config_help": "Ajoutez des objets, ajustez leur taille et organisez les lignes/colonnes",
+    "mode": "Mode",
+    "mode_grid": "Grille",
+    "mode_row": "Rangée",
+    "header_item": "En-tête",
+    "size": "Taille",
+    "item": "Objet",
+    "addrow": "Ajouter rangée",
+    "additem": "Ajouter objet",
+    "removerow": "Supprimer rangée",
+    "removeitem": "Supprimer l'objet",
+    "float": "Flottant",
+    "resize": "Dimensionnement ajusté"
+  },
+  "home": {
+    "welcome": "Bienvenue sur Datalchemist",
+    "header": "Page d'accueil",
+    "message": "Si vous avez une vue par défaut configurée dans les paramètres, vous serez redirigé vers celle-ci. Sinon, vous pouvez explorer l'application à partir d'ici"
+  },
+  "save": {
+    "label": "Sauvegarder",
+    "nosave": "Voulez-vous vraiment quitter sans sauvegarder les modifications ?",
+    "modalTitle": "Modifications non sauvegardées",
+    "stay": "Rester sur la page",
+    "leave": "Quitter sans sauvegarder"
+  }
 }
