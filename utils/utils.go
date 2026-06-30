@@ -17,6 +17,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"crypto/sha256"
 	"encoding/hex"
@@ -42,6 +43,34 @@ import (
 	"github.com/tidwall/gjson"
 	"gopkg.in/yaml.v2"
 )
+
+// concurrencyLimit borne le nombre de goroutines actives en parallèle
+// pour les boucles et le chargement de sources (appels URL, exécutions, etc.).
+const concurrencyLimit = 10
+
+// copyDataForGoroutine crée une copie de data avec ses propres maps "sn" et "sid"
+// pour éviter les data races lors des appels concurrents à SourceToData.
+func copyDataForGoroutine(data map[string]interface{}) map[string]interface{} {
+	cp := make(map[string]interface{}, len(data))
+	for k, v := range data {
+		cp[k] = v
+	}
+	if sn, ok := data["sn"].(map[string]interface{}); ok {
+		snCopy := make(map[string]interface{}, len(sn))
+		for k, v := range sn {
+			snCopy[k] = v
+		}
+		cp["sn"] = snCopy
+	}
+	if sid, ok := data["sid"].(map[string]interface{}); ok {
+		sidCopy := make(map[string]interface{}, len(sid))
+		for k, v := range sid {
+			sidCopy[k] = v
+		}
+		cp["sid"] = sidCopy
+	}
+	return cp
+}
 
 func SourceToData(id string, data *map[string]interface{}) interface{} {
 	requirement, err := database.SourceRequire(id)
@@ -83,23 +112,52 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 		// WITH LOOP
 		SearchResult := SearchInMap(*data, daSource["loop"].(string))
 		switch loop := SearchResult.(type) {
-		// Case array
+		// Case array – chaque itération est indépendante, on parallélise
 		case []interface{}:
-			var daMap = []interface{}{}
-			for _, value := range loop {
-				context := *data
-				context["item"] = value
-				daMap = append(daMap, GetSourceContent(RenderAllStrings(daSource, context).(map[string]interface{})))
+			daMap := make([]interface{}, len(loop))
+			sem := make(chan struct{}, concurrencyLimit)
+			var wg sync.WaitGroup
+			for i, value := range loop {
+				i, value := i, value
+				wg.Add(1)
+				sem <- struct{}{}
+				go func() {
+					defer wg.Done()
+					defer func() { <-sem }()
+					ctx := copyDataForGoroutine(*data)
+					ctx["item"] = value
+					if rendered, ok := RenderAllStrings(daSource, ctx).(map[string]interface{}); ok {
+						daMap[i] = GetSourceContent(rendered)
+					}
+				}()
 			}
+			wg.Wait()
 			return daMap
-		// Case map
+		// Case map – idem
 		case map[string]interface{}:
 			daMap := make(map[string]interface{})
+			var mu sync.Mutex
+			sem := make(chan struct{}, concurrencyLimit)
+			var wg sync.WaitGroup
 			for key, value := range loop {
-				context := *data
-				context["item"] = value
-				daMap[key] = GetSourceContent(RenderAllStrings(daSource, context).(map[string]interface{}))
+				key, value := key, value
+				wg.Add(1)
+				sem <- struct{}{}
+				go func() {
+					defer wg.Done()
+					defer func() { <-sem }()
+					ctx := copyDataForGoroutine(*data)
+					ctx["item"] = value
+					var result interface{}
+					if rendered, ok := RenderAllStrings(daSource, ctx).(map[string]interface{}); ok {
+						result = GetSourceContent(rendered)
+					}
+					mu.Lock()
+					daMap[key] = result
+					mu.Unlock()
+				}()
 			}
+			wg.Wait()
 			return daMap
 		}
 	} else {
@@ -112,16 +170,53 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 }
 
 func ItemToData(id string, data *map[string]interface{}) {
-
 	ItemSources, err := database.ItemSources(id)
 	if checkErr(err) {
 		return
 	}
 
+	type loadedData struct {
+		sn  map[string]interface{}
+		sid map[string]interface{}
+	}
+
+	snMap := (*data)["sn"].(map[string]interface{})
+	results := make(chan loadedData, len(ItemSources))
+	sem := make(chan struct{}, concurrencyLimit)
+	var wg sync.WaitGroup
+
 	for _, source := range ItemSources {
-		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
-			(*data)["sn"].(map[string]interface{})[source.Name] = SourceToData(source.Name, data)
-			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = (*data)["sn"].(map[string]interface{})[source.Name]
+		if _, ok := snMap[source.Name]; ok {
+			continue
+		}
+		source := source
+		wg.Add(1)
+		sem <- struct{}{}
+		go func() {
+			defer wg.Done()
+			defer func() { <-sem }()
+			dataCopy := copyDataForGoroutine(*data)
+			SourceToData(source.Name, &dataCopy)
+			results <- loadedData{
+				sn:  dataCopy["sn"].(map[string]interface{}),
+				sid: dataCopy["sid"].(map[string]interface{}),
+			}
+		}()
+	}
+	wg.Wait()
+	close(results)
+
+	// Fusion séquentielle des résultats dans data (pas de race)
+	for r := range results {
+		for k, v := range r.sn {
+			if _, ok := (*data)["sn"].(map[string]interface{})[k]; !ok {
+				(*data)["sn"].(map[string]interface{})[k] = v
+			}
+		}
+		for k, v := range r.sid {
+			if _, ok := (*data)["sid"].(map[string]interface{})[k]; !ok {
+				(*data)["sid"].(map[string]interface{})[k] = v
+			}
 		}
 	}
 }
