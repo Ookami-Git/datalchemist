@@ -57,6 +57,7 @@ const showTemplatePicker = ref(false);
 const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const previewReloadToken = ref(0);
+const previewLoadTime = ref(null);
 const sourceListVersion = ref(0);
 const previewSourceConfigs = ref([]);
 
@@ -100,6 +101,7 @@ async function openPreview() {
   await loadPreviewSourceConfigs();
   previewQueryParams.value = normalizePreviewQuery();
   previewQueryInput.value = formatGetQuery(previewQueryParams.value);
+  previewLoadTime.value = null;
   previewReloadToken.value += 1;
   showPreview.value = true;
 }
@@ -115,6 +117,7 @@ function handleSourceChange() {
 
 function reloadPreview() {
   applyPreviewQueryFromInput();
+  previewLoadTime.value = null;
   previewReloadToken.value += 1;
 }
 
@@ -524,6 +527,9 @@ onBeforeUnmount(() => {
             <h5 id="item-preview-modal-title" class="modal-title">
               {{ $t('edititem.preview') }}
               <span v-if="ItemInfo?.name" class="admin-edit-item-preview-item-name">- {{ ItemInfo.name }}</span>
+              <span class="badge text-bg-info ms-2" v-if="previewLoadTime !== null">
+                <i class="bi bi-stopwatch me-1"></i>{{ previewLoadTime }} ms
+              </span>
             </h5>
           </div>
 
@@ -547,7 +553,8 @@ onBeforeUnmount(() => {
         <div class="modal-body admin-edit-item-preview-body">
           <div class="admin-edit-item-preview-canvas">
             <Preview v-if="showPreview && ItemInfo" :key="previewRenderKey" :itemid="itemid" :mode="'edit'"
-              :item="previewItem" :preview-query="previewQueryParams" :refresh-token="previewReloadToken" />
+              :item="previewItem" :preview-query="previewQueryParams" :refresh-token="previewReloadToken"
+              @data-loaded="previewLoadTime = $event" />
           </div>
         </div>
 
