@@ -501,6 +501,7 @@ div.dataTables_wrapper, div.dt-container {
 /* --- Panel heads & card-headers: accent bar + glass background --- */
 .admin-frame-header,
 .admin-edit-item-page .admin-edit-item-panel-head,
+.admin-edit-item-page .admin-edit-item-panel .card-header,
 .admin-edit-item-page .admin-edit-item-side .card-header,
 .admin-edit-source-page .admin-edit-source-panel-head,
 .admin-edit-source-page .admin-edit-source-side .card-header,
@@ -551,3 +552,115 @@ div.dataTables_wrapper, div.dt-container {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
   transition: var(--dc-transition-fast);
 }
+
+/* Keep card-body backgrounds transparent to let the card glass background show through */
+.admin-panel .card-body,
+.admin-navbar-panel .card-body,
+.admin-users-panel .card-body,
+.admin-users-table-panel .card-body,
+.admin-groups-panel .card-body,
+.admin-groups-table-panel .card-body,
+.admin-acl-panel .card-body,
+.admin-acl-table-panel .card-body,
+.admin-edit-panel .card-body,
+.admin-edit-item-panel .card-body,
+.admin-edit-item-side .card-body,
+.admin-edit-source-panel .card-body,
+.admin-edit-source-side .card-body,
+.admin-edit-view-panel .card-body,
+.profile-editor .card-body {
+  background: transparent !important;
+}
+
+/* Helper accordion transparency inside editor sidebar */
+.edit-item-helper-card .accordion-item,
+.edit-item-helper-card .accordion-button {
+  background-color: transparent !important;
+}
+
+/* Card inner blocks (like db path, url inputs container) should be opaque/solid to stand out */
+.card-inner {
+  background: var(--bs-tertiary-bg) !important;
+  border-color: var(--dc-border-subtle) !important;
+}
+.card-inner:hover {
+  background: var(--bs-secondary-bg) !important;
+  border-color: var(--dc-hover-border) !important;
+}
+
+/* Improve readability of secondary/grey texts on glass backgrounds */
+.admin-navbar-panel,
+.admin-edit-panel,
+.admin-edit-item-panel,
+.admin-edit-source-panel,
+.admin-edit-view-panel,
+.admin-edit-item-side,
+.admin-edit-source-side,
+.admin-edit-view-hero,
+.admin-edit-source-hero,
+.admin-edit-item-hero {
+  .text-secondary,
+  .form-text,
+  .text-muted {
+    color: var(--bs-body-color) !important;
+    opacity: 0.82;
+  }
+}
+
+/* Distinct styling for linked sources entries in items and sources */
+.edit-item-source-entry {
+  background: var(--bs-body-bg) !important;
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.18) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+.edit-item-source-token-block code {
+  background: var(--bs-tertiary-bg) !important;
+  border-color: rgba(var(--bs-body-color-rgb), 0.18) !important;
+}
+
+[data-bs-theme="dark"] {
+  .edit-item-source-entry {
+    background: var(--bs-tertiary-bg) !important;
+    border-color: var(--dc-border-subtle) !important;
+    box-shadow: none !important;
+  }
+  .edit-item-source-token-block code {
+    background: rgba(0, 0, 0, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+/* Opaque/solid card elements on the edit dashboard (/edit) to make them stand out */
+.modern-edit-page .card-inner,
+.modern-edit-page .item-card {
+  background: var(--bs-body-bg) !important;
+  border: 1px solid rgba(var(--bs-primary-rgb), 0.15) !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.04) !important;
+  backdrop-filter: none !important;
+}
+
+[data-bs-theme="dark"] .modern-edit-page {
+  .card-inner,
+  .item-card {
+    background: var(--bs-tertiary-bg) !important;
+    border-color: var(--dc-border-subtle) !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Glassmorphism background for the main workspace card on the /edit page */
+.main-workspace-card {
+  background: var(--dc-card-bg-glass) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--dc-border-subtle) !important;
+  box-shadow: var(--dc-card-shadow) !important;
+  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+
+
+

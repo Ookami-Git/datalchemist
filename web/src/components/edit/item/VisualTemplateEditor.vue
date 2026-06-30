@@ -791,6 +791,7 @@ function selectConditionKey(field, ruleIndex, keyName) {
           <section
             v-for="section in sections"
             :key="section.key"
+            :class="['section-' + section.key, { 'is-open': openedSections[section.key] }]"
             class="visual-template-section border rounded-3 bg-body"
           >
             <button
@@ -1355,11 +1356,55 @@ function selectConditionKey(field, ruleIndex, keyName) {
   border-radius: 12px;
   background: var(--bs-body-bg);
   transition: var(--dc-transition-smooth);
+  position: relative;
 }
 
-.visual-template-section:hover {
-  border-color: var(--dc-hover-border) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+/* Sections color themes variables */
+.section-data {
+  --section-accent-color: #3b82f6;
+  --section-accent-bg: rgba(59, 130, 246, 0.08);
+}
+.section-display {
+  --section-accent-color: #8b5cf6;
+  --section-accent-bg: rgba(139, 92, 246, 0.08);
+}
+.section-colors {
+  --section-accent-color: #ec4899;
+  --section-accent-bg: rgba(236, 72, 153, 0.08);
+}
+.section-options {
+  --section-accent-color: #10b981;
+  --section-accent-bg: rgba(16, 185, 129, 0.08);
+}
+.section-advanced {
+  --section-accent-color: #f97316;
+  --section-accent-bg: rgba(249, 115, 22, 0.08);
+}
+.section-variables {
+  --section-accent-color: #eab308;
+  --section-accent-bg: rgba(234, 179, 8, 0.08);
+}
+
+/* Left vertical indicator */
+.visual-template-section::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: transparent;
+  transition: var(--dc-transition-fast);
+  z-index: 10;
+}
+
+.visual-template-section.is-open::before {
+  background-color: var(--section-accent-color);
+}
+
+.visual-template-section:hover, .visual-template-section.is-open {
+  border-color: var(--section-accent-color) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
 }
 
 .visual-template-section-toggle {
@@ -1374,8 +1419,8 @@ function selectConditionKey(field, ruleIndex, keyName) {
 .visual-template-section-icon {
   width: 2.5rem;
   height: 2.5rem;
-  color: var(--bs-primary);
-  background: rgba(var(--bs-primary-rgb), 0.08);
+  color: var(--section-accent-color, var(--bs-primary));
+  background: var(--section-accent-bg, rgba(var(--bs-primary-rgb), 0.08));
   border-radius: 10px;
   flex: 0 0 auto;
   font-size: 1.1rem;
@@ -1383,8 +1428,8 @@ function selectConditionKey(field, ruleIndex, keyName) {
 }
 
 .visual-template-section-toggle:hover .visual-template-section-icon {
-  background: var(--dc-accent-gradient);
-  color: #fff;
+  background: var(--section-accent-color) !important;
+  color: #fff !important;
   transform: scale(1.05);
 }
 
