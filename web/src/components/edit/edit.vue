@@ -44,6 +44,15 @@ const ToDelete = ref({
 const route = useRoute()
 const activeTab = ref(route.query.tab || 'sources')
 const searchQuery = ref('')
+const selectedSourceType = ref('all')
+
+const sourceTypesList = [
+  { type: 'file', label: 'Fichier', icon: 'bi bi-file-earmark-text-fill' },
+  { type: 'url', label: 'URL', icon: 'bi bi-globe2' },
+  { type: 'database', label: 'Base de données', icon: 'bi bi-database-fill' },
+  { type: 'text', label: 'Texte', icon: 'bi bi-blockquote-left' },
+  { type: 'execute', label: 'Exécution', icon: 'bi bi-terminal-fill' }
+]
 
 // Ajout de la variable d'état pour l'erreur API
 const apiError = ref(null)
@@ -92,9 +101,37 @@ const getCollectionArray = (collection) => {
   return Array.isArray(collection) ? collection : Object.values(collection);
 };
 
+const getSourceTypeCount = (type) => {
+  const list = getCollectionArray(sources.value);
+  return list.filter(x => {
+    if (!x.json) return false;
+    try {
+      const parsed = JSON.parse(x.json);
+      const srcType = parsed.src || 'file';
+      return srcType === type;
+    } catch (e) {
+      return false;
+    }
+  }).length;
+};
+
 // Filtered lists for each tab
 const filteredSources = computed(() => {
-  const list = getCollectionArray(sources.value);
+  let list = getCollectionArray(sources.value);
+  
+  if (selectedSourceType.value !== 'all') {
+    list = list.filter(x => {
+      if (!x.json) return false;
+      try {
+        const parsed = JSON.parse(x.json);
+        const srcType = parsed.src || 'file';
+        return srcType === selectedSourceType.value;
+      } catch (e) {
+        return false;
+      }
+    });
+  }
+  
   if (!searchQuery.value) return list;
   const q = searchQuery.value.toLowerCase().trim();
   return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
@@ -577,6 +614,37 @@ fetchSecrets()
       <div class="card-body px-4 pb-4 pt-2">
         <!-- Sources Tab Content -->
         <div v-if="activeTab === 'sources'">
+          <!-- Filtres de type de source -->
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            <button 
+              type="button" 
+              class="btn btn-filter"
+              :class="{ 'active': selectedSourceType === 'all' }"
+              @click="selectedSourceType = 'all'"
+            >
+              <i class="bi bi-grid-fill me-2"></i>
+              <span>Tous</span>
+              <span class="badge rounded-pill ms-2 filter-badge">
+                {{ getCollectionArray(sources).length }}
+              </span>
+            </button>
+            
+            <button 
+              v-for="typeInfo in sourceTypesList" 
+              :key="typeInfo.type"
+              type="button" 
+              class="btn btn-filter"
+              :class="{ 'active': selectedSourceType === typeInfo.type }"
+              @click="selectedSourceType = typeInfo.type"
+            >
+              <i :class="typeInfo.icon + ' me-2'"></i>
+              <span>{{ typeInfo.label }}</span>
+              <span class="badge rounded-pill ms-2 filter-badge">
+                {{ getSourceTypeCount(typeInfo.type) }}
+              </span>
+            </button>
+          </div>
+
           <div v-if="filteredSources.length > 0" class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3">
             <div v-for="row in filteredSources" :key="row.id" class="col">
               <div class="item-card hover-source">
@@ -626,8 +694,29 @@ fetchSecrets()
               <i class="bi bi-plug-fill text-source fs-2"></i>
             </div>
             <h4 class="h5 mb-1">Aucune source trouvée</h4>
-            <p class="text-muted small mb-3">Commencez par ajouter une source de données pour l'exploiter dans vos objets.</p>
-            <button type="button" class="btn btn-source d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addsource">
+            <p class="text-muted small mb-3">
+              <span v-if="getCollectionArray(sources).length > 0">
+                Aucune source ne correspond à vos critères de recherche ou de filtrage.
+              </span>
+              <span v-else>
+                Commencez par ajouter une source de données pour l'exploiter dans vos objets.
+              </span>
+            </p>
+            <button 
+              v-if="getCollectionArray(sources).length > 0"
+              type="button" 
+              class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+              @click="selectedSourceType = 'all'; searchQuery = ''"
+            >
+              <i class="bi bi-x-lg"></i> Réinitialiser les filtres
+            </button>
+            <button 
+              v-else
+              type="button" 
+              class="btn btn-source d-inline-flex align-items-center gap-2" 
+              data-bs-toggle="modal" 
+              data-bs-target="#addsource"
+            >
               <i class="bi bi-plus-lg"></i> Créer une source
             </button>
           </div>
@@ -1444,6 +1533,47 @@ fetchSecrets()
   max-width: 200px;
 }
 
+/* Filter buttons */
+.btn-filter {
+  border-radius: 50rem;
+  font-weight: 500;
+  padding: 0.4rem 1rem;
+  transition: all 0.15s ease-in-out;
+  border: 1px solid var(--bs-border-color);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-secondary-color);
+  font-size: 0.85rem;
+  display: inline-flex;
+  align-items: center;
+
+  &:hover {
+    background-color: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
+    border-color: var(--bs-border-color-translucent);
+  }
+
+  &.active {
+    background-color: rgba(var(--edit-color-source-rgb), 0.08);
+    border-color: var(--edit-color-source);
+    color: var(--edit-color-source);
+    font-weight: 600;
+
+    .filter-badge {
+      background-color: var(--edit-color-source) !important;
+      color: white !important;
+    }
+  }
+}
+
+.filter-badge {
+  background-color: var(--bs-secondary-bg);
+  color: var(--bs-secondary-color);
+  font-size: 0.75rem;
+  padding: 0.15rem 0.45rem;
+  font-weight: 600;
+  transition: all 0.15s ease-in-out;
+}
+
 /* Theme support for dark mode */
 [data-bs-theme='dark'] {
   .modern-hero {
@@ -1459,6 +1589,18 @@ fetchSecrets()
   .item-card {
     background: rgba(30, 41, 59, 0.35);
     backdrop-filter: blur(8px);
+  }
+
+  .btn-filter {
+    background-color: rgba(30, 41, 59, 0.35);
+    
+    &:hover {
+      background-color: rgba(30, 41, 59, 0.6);
+    }
+    
+    &.active {
+      background-color: rgba(var(--edit-color-source-rgb), 0.15);
+    }
   }
 }
 </style>
