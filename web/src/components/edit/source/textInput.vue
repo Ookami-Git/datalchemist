@@ -69,14 +69,17 @@ watch(() => source.value.type, () => {
 </script>
 
 <template>
-    <div class="mb-3">
-        <div id="TextHelp" class="form-text">{{ $t('editsource.text.helper') }} ( {{ source.type }} | <a
-                href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank">Gonja</a> )
+  <div class="source-text-editor card-inner p-3 rounded-3">
+    <div class="mb-0">
+      <div id="TextHelp" class="form-text mb-3 small text-secondary">
+        <i class="bi bi-info-circle me-1"></i>{{ $t('editsource.text.helper') }} ({{ source.type }} | <a
+          href="https://github.com/NikolaLohinski/gonja/blob/master/docs/filters.md" target="_blank" class="text-decoration-none fw-medium">Gonja</a>)
+      </div>
+      <template v-if="parameter?.name">
+        <div class="source-editor-wrap source-editor-wrap-compact rounded-2 overflow-hidden border border-subtle">
+          <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" />
         </div>
-        <template v-if="parameter?.name">
-            <div class="source-editor-wrap source-editor-wrap-compact">
-                <Codemirror v-model:value="source.query" :options="cmOptions" height="100%" />
-            </div>
-        </template>
+      </template>
     </div>
+  </div>
 </template>

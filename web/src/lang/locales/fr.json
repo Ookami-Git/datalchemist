@@ -15,6 +15,7 @@
     "edit": "Modifier",
     "preview": "Aperçu",
     "preview_saved_hint": "Aperçu de la version sauvegardée",
+    "no_headers_hint": "Aucun en-tête configuré",
     "error": {
       "unknown": "Erreur inconnue",
       "fetch_sources": "Erreur lors de la récupération des sources",

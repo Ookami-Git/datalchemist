@@ -15,6 +15,7 @@
     "edit": "Edit",
     "preview": "Preview",
     "preview_saved_hint": "Preview of the saved version",
+    "no_headers_hint": "No headers configured",
     "error": {
       "unknown": "Unknown error",
       "fetch_sources": "Error while fetching sources",

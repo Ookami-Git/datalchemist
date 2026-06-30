@@ -2915,6 +2915,97 @@ body.item-preview-modal-open {
   justify-content: center;
 }
 
+/* Modernized elements */
+.admin-edit-source-page {
+  .text-gradient {
+    background: var(--dc-accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .admin-edit-source-name-input-modern {
+    .input-group-text, .form-control {
+      border-color: var(--dc-border-subtle);
+      background-color: rgba(var(--bs-body-bg-rgb), 0.5);
+      transition: var(--dc-transition-fast);
+    }
+    .form-control:focus {
+      border-color: var(--bs-primary);
+      box-shadow: none;
+      background-color: var(--bs-body-bg);
+    }
+  }
+
+  .source-type-card {
+    transition: var(--dc-transition-smooth);
+    border: 1px solid var(--dc-border-subtle);
+    border-radius: 12px;
+    
+    i {
+      font-size: 1.5rem;
+      transition: var(--dc-transition-fast);
+    }
+    
+    &.active-source-type {
+      background: var(--dc-accent-gradient);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+      
+      i {
+        transform: scale(1.1);
+      }
+    }
+    
+    &.inactive-source-type {
+      background: var(--bs-tertiary-bg);
+      color: var(--bs-secondary-color);
+      
+      &:hover {
+        background: var(--bs-secondary-bg);
+        border-color: var(--dc-hover-border);
+        color: var(--bs-body-color);
+      }
+    }
+  }
+
+  .source-format-pill {
+    transition: var(--dc-transition-fast);
+    border: 1px solid var(--dc-border-subtle);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    
+    &.active-format-pill {
+      background: var(--bs-primary);
+      color: #fff;
+      border-color: transparent;
+    }
+    
+    &.inactive-format-pill {
+      background: var(--bs-tertiary-bg);
+      color: var(--bs-secondary-color);
+      
+      &:hover {
+        background: var(--bs-secondary-bg);
+        border-color: var(--dc-hover-border);
+        color: var(--bs-body-color);
+      }
+    }
+  }
+
+  .card-inner {
+    border: 1px solid var(--dc-border-subtle);
+    background: rgba(var(--bs-tertiary-bg-rgb), 0.25);
+    transition: var(--dc-transition-smooth);
+    
+    &:hover {
+      border-color: var(--dc-hover-border);
+      background: rgba(var(--bs-tertiary-bg-rgb), 0.4);
+    }
+  }
+}
+
 [data-bs-theme='dark'] .admin-edit-source-page .admin-edit-source-hero {
   border-color: #374155;
   background: linear-gradient(118deg, #283431 0%, #2f3c38 58%, #34433e 100%);
