@@ -3117,6 +3117,25 @@ body.item-preview-modal-open {
   max-width: 100%;
   --edit-view-workspace-min-height: clamp(420px, 62vh, 860px);
   --edit-view-accent-rgb: 186, 156, 88;
+
+  .text-gradient {
+    background: var(--dc-accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .admin-edit-view-name-input-modern {
+    .input-group-text, .form-control {
+      border-color: var(--dc-border-subtle);
+      background-color: rgba(var(--bs-body-bg-rgb), 0.5);
+      transition: var(--dc-transition-fast);
+    }
+    .form-control:focus {
+      border-color: var(--bs-primary);
+      box-shadow: none;
+      background-color: var(--bs-body-bg);
+    }
+  }
 }
 
 .admin-edit-view-page .admin-edit-view-hero,

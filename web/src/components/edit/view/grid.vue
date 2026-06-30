@@ -183,49 +183,67 @@ watch(
 </script>
 
 <template>
-  <div v-if="parameters && parameters.version === 2">
-    <div class="row">
-      <div class="col-md-3">
-        <button type="button" class="btn btn-primary btn-sm me-2" @click="addNewWidget">
-          <i class="bi bi-plus"></i> {{ $t('editview.item') }}
-        </button>
-        <button type="button" class="btn btn-sm me-2"
-          :class="parameters.float ? 'btn-success' : 'btn-outline-secondary'" @click="changeFloat">
-          <i class="bi bi-arrows-move"></i> {{ $t('editview.float') }}: {{ parameters.float ? $t('global.yes') :
-            $t('global.no') }}
-        </button>
-      </div>
+  <div v-if="parameters && parameters.version === 2" class="admin-edit-view-grid-mode">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <button type="button"
+        class="btn btn-light border btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-2 shadow-xs"
+        @click="addNewWidget">
+        <i class="bi bi-plus-lg text-primary"></i>
+        <span class="fw-medium">{{ $t('editview.item') }}</span>
+      </button>
+      <button type="button"
+        class="btn btn-sm rounded-pill px-3 py-1.5 d-inline-flex align-items-center gap-2 border shadow-xs"
+        :class="parameters.float ? 'btn-primary border-primary' : 'btn-light border-subtle text-secondary bg-transparent'"
+        @click="changeFloat">
+        <i class="bi bi-arrows-move"></i>
+        <span class="fw-medium">{{ $t('editview.float') }} : {{ parameters.float ? $t('global.yes') : $t('global.no')
+        }}</span>
+      </button>
     </div>
-    <div class="card-body">
+
+    <div class="grid-container-wrap">
       <div class="grid-stack">
         <div v-for="(w, index) in parameters.items" :key="w.id" class="grid-stack-item" :gs-x="w.x" :gs-y="w.y"
           :gs-w="w.w" :gs-h="w.h" :gs-id="w.id" :id="w.id">
-          <div class="grid-stack-item-content card">
-            <div class="card-header d-flex align-items-center">
+          <div class="grid-stack-item-content card border-0">
+            <div
+              class="card-header d-flex align-items-center justify-content-between py-2 px-3 bg-body-tertiary border-bottom">
               <div class="flex-grow-1 me-2">
-                <div class="form-floating">
-                  <input type="text" class="form-control form-control-sm" :id="`title_${w.id}`"
-                    placeholder="Widget title" v-model="w.title">
-                  <label :for="`title_${w.id}`">Header</label>
+                <div class="input-group input-group-sm widget-title-input-group">
+                  <span class="input-group-text bg-transparent border-0 pe-1 text-secondary p-0"><i
+                      class="bi bi-card-heading"></i></span>
+                  <input type="text"
+                    class="form-control border-0 bg-transparent ps-1 widget-title-input fw-bold text-emphasis"
+                    :id="`title_${w.id}`" :placeholder="$t('editview.header_item') || 'Header'" v-model="w.title"
+                    style="font-size: 0.85rem;">
                 </div>
               </div>
-              <button class="btn btn-sm me-2" :class="w.autoResize ? 'btn-primary active' : 'btn-outline-secondary'"
-                @click="w.autoResize = !w.autoResize"
-                :title="w.autoResize ? $t('editview.resize') + ' : ' + $t('global.yes') : $t('editview.resize') + ' : ' + $t('global.no')">
-                <i :class="w.autoResize ? 'bi bi-arrows-angle-expand' : 'bi bi-arrows-angle-contract'"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger" @click="remove(w)">
-                <i class="bi bi-x"></i>
-              </button>
+              <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                <button class="btn btn-xs btn-icon rounded-circle"
+                  :class="w.autoResize ? 'btn-primary' : 'btn-outline-secondary'" @click="w.autoResize = !w.autoResize"
+                  :title="w.autoResize ? $t('editview.resize') + ' : ' + $t('global.yes') : $t('editview.resize') + ' : ' + $t('global.no')">
+                  <i :class="w.autoResize ? 'bi bi-arrows-angle-expand' : 'bi bi-arrows-angle-contract'"></i>
+                </button>
+                <button class="btn btn-xs btn-icon btn-outline-danger rounded-circle" @click="remove(w)">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
             </div>
-            <div class="card-body p-2 small">
-              <label class="form-label mb-2">{{ $t('editview.item') }}</label>
-              <select class="form-select form-select-sm" v-model="w.itemid">
-                <option :value="null">{{ $t('editview.item') }}</option>
-                <option v-for="item in availableItems" :key="item.id" :value="item.id">
-                  {{ item.id }} - {{ item.name }}
-                </option>
-              </select>
+            <div class="card-body p-3 d-flex flex-column gap-2 bg-card">
+              <div class="d-flex flex-column gap-1">
+                <label class="form-label text-secondary small uppercase fw-bold mb-0"
+                  style="font-size: 0.7rem; letter-spacing: 0.05em;">{{ $t('editview.item') }}</label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-transparent text-secondary border-end-0"><i
+                      class="bi bi-braces-asterisk"></i></span>
+                  <select class="form-select border-start-0 ps-0" v-model="w.itemid">
+                    <option :value="null">{{ $t('editview.item') }}</option>
+                    <option v-for="item in availableItems" :key="item.id" :value="item.id">
+                      #{{ item.id }} : {{ item.name }}
+                    </option>
+                  </select>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -236,27 +254,55 @@ watch(
 
 <style scoped>
 :deep(.grid-stack) {
-  background-color: var(--bs-body-bg);
-  border: 1px solid var(--bs-border-color);
-  border-radius: 4px;
+  background-color: transparent;
+  border: none;
   padding: 0 !important;
   margin: 0 !important;
-  overflow: hidden;
-  min-height: 500px;
+  min-height: 550px;
 }
 
 :deep(.grid-stack-item-content) {
-  background-color: var(--bs-tertiary-bg);
+  border-radius: 12px !important;
+  border: 1px solid var(--bs-border-color) !important;
+  box-shadow: var(--bs-box-shadow-sm);
+  background-color: var(--bs-card-bg);
+  overflow: hidden;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
 }
 
-.json-modal {
-  background-color: var(--bs-secondary-bg);
-  color: var(--bs-body-color);
-  padding: 10px;
-  border-radius: 4px;
-  overflow-x: auto;
-  border: 1px solid var(--bs-border-color);
-  margin: 0;
-  max-height: 500px;
+:deep(.grid-stack-item-content:hover) {
+  box-shadow: var(--bs-box-shadow);
+  border-color: rgba(var(--edit-view-accent-rgb), 0.5) !important;
+}
+
+.widget-title-input-group {
+  border-bottom: 1px solid transparent;
+}
+
+.widget-title-input {
+  box-shadow: none !important;
+  padding: 0;
+}
+
+.btn-icon {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.btn-xs {
+  font-size: 0.75rem;
+}
+
+.grid-container-wrap {
+  margin-top: 10px;
+  background-color: var(--bs-body-bg);
+  border: 1px dashed var(--bs-border-color-translucent);
+  border-radius: 16px;
+  padding: 16px;
 }
 </style>

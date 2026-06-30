@@ -374,37 +374,40 @@ onBeforeUnmount(() => {
     <div class="d-flex flex-column gap-3 gap-xxl-4">
       <header class="card admin-edit-item-hero shadow-sm">
         <div class="card-body p-3 p-lg-4 d-flex flex-column gap-3">
-          <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
-            <div class="d-flex align-items-center gap-3">
-              <div class="admin-edit-item-hero-icon">
-                <i class="bi bi-braces-asterisk"></i>
-              </div>
-              <div class="admin-edit-item-title-wrap">
-                <p class="admin-edit-item-kicker mb-0">{{ $t('menu.edit') }}</p>
-                <h5 class="mb-0 fw-bold text-gradient">{{ $t('edititem.header') }}</h5>
-                <p class="mb-0 small text-secondary">{{ $t('edititem.subtitle') }}</p>
-              </div>
+          <div class="d-flex flex-wrap align-items-center gap-3">
+            <div class="admin-edit-item-hero-icon">
+              <i class="bi bi-braces-asterisk"></i>
             </div>
-            <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip py-2 px-3">
-              <i class="bi bi-hash me-1 text-primary"></i>{{ ItemInfo.id }}
-            </span>
+            <div class="admin-edit-item-title-wrap me-auto">
+              <p class="admin-edit-item-kicker mb-0">{{ $t('menu.edit') }}</p>
+              <h5 class="mb-0 fw-bold text-gradient">{{ ItemInfo ? ItemInfo.name : $t('edititem.header') }}</h5>
+              <p class="mb-0 small text-secondary">{{ $t('edititem.subtitle') }}</p>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+              <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-light border-subtle">
+                <i class="bi bi-hash me-1"></i>{{ ItemInfo.id }}
+              </span>
+              <span v-if="ItemInfo" class="badge rounded-pill admin-edit-item-state-chip text-bg-primary">
+                {{ editorMode === VISUAL_ITEM_MODE ? 'Visual' : 'Code' }}
+              </span>
+            </div>
           </div>
 
-          <div class="row g-3 align-items-center">
-            <div class="col-12 col-md-auto d-flex align-items-center gap-2">
-              <RouterLink type="button" class="btn btn-outline-secondary d-inline-flex align-items-center gap-2" :to="{ name: 'edit', query: { tab: 'items' } }" active-class="active">
-                <i class="bi bi-arrow-left"></i><span>{{ $t('menu.edit') }}</span>
+          <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pt-2 border-top border-subtle">
+            <div class="d-flex align-items-center gap-2 flex-shrink-0">
+              <RouterLink type="button" class="btn btn-light btn-sm px-3 rounded-pill" :to="{ name: 'edit', query: { tab: 'items' } }" active-class="active">
+                <i class="bi bi-arrow-left me-1"></i>{{ $t('menu.edit') }}
               </RouterLink>
-              <button type="button" class="btn btn-primary d-inline-flex align-items-center gap-2" @click="openPreview"
+              <button type="button" class="btn btn-outline-primary btn-sm px-3 rounded-pill" @click="openPreview"
                 :title="$t('edititem.preview_local_hint')" :disabled="!ItemInfo">
-                <i class="bi bi-eye"></i><span>{{ $t('edititem.preview') }}</span>
+                <i class="bi bi-eye-fill me-1"></i>{{ $t('edititem.preview') }}
               </button>
             </div>
 
-            <div class="col-12 col-md" v-if="ItemInfo">
-              <div class="input-group admin-edit-item-name-input-modern shadow-xs">
-                <span class="input-group-text"><i class="bi bi-tag-fill text-secondary"></i></span>
-                <input id="item-name-input" type="text" class="form-control" :placeholder="$t('edit.name')"
+            <div class="flex-grow-1 max-w-md-50" v-if="ItemInfo">
+              <div class="input-group input-group-sm admin-edit-item-name-input-modern">
+                <span class="input-group-text bg-transparent border-end-0 text-secondary"><i class="bi bi-tag"></i></span>
+                <input id="item-name-input" type="text" class="form-control border-start-0 ps-0" :placeholder="$t('edit.name')"
                   :aria-label="$t('edit.name')" :value="ItemInfo.name"
                   @input="updateItemName($event.target.value)">
               </div>
