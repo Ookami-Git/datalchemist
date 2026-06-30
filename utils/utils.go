@@ -196,7 +196,9 @@ func ItemToData(id string, data *map[string]interface{}) {
 			defer wg.Done()
 			defer func() { <-sem }()
 			dataCopy := copyDataForGoroutine(*data)
-			SourceToData(source.Name, &dataCopy)
+			val := SourceToData(source.Name, &dataCopy)
+			dataCopy["sn"].(map[string]interface{})[source.Name] = val
+			dataCopy["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = val
 			results <- loadedData{
 				sn:  dataCopy["sn"].(map[string]interface{}),
 				sid: dataCopy["sid"].(map[string]interface{}),
