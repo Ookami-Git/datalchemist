@@ -466,7 +466,7 @@ fetchSecrets()
           </div>
           <div>
             <span class="hero-badge text-uppercase">{{ $t('menu.edit') }}</span>
-            <h1 class="hero-title h3 mb-1 text-white">Espace de Configuration</h1>
+            <h1 class="hero-title h3 mb-1">Espace de Configuration</h1>
             <p class="hero-subtitle mb-0">{{ $t('edit.subtitle') }}</p>
           </div>
         </div>
@@ -1137,11 +1137,11 @@ fetchSecrets()
 .modern-hero {
   position: relative;
   border-radius: 1.25rem;
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%);
   padding: 2.25rem 2.5rem;
   overflow: hidden;
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 10px 30px -10px rgba(79, 70, 229, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.08);
 }
 
 .hero-bg-glow {
@@ -1151,7 +1151,7 @@ fetchSecrets()
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 70%);
   pointer-events: none;
   filter: blur(40px);
 }
@@ -1165,14 +1165,14 @@ fetchSecrets()
   align-items: center;
   justify-content: center;
   font-size: 1.5rem;
-  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.35);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.25);
 }
 
 .hero-badge {
   font-size: 0.65rem;
   letter-spacing: 0.12em;
   font-weight: 700;
-  color: #818cf8;
+  color: #4f46e5;
   display: inline-block;
   margin-bottom: 0.25rem;
 }
@@ -1180,10 +1180,11 @@ fetchSecrets()
 .hero-title {
   font-weight: 800;
   letter-spacing: -0.02em;
+  color: #1e293b;
 }
 
 .hero-subtitle {
-  color: #94a3b8;
+  color: #475569;
   font-size: 0.9rem;
 }
 
@@ -1196,19 +1197,19 @@ fetchSecrets()
   display: inline-flex;
   align-items: center;
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(79, 70, 229, 0.12);
 }
 .badge-primary {
-  background: rgba(99, 102, 241, 0.15);
-  color: #a5b4fc;
+  background: rgba(79, 70, 229, 0.08);
+  color: #4f46e5;
 }
 .badge-success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #34d399;
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
 }
 .badge-warning {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
+  background: rgba(217, 119, 6, 0.08);
+  color: #d97706;
 }
 
 /* Stat Card Selectors */
@@ -1579,6 +1580,38 @@ fetchSecrets()
   .modern-hero {
     background: linear-gradient(135deg, #0f172a 0%, #020617 100%);
     border-color: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+  }
+
+  .hero-title {
+    color: #ffffff;
+  }
+
+  .hero-subtitle {
+    color: #94a3b8;
+  }
+
+  .hero-badge {
+    color: #818cf8;
+  }
+
+  .status-pill {
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .badge-primary {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+  }
+
+  .badge-success {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+  }
+
+  .badge-warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
   }
   
   .card-inner {
