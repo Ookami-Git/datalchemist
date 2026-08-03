@@ -352,9 +352,12 @@ document.querySelectorAll('table[data-dc-datatable="${tableToken}"]').forEach((t
     table.style.width = '100%';
   }
   if (tableOptions.stateSave) {
+    // Always restart on the first page with the configured page length, but keep both keys
+    // defined: SearchPanes reads state.loaded().start on startup and calls
+    // page(start / page.len()), which becomes page(NaN) and draws an empty tbody if deleted.
     tableOptions.stateLoadParams = (_settings, data) => {
-      delete data.length;
-      delete data.start;
+      data.start = 0;
+      data.length = tableOptions.pageLength;
     };
   }
   if (tableOptions.searchPanes && dataTableSearchPanesColumns.length > 0) {

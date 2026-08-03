@@ -257,8 +257,9 @@ test('compact table enables DataTables runtime controls consistently', () => {
   assert.match(compiled.javascript, /"order":\[\[1,"desc"\]\]/);
   assert.match(compiled.javascript, /"select":\{"style":"multi","items":"row"\}/);
   assert.match(compiled.javascript, /"scrollX":true/);
-  assert.match(compiled.javascript, /delete data\.length/);
-  assert.match(compiled.javascript, /delete data\.start/);
+  assert.match(compiled.javascript, /data\.start = 0/);
+  assert.match(compiled.javascript, /data\.length = tableOptions\.pageLength/);
+  assert.doesNotMatch(compiled.javascript, /delete data\.(start|length)/);
   assert.doesNotMatch(compiled.javascript, /"responsive":true/);
   assert.match(compiled.template, /text-nowrap/);
 });
