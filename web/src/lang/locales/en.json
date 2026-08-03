@@ -494,5 +494,18 @@
     "modalTitle": "Unsaved changes",
     "stay": "Stay on this page",
     "leave": "Leave without saving"
+  },
+  "dataprogress": {
+    "title": "Loading sources",
+    "summary": "{done}/{total} sources",
+    "show": "Show loading details",
+    "hide": "Hide loading details",
+    "loop": "Loop",
+    "status": {
+      "pending": "Pending",
+      "running": "Loading...",
+      "done": "Loaded",
+      "error": "Error"
+    }
   }
 }

@@ -5,11 +5,15 @@ import (
 	"datalchemist/database"
 	"datalchemist/models"
 	"datalchemist/utils"
+	"datalchemist/utils/progress"
 	"datalchemist/utils/secrets"
 	"datalchemist/utils/token"
 
+	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
@@ -196,22 +200,159 @@ func ParametersGet(c *gin.Context) {
 func SourceData(c *gin.Context) {
 	id := c.Param("sourceid")
 	data := utils.MakeData(c)
-	daData := utils.SourceToData(id, &data)
+	daData := utils.SourceToData(id, &data, nil)
 	c.JSON(200, daData)
 }
 
 func ItemData(c *gin.Context) {
 	id := c.Param("itemid")
 	daData := utils.MakeData(c)
-	utils.ItemToData(id, &daData)
+	utils.ItemToData(id, &daData, nil)
 	c.JSON(200, daData)
 }
 
 func ViewData(c *gin.Context) {
 	id := c.Param("id")
 	daData := utils.MakeData(c)
-	utils.ViewToData(id, &daData)
+	utils.ViewToData(id, &daData, nil)
 	c.JSON(200, daData)
+}
+
+// ViewDataStream renvoie les données d'une vue via un flux SSE : des événements
+// "progress" pendant le chargement des sources, puis un événement "result"
+// contenant les données complètes.
+func ViewDataStream(c *gin.Context) {
+	id := c.Param("id")
+	daData := utils.MakeData(c)
+
+	tracker := progress.New()
+	sources, err := utils.ViewSources(id)
+	if err != nil {
+		log.Print("ERROR handlers: list view sources:", err)
+	}
+	for _, source := range sources {
+		tracker.Expect(source.Name, source.ID)
+	}
+
+	streamData(c, tracker, func() interface{} {
+		utils.ViewToData(id, &daData, tracker)
+		return daData
+	})
+}
+
+// ItemDataStream est l'équivalent de ViewDataStream pour un objet (aperçu).
+func ItemDataStream(c *gin.Context) {
+	id := c.Param("itemid")
+	daData := utils.MakeData(c)
+
+	tracker := progress.New()
+	sources, err := utils.ItemSources(id)
+	if err != nil {
+		log.Print("ERROR handlers: list item sources:", err)
+	}
+	for _, source := range sources {
+		tracker.Expect(source.Name, source.ID)
+	}
+
+	streamData(c, tracker, func() interface{} {
+		utils.ItemToData(id, &daData, tracker)
+		return daData
+	})
+}
+
+const (
+	// Fréquence de vérification de l'avancement : un événement n'est émis que si
+	// l'état a changé depuis le dernier envoi.
+	progressInterval = 200 * time.Millisecond
+	// Commentaire SSE périodique pour garder la connexion ouverte quand une
+	// source est longue et qu'aucune progression n'est observable.
+	progressKeepAlive = 15 * time.Second
+)
+
+// streamData exécute compute en arrière-plan et diffuse l'avancement du tracker
+// en SSE, puis le résultat. Si le client se déconnecte, la diffusion s'arrête ;
+// le calcul en cours se termine sans être publié (la chaîne de chargement des
+// sources n'est pas annulable).
+func streamData(c *gin.Context, tracker *progress.Tracker, compute func() interface{}) {
+	header := c.Writer.Header()
+	header.Set("Content-Type", "text/event-stream")
+	header.Set("Cache-Control", "no-cache")
+	header.Set("Connection", "keep-alive")
+	// Désactive la mise en tampon des reverse-proxies (nginx & co).
+	header.Set("X-Accel-Buffering", "no")
+	c.Writer.WriteHeader(200)
+	c.Writer.Flush()
+
+	type outcome struct {
+		data interface{}
+		err  string
+	}
+	done := make(chan outcome, 1)
+
+	go func() {
+		// Le calcul tourne hors du handler : sans ce recover, une panique dans le
+		// chargement d'une source arrêterait le process au lieu d'être renvoyée
+		// au client.
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				log.Print("ERROR handlers: data stream panic: ", recovered)
+				tracker.Finish()
+				done <- outcome{err: fmt.Sprint(recovered)}
+			}
+		}()
+		data := compute()
+		tracker.Finish()
+		done <- outcome{data: data}
+	}()
+
+	lastSend := time.Now()
+	lastVersion := tracker.Version()
+	if !sendEvent(c, "progress", tracker.Snapshot()) {
+		return
+	}
+
+	ticker := time.NewTicker(progressInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-c.Request.Context().Done():
+			return
+		case result := <-done:
+			sendEvent(c, "progress", tracker.Snapshot())
+			if result.err != "" {
+				sendEvent(c, "failure", gin.H{"message": result.err})
+				return
+			}
+			sendEvent(c, "result", result.data)
+			return
+		case <-ticker.C:
+			version := tracker.Version()
+			if version == lastVersion && time.Since(lastSend) < progressKeepAlive {
+				continue
+			}
+			lastVersion = version
+			lastSend = time.Now()
+			if !sendEvent(c, "progress", tracker.Snapshot()) {
+				return
+			}
+		}
+	}
+}
+
+// sendEvent écrit un événement SSE. Retourne false si le client n'est plus
+// joignable.
+func sendEvent(c *gin.Context, event string, payload interface{}) bool {
+	body, err := json.Marshal(payload)
+	if err != nil {
+		log.Print("ERROR handlers: encode stream event:", err)
+		return false
+	}
+	if _, err := fmt.Fprintf(c.Writer, "event: %s\ndata: %s\n\n", event, body); err != nil {
+		return false
+	}
+	c.Writer.Flush()
+	return true
 }
 
 func SourceList(c *gin.Context) {

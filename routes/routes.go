@@ -30,6 +30,7 @@ func SetupRoutes(r *gin.Engine) {
 		acl.GET("/api/view/:id", handlers.ViewGet)
 		acl.GET("/api/view/:id/items", handlers.ViewItems)
 		acl.GET("/api/data/view/:id", handlers.ViewData)
+		acl.GET("/api/data/view/:id/stream", handlers.ViewDataStream)
 	}
 
 	protected := r.Group("/")
@@ -45,6 +46,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.Use(middlewares.AdminMiddleware())
 
 		protected.GET("/api/data/item/:itemid", handlers.ItemData)
+		protected.GET("/api/data/item/:itemid/stream", handlers.ItemDataStream)
 		protected.GET("/api/data/source/:sourceid", handlers.SourceData)
 
 		protected.DELETE("/api/source/:id", handlers.SourceDelete)

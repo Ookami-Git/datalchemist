@@ -6,6 +6,8 @@ import (
 	"context"
 	"crypto/tls"
 	"datalchemist/database"
+	"datalchemist/models"
+	"datalchemist/utils/progress"
 	"datalchemist/utils/secrets"
 	"encoding/csv"
 	"encoding/json"
@@ -72,9 +74,20 @@ func copyDataForGoroutine(data map[string]interface{}) map[string]interface{} {
 	return cp
 }
 
-func SourceToData(id string, data *map[string]interface{}) interface{} {
+// SourceToData charge une source et ses dépendances. tracker peut être nil
+// lorsque le chargement n'est pas suivi (endpoints JSON classiques).
+func SourceToData(id string, data *map[string]interface{}, tracker *progress.Tracker) interface{} {
+	// La source est résolue en premier pour connaître son nom canonique : c'est
+	// la clé utilisée par le suivi de chargement.
+	result, err := database.SourceGet(id)
+	if checkErr(err) {
+		tracker.Fail(id, 0, err.Error())
+		return nil
+	}
+
 	requirement, err := database.SourceRequire(id)
 	if checkErr(err) {
+		tracker.Fail(result.Name, result.ID, err.Error())
 		return nil
 	}
 
@@ -82,6 +95,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 		(*data)["secret"] = make(map[string]interface{})
 		secrets, err := database.SecretsGet()
 		if checkErr(err) {
+			tracker.Fail(result.Name, result.ID, err.Error())
 			return nil
 		}
 		for _, secret := range secrets {
@@ -91,22 +105,22 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 
 	for _, source := range requirement {
 		if _, ok := (*data)["sn"].(map[string]interface{})[source.Name]; !ok {
-			(*data)["sn"].(map[string]interface{})[source.Name] = SourceToData(source.Name, data)
+			(*data)["sn"].(map[string]interface{})[source.Name] = SourceToData(source.Name, data, tracker)
 			(*data)["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = (*data)["sn"].(map[string]interface{})[source.Name]
 		}
-	}
-
-	result, err := database.SourceGet(id)
-	if checkErr(err) {
-		return nil
 	}
 
 	var daSource map[string]interface{}
 
 	err = json.Unmarshal([]byte(result.JSON), &daSource)
 	if checkErr(err) {
+		tracker.Fail(result.Name, result.ID, err.Error())
 		return nil
 	}
+
+	// Les dépendances sont résolues : le chargement propre à cette source commence.
+	tracker.Start(result.Name, result.ID)
+	defer tracker.Done(result.Name)
 
 	if loopValue, ok := daSource["loop"]; ok && loopValue != "" {
 		// WITH LOOP
@@ -114,6 +128,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 		switch loop := SearchResult.(type) {
 		// Case array – chaque itération est indépendante, on parallélise
 		case []interface{}:
+			tracker.SetLoop(result.Name, len(loop))
 			daMap := make([]interface{}, len(loop))
 			sem := make(chan struct{}, concurrencyLimit)
 			var wg sync.WaitGroup
@@ -124,6 +139,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 				go func() {
 					defer wg.Done()
 					defer func() { <-sem }()
+					defer tracker.LoopStep(result.Name)
 					ctx := copyDataForGoroutine(*data)
 					ctx["item"] = value
 					if rendered, ok := RenderAllStrings(daSource, ctx).(map[string]interface{}); ok {
@@ -135,6 +151,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 			return daMap
 		// Case map – idem
 		case map[string]interface{}:
+			tracker.SetLoop(result.Name, len(loop))
 			daMap := make(map[string]interface{})
 			var mu sync.Mutex
 			sem := make(chan struct{}, concurrencyLimit)
@@ -146,6 +163,7 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 				go func() {
 					defer wg.Done()
 					defer func() { <-sem }()
+					defer tracker.LoopStep(result.Name)
 					ctx := copyDataForGoroutine(*data)
 					ctx["item"] = value
 					var result interface{}
@@ -169,8 +187,9 @@ func SourceToData(id string, data *map[string]interface{}) interface{} {
 	return nil
 }
 
-func ItemToData(id string, data *map[string]interface{}) {
-	ItemSources, err := database.ItemSources(id)
+// ItemToData charge les sources d'un objet. tracker peut être nil.
+func ItemToData(id string, data *map[string]interface{}, tracker *progress.Tracker) {
+	itemSources, err := database.ItemSources(id)
 	if checkErr(err) {
 		return
 	}
@@ -181,11 +200,11 @@ func ItemToData(id string, data *map[string]interface{}) {
 	}
 
 	snMap := (*data)["sn"].(map[string]interface{})
-	results := make(chan loadedData, len(ItemSources))
+	results := make(chan loadedData, len(itemSources))
 	sem := make(chan struct{}, concurrencyLimit)
 	var wg sync.WaitGroup
 
-	for _, source := range ItemSources {
+	for _, source := range itemSources {
 		if _, ok := snMap[source.Name]; ok {
 			continue
 		}
@@ -196,7 +215,7 @@ func ItemToData(id string, data *map[string]interface{}) {
 			defer wg.Done()
 			defer func() { <-sem }()
 			dataCopy := copyDataForGoroutine(*data)
-			val := SourceToData(source.Name, &dataCopy)
+			val := SourceToData(source.Name, &dataCopy, tracker)
 			dataCopy["sn"].(map[string]interface{})[source.Name] = val
 			dataCopy["sid"].(map[string]interface{})["s"+strconv.Itoa(int(source.ID))] = val
 			results <- loadedData{
@@ -223,14 +242,72 @@ func ItemToData(id string, data *map[string]interface{}) {
 	}
 }
 
-func ViewToData(id string, data *map[string]interface{}) {
+// ViewToData charge les sources de tous les objets d'une vue. tracker peut être nil.
+func ViewToData(id string, data *map[string]interface{}, tracker *progress.Tracker) {
 	ViewItems, err := ViewItems(id)
 	if checkErr(err) {
 		return
 	}
 	for _, item := range ViewItems {
-		ItemToData(item, data)
+		ItemToData(item, data, tracker)
 	}
+}
+
+// ViewSources liste les sources nécessaires à une vue sans les charger : sources
+// des objets et leurs dépendances récursives, dédoublonnées, dans l'ordre de
+// chargement (dépendances avant la source qui les utilise).
+func ViewSources(viewID string) ([]models.Sources, error) {
+	items, err := ViewItems(viewID)
+	if err != nil {
+		return nil, err
+	}
+
+	seen := make(map[string]bool)
+	sources := []models.Sources{}
+	for _, item := range items {
+		if err := appendItemSources(item, seen, &sources); err != nil {
+			return sources, err
+		}
+	}
+
+	return sources, nil
+}
+
+// ItemSources liste les sources nécessaires à un objet sans les charger.
+func ItemSources(itemID string) ([]models.Sources, error) {
+	seen := make(map[string]bool)
+	sources := []models.Sources{}
+	err := appendItemSources(itemID, seen, &sources)
+	return sources, err
+}
+
+func appendItemSources(itemID string, seen map[string]bool, sources *[]models.Sources) error {
+	itemSources, err := database.ItemSources(itemID)
+	if err != nil {
+		return err
+	}
+	for _, source := range itemSources {
+		appendSourceTree(source, seen, sources)
+	}
+	return nil
+}
+
+// appendSourceTree ajoute une source et ses dépendances. Le suivi par nom évite
+// les boucles de dépendances et les doublons entre objets.
+func appendSourceTree(source models.Sources, seen map[string]bool, sources *[]models.Sources) {
+	if seen[source.Name] {
+		return
+	}
+	seen[source.Name] = true
+
+	requires, err := database.SourceRequire(source.Name)
+	if !checkErr(err) {
+		for _, require := range requires {
+			appendSourceTree(require, seen, sources)
+		}
+	}
+
+	*sources = append(*sources, source)
 }
 
 func GetSourceContent(daSource map[string]interface{}) interface{} {

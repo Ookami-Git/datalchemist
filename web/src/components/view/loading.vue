@@ -27,7 +27,10 @@
   justify-content: center;
 }
 
-:global([data-bs-theme='dark']) .dc-loader {
+// Sans :global() : le compilateur scoped remplacerait tout le sélecteur par le
+// contenu de :global(), les variables seraient posées sur <html> et la
+// déclaration locale de .dc-loader les écraserait.
+[data-bs-theme='dark'] .dc-loader {
   --loader-primary: #7ab7ff;
   --loader-secondary: #71e0bf;
   --loader-ink: #eef4ff;

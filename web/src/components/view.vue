@@ -6,8 +6,10 @@ import axios from 'axios';
 import jQuery from 'jquery';
 import DataTable from 'datatables.net-bs5';
 import loading from './view/loading.vue';
+import loadingProgress from './view/loadingProgress.vue';
 import viewGrid from './view/viewGrid.vue';
 import viewRow from './view/viewRow.vue';
+import { fetchDataWithProgress } from '@/utils/dataStream.js';
 
 const props = defineProps({
     viewid: [String, Number],
@@ -28,6 +30,8 @@ provide('data', viewData);
 
 const hasLoadError = ref(false);
 const fetchError = ref(null);
+// Avancement du chargement des sources, alimenté par le flux SSE des données.
+const loadProgress = ref(null);
 
 function cleanupViewDataTables() {
     if (!viewRoot.value) return;
@@ -72,6 +76,7 @@ function cleanupViewDataTables() {
 
 if (!props.viewStructure || !props.viewItems) {
     let loadCycle = 0;
+    let activeDataStream = null;
 
     // Mode normal : chargement API
     const fetchViewStructure = async (viewid) => {
@@ -84,19 +89,14 @@ if (!props.viewStructure || !props.viewItems) {
         return response.data;
     };
 
-    const fetchViewData = async (viewid) => {
-        const response = await axios.get(`${apiUrl}/data/view/${viewid}`, {
-            params: route.query
-        });
-        return response.data;
-    };
-
     watch(() => route.fullPath, async (_, __, onCleanup) => {
         const currentCycle = ++loadCycle;
         let canceled = false;
 
         onCleanup(() => {
             canceled = true;
+            activeDataStream?.cancel();
+            activeDataStream = null;
             cleanupViewDataTables();
         });
 
@@ -106,24 +106,40 @@ if (!props.viewStructure || !props.viewItems) {
         viewStructure.value = null;
         viewData.value = null;
         viewItems.value = null;
+        loadProgress.value = null;
 
         const currentViewId = route.params.viewid;
+
+        activeDataStream = fetchDataWithProgress({
+            url: `${apiUrl}/data/view/${currentViewId}`,
+            params: route.query,
+            onProgress: (snapshot) => {
+                if (canceled || currentCycle !== loadCycle) return;
+                loadProgress.value = snapshot;
+            }
+        });
 
         try {
             const [nextStructure, nextData, nextItems] = await Promise.all([
                 fetchViewStructure(currentViewId),
-                fetchViewData(currentViewId),
+                activeDataStream.promise,
                 fetchViewItems(currentViewId)
             ]);
 
             if (canceled || currentCycle !== loadCycle) return;
 
+            activeDataStream = null;
+            loadProgress.value = null;
             viewStructure.value = nextStructure;
             viewData.value = nextData;
             viewItems.value = nextItems;
         } catch (error) {
+            activeDataStream?.cancel();
+            activeDataStream = null;
+
             if (canceled || currentCycle !== loadCycle) return;
 
+            loadProgress.value = null;
             fetchError.value = error.response || {
                 status: 'Unknown',
                 statusText: error.message || 'Error'
@@ -169,6 +185,8 @@ onBeforeUnmount(() => {
         <div v-else class="view-loading-page-center">
             <loading />
         </div>
+
+        <loadingProgress :snapshot="loadProgress" />
     </div>
 </template>
 

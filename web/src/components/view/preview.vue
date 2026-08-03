@@ -1,11 +1,13 @@
 <script setup>
 
-import { ref, provide, watch, onMounted, inject } from 'vue';
+import { ref, provide, watch, onMounted, onBeforeUnmount, inject } from 'vue';
 import { useRoute } from 'vue-router';
 import View from '../view.vue';
 import loading from '../view/loading.vue';
+import loadingProgress from '../view/loadingProgress.vue';
 import axios from 'axios';
 import { effectiveGetQuery } from '@/utils/getVariables.js';
+import { fetchDataWithProgress } from '@/utils/dataStream.js';
 
 const emit = defineEmits(['data-loaded']);
 
@@ -40,11 +42,37 @@ const viewData = ref(null);
 
 const apiUrl = inject('apiUrl');
 
+// Avancement du chargement des sources de l'objet prévisualisé.
+const loadProgress = ref(null);
+let activeDataStream = null;
+let loadCycle = 0;
 
+// Charge les données de l'objet en suivant l'avancement des sources.
+async function fetchItemData(itemid, params, cycle) {
+    activeDataStream?.cancel();
+
+    const stream = fetchDataWithProgress({
+        url: `${apiUrl}/data/item/${itemid}`,
+        params,
+        onProgress: (snapshot) => {
+            if (cycle !== loadCycle) return;
+            loadProgress.value = snapshot;
+        }
+    });
+    activeDataStream = stream;
+
+    try {
+        return await stream.promise;
+    } finally {
+        if (activeDataStream === stream) activeDataStream = null;
+        if (cycle === loadCycle) loadProgress.value = null;
+    }
+}
 
 async function fetchRealData(itemid) {
     const requestConfig = { params: effectiveGetQuery(props.previewQuery, route.query) };
     const startTime = performance.now();
+    const cycle = ++loadCycle;
 
     try {
         if (props.mode === 'edit' && props.item) {
@@ -68,8 +96,7 @@ async function fetchRealData(itemid) {
             let data = {};
             if (props.item.id || itemid) {
                 try {
-                    const dataRes = await axios.get(`${apiUrl}/data/item/${props.item.id || itemid}`, requestConfig);
-                    data = dataRes.data;
+                    data = await fetchItemData(props.item.id || itemid, requestConfig.params, cycle);
                 } catch { }
             }
             viewData.value = data;
@@ -79,7 +106,7 @@ async function fetchRealData(itemid) {
         }
         // Sinon, mode normal (saved)
         const itemRes = await axios.get(`${apiUrl}/item/${itemid}`);
-        const dataRes = await axios.get(`${apiUrl}/data/item/${itemid}`, requestConfig);
+        const dataRes = await fetchItemData(itemid, requestConfig.params, cycle);
 
         viewStructure.value = {
             version: 1,
@@ -96,7 +123,7 @@ async function fetchRealData(itemid) {
         viewItems.value = {
             ["i" + itemid]: itemRes.data
         };
-        viewData.value = dataRes.data;
+        viewData.value = dataRes;
         provide('data', ref(viewData.value));
         emit('data-loaded', Math.round(performance.now() - startTime));
     } catch (e) {
@@ -125,6 +152,12 @@ watch(() => [props.mode, props.itemid, props.item, props.refreshToken, JSON.stri
         fetchRealData(id);
     }
 });
+
+onBeforeUnmount(() => {
+    loadCycle++;
+    activeDataStream?.cancel();
+    activeDataStream = null;
+});
 </script>
 
 <template>
@@ -134,4 +167,5 @@ watch(() => [props.mode, props.itemid, props.item, props.refreshToken, JSON.stri
     <div v-else>
         <loading />
     </div>
+    <loadingProgress :snapshot="loadProgress" />
 </template>

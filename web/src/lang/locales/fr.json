@@ -494,5 +494,18 @@
     "modalTitle": "Modifications non sauvegardées",
     "stay": "Rester sur la page",
     "leave": "Quitter sans sauvegarder"
+  },
+  "dataprogress": {
+    "title": "Chargement des sources",
+    "summary": "{done}/{total} sources",
+    "show": "Afficher le détail du chargement",
+    "hide": "Masquer le détail du chargement",
+    "loop": "Boucle",
+    "status": {
+      "pending": "En attente",
+      "running": "Chargement...",
+      "done": "Chargée",
+      "error": "Erreur"
+    }
   }
 }

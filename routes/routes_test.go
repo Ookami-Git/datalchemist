@@ -13,7 +13,7 @@ func TestSetupRoutesRegistersPublicAndProtectedEndpoints(t *testing.T) {
 	r := gin.New()
 	SetupRoutes(r)
 
-	for _, path := range []string{"/api/auth/logout", "/api/user", "/api/view/1"} {
+	for _, path := range []string{"/api/auth/logout", "/api/user", "/api/view/1", "/api/data/view/1/stream", "/api/data/item/1/stream"} {
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, path, nil))
 		if w.Code == http.StatusNotFound {
