@@ -19,6 +19,16 @@
 
   --dc-transition-fast: all 0.2s ease-in-out;
   --dc-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Densité des tableaux (DataTables) : chaque cellule consomme le moins
+     de largeur possible pour laisser la place au contenu et limiter les
+     retours à la ligne quand il y a beaucoup de colonnes. */
+  --dc-dt-cell-pad-x: 0.5rem;
+  --dc-dt-cell-pad-y: 0.4rem;
+  --dc-dt-head-pad-y: 0.7rem;
+  --dc-dt-font-size: 0.85rem;
+  --dc-dt-head-font-size: 0.72rem;
+  --dc-dt-line-height: 1.35;
 }
 
 [data-bs-theme="dark"] {
@@ -133,10 +143,29 @@ table.dataTable {
       border-bottom: 2px solid var(--dc-border-subtle) !important;
       color: var(--bs-secondary-color) !important;
       font-weight: 600 !important;
-      font-size: 0.825rem !important;
+      font-size: var(--dc-dt-head-font-size) !important;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      padding: 0.75rem 0.95rem !important;
+      /* Pas de letter-spacing : il gonfle la largeur mini de chaque colonne */
+      letter-spacing: 0;
+      line-height: 1.25;
+      padding: var(--dc-dt-head-pad-y) var(--dc-dt-cell-pad-x) !important;
+
+      /* L'en-tête peut passer sur deux lignes plutôt que d'imposer
+         la largeur de la colonne au contenu. */
+      .dt-column-title {
+        white-space: normal;
+        overflow-wrap: break-word;
+      }
+
+      /* Flèches de tri : 12px + 4px de gap par colonne, on resserre. */
+      .dt-column-header,
+      .dt-column-footer {
+        gap: 2px;
+      }
+
+      .dt-column-order {
+        width: 8px !important;
+      }
 
       &:first-child {
         border-top-left-radius: 12px !important;
@@ -179,9 +208,13 @@ table.dataTable {
 
       td {
         border-bottom: 1px solid var(--dc-border-subtle) !important;
-        padding: 0.8rem 0.95rem !important;
+        padding: var(--dc-dt-cell-pad-y) var(--dc-dt-cell-pad-x) !important;
         vertical-align: middle;
-        font-size: 0.925rem;
+        font-size: var(--dc-dt-font-size);
+        line-height: var(--dc-dt-line-height);
+        /* Les longues chaînes sans espace (URL, identifiants) se coupent
+           au lieu de déborder ou d'élargir la colonne. */
+        overflow-wrap: break-word;
       }
 
       &:hover {
