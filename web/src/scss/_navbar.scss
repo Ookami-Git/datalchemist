@@ -7,8 +7,6 @@
   bottom: 0;
   z-index: 1030;
   background: rgba(var(--bs-body-bg-rgb), var(--sidebar-navbar-bg-opacity));
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.04);
   border-right: 1px solid var(--dc-border-subtle, rgba(0, 0, 0, 0.08));
   width: var(--sidebar-width, 200px);
@@ -24,7 +22,7 @@
     border-color 0.3s ease;
 }
 
-[data-bs-theme='dark'] .sidebar-navbar {
+[data-bs-theme="dark"] .sidebar-navbar {
   --sidebar-navbar-bg-opacity: 0.85;
   box-shadow: 4px 0 30px rgba(0, 0, 0, 0.25);
   border-right: 1px solid var(--dc-border-subtle, rgba(255, 255, 255, 0.08));
@@ -75,7 +73,7 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-bs-theme='dark'] .sidebar-navbar .sidebar-toggle {
+[data-bs-theme="dark"] .sidebar-navbar .sidebar-toggle {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
@@ -161,16 +159,19 @@
   background-color: rgba(var(--bs-primary-rgb), 0.09);
   border-color: rgba(var(--bs-primary-rgb), 0.08);
   font-weight: 600;
-  
+
   /* Accent indicator bar on the left */
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 4px;
     top: 20%;
     height: 60%;
     width: 3px;
-    background: var(--dc-accent-gradient, linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%));
+    background: var(
+      --dc-accent-gradient,
+      linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)
+    );
     border-radius: 4px;
   }
 }
@@ -182,7 +183,9 @@
 /* Icon animations inside links */
 .sidebar-navbar .navbar-nav .nav-link i {
   font-size: 1.15rem;
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s ease;
+  transition:
+    transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s ease;
 }
 
 .sidebar-navbar .navbar-nav .nav-link:hover i {
@@ -236,7 +239,9 @@
   font-size: 0.55rem;
   font-weight: 900;
   color: var(--bs-secondary-color);
-  transition: transform 0.25s ease, color 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    color 0.25s ease;
 }
 
 .sidebar-navbar.is-collapsed .dropdown-toggle:hover i::after {
@@ -409,7 +414,9 @@
 
 /* Transitions for text fade */
 .sidebar-navbar .sidebar-text-enter-active {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
 
 .sidebar-navbar .sidebar-text-enter-from {

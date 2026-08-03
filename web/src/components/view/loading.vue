@@ -55,7 +55,6 @@
 .dc-loader__halo {
   inset: -8px;
   background: radial-gradient(circle, var(--loader-glow) 0%, rgba(0, 0, 0, 0) 72%);
-  filter: blur(1px);
   animation: loader-breathe 2.4s ease-in-out infinite;
 }
 

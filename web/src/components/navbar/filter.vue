@@ -154,7 +154,7 @@ onMounted(() => {
         document.addEventListener('click', handleClickOutside);
     }
     handleRefresh();
-    
+
     // Stop the helper shortcut animation after a few seconds or on first user interaction
     setTimeout(() => {
         hasInteracted.value = true;
@@ -177,16 +177,19 @@ watch(enableGlobalSearch, () => {
 </script>
 
 <template>
-    <div v-if="enableGlobalSearch" class="navbar-filter" :class="{ 'is-collapsed': collapsed, 'has-text': searchText.length > 0 }">
+    <div v-if="enableGlobalSearch" class="navbar-filter"
+        :class="{ 'is-collapsed': collapsed, 'has-text': searchText.length > 0 }">
         <div v-if="!collapsed" class="navbar-search-inline">
-            <input ref="inlineSearchInput" v-model="searchText" class="form-control form-control-sm navbar-search-input" type="text"
-                :placeholder="$t('menu.search')" :aria-label="$t('menu.search')" @focus="hasInteracted = true">
+            <input ref="inlineSearchInput" v-model="searchText" class="form-control form-control-sm navbar-search-input"
+                type="text" :placeholder="$t('menu.search')" :aria-label="$t('menu.search')"
+                @focus="hasInteracted = true">
             <i class="bi bi-search navbar-search-icon" aria-hidden="true"></i>
             <button v-if="searchText.length" type="button" class="navbar-search-clear" @mousedown.prevent
                 @click.stop="clearSearch" :aria-label="$t('menu.clearsearch')" :title="$t('menu.clearsearch')">
                 <i class="bi bi-x-circle-fill"></i>
             </button>
-            <kbd v-else class="navbar-search-shortcut" :class="{ 'pulse-shortcut': !hasInteracted }" aria-hidden="true" :title="$t('menu.search') + ' (Press /)'">{{ searchShortcutKey }}</kbd>
+            <kbd v-else class="navbar-search-shortcut" :class="{ 'pulse-shortcut': !hasInteracted }" aria-hidden="true"
+                :title="$t('menu.search') + ' (Press /)'">{{ searchShortcutKey }}</kbd>
         </div>
 
         <template v-else>
@@ -328,11 +331,14 @@ watch(enableGlobalSearch, () => {
 }
 
 @keyframes kbd-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: scale(1);
         border-color: var(--bs-border-color);
         box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
     }
+
     50% {
         transform: scale(1.15);
         border-color: var(--bs-primary);
@@ -353,8 +359,10 @@ watch(enableGlobalSearch, () => {
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    padding: 2rem 1rem 1rem 1rem; /* un peu plus haut pour dégager la vue sur le tableau */
-    background: transparent; /* transparent pour voir les résultats en temps réel */
+    padding: 2rem 1rem 1rem 1rem;
+    /* un peu plus haut pour dégager la vue sur le tableau */
+    background: transparent;
+    /* transparent pour voir les résultats en temps réel */
     pointer-events: auto;
     /* On garde une légère transition sans flou ni couleur bloquante */
     transition: all 0.2s ease;
@@ -364,12 +372,9 @@ watch(enableGlobalSearch, () => {
     width: min(540px, calc(100% - 2rem));
     border: 1px solid color-mix(in srgb, var(--bs-primary) 25%, var(--bs-border-color));
     border-radius: 12px;
-    /* Effet de verre dépoli (glassmorphism) localisé uniquement sur la boîte de recherche */
-    background: color-mix(in srgb, var(--bs-body-bg) 85%, transparent);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    box-shadow: 
-        0 20px 25px -5px rgba(0, 0, 0, 0.15), 
+    background: color-mix(in srgb, var(--bs-body-bg) 96%, transparent);
+    box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.15),
         0 10px 10px -5px rgba(0, 0, 0, 0.1),
         0 0 0 1px color-mix(in srgb, var(--bs-primary) 10%, transparent);
     padding: 0.5rem 0.75rem;
@@ -418,4 +423,3 @@ watch(enableGlobalSearch, () => {
     right: 0.75rem;
 }
 </style>
-

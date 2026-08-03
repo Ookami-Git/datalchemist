@@ -188,8 +188,7 @@ watch(() => props.collapsed, (collapsed, previousCollapsed) => {
     border-radius: 10px;
     padding: 0.35rem;
     border: 1px solid var(--bs-border-color-translucent);
-    background-color: rgba(var(--bs-body-bg-rgb), 0.94);
-    backdrop-filter: blur(12px);
+    background-color: var(--bs-body-bg);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
@@ -204,7 +203,8 @@ watch(() => props.collapsed, (collapsed, previousCollapsed) => {
     margin-top: 0.15rem;
     margin-bottom: 0.35rem;
     padding: 0;
-    padding-left: 1.15rem; /* Clean indentation for subitems */
+    padding-left: 1.15rem;
+    /* Clean indentation for subitems */
     background: transparent;
     border: none;
     box-shadow: none;

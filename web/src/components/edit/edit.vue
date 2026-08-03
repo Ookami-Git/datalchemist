@@ -118,7 +118,7 @@ const getSourceTypeCount = (type) => {
 // Filtered lists for each tab
 const filteredSources = computed(() => {
   let list = getCollectionArray(sources.value);
-  
+
   if (selectedSourceType.value !== 'all') {
     list = list.filter(x => {
       if (!x.json) return false;
@@ -131,7 +131,7 @@ const filteredSources = computed(() => {
       }
     });
   }
-  
+
   if (!searchQuery.value) return list;
   const q = searchQuery.value.toLowerCase().trim();
   return list.filter(x => x.name?.toLowerCase().includes(q) || String(x.id).includes(q));
@@ -165,7 +165,7 @@ const getSourceDetails = (source) => {
     const parsed = JSON.parse(source.json);
     const srcType = parsed.src || 'file';
     const dataType = parsed.type || 'json';
-    
+
     const srcLabels = {
       file: 'Fichier',
       url: 'URL',
@@ -173,7 +173,7 @@ const getSourceDetails = (source) => {
       text: 'Texte',
       execute: 'Exécution'
     };
-    
+
     let details = '';
     if (srcType === 'file') {
       details = parsed.path ? parsed.path.split('/').pop() : 'Fichier local';
@@ -184,7 +184,7 @@ const getSourceDetails = (source) => {
     } else if (srcType === 'text') {
       details = 'Statique';
     }
-    
+
     return {
       type: srcLabels[srcType] || srcType,
       format: dataType.toUpperCase(),
@@ -222,7 +222,7 @@ const getViewDetails = (view) => {
     if (parsed && Array.isArray(parsed.items)) {
       return { itemsCount: parsed.items.length };
     }
-  } catch (e) {}
+  } catch (e) { }
   return { itemsCount: 0 };
 };
 
@@ -470,7 +470,7 @@ fetchSecrets()
             <p class="hero-subtitle mb-0">{{ $t('edit.subtitle') }}</p>
           </div>
         </div>
-        
+
         <!-- Status chips -->
         <div class="d-flex flex-wrap gap-2">
           <div class="status-pill badge-primary">
@@ -489,7 +489,8 @@ fetchSecrets()
     <div class="row g-3 mb-4">
       <!-- Sources Card Selector -->
       <div class="col-6 col-md-3">
-        <button @click="activeTab = 'sources'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'sources' }">
+        <button @click="activeTab = 'sources'" class="stat-select-card w-100 text-start"
+          :class="{ 'active': activeTab === 'sources' }">
           <div class="card-inner border-source">
             <div class="card-header-icon bg-source-soft">
               <i class="bi bi-plug-fill text-source"></i>
@@ -505,7 +506,8 @@ fetchSecrets()
 
       <!-- Items Card Selector -->
       <div class="col-6 col-md-3">
-        <button @click="activeTab = 'items'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'items' }">
+        <button @click="activeTab = 'items'" class="stat-select-card w-100 text-start"
+          :class="{ 'active': activeTab === 'items' }">
           <div class="card-inner border-item">
             <div class="card-header-icon bg-item-soft">
               <i class="bi bi-box-seam-fill text-item"></i>
@@ -521,7 +523,8 @@ fetchSecrets()
 
       <!-- Views Card Selector -->
       <div class="col-6 col-md-3">
-        <button @click="activeTab = 'views'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'views' }">
+        <button @click="activeTab = 'views'" class="stat-select-card w-100 text-start"
+          :class="{ 'active': activeTab === 'views' }">
           <div class="card-inner border-view">
             <div class="card-header-icon bg-view-soft">
               <i class="bi bi-grid-1x2-fill text-view"></i>
@@ -537,7 +540,8 @@ fetchSecrets()
 
       <!-- Secrets Card Selector -->
       <div v-if="showSecretsPanel" class="col-6 col-md-3">
-        <button @click="activeTab = 'secrets'" class="stat-select-card w-100 text-start" :class="{ 'active': activeTab === 'secrets' }">
+        <button @click="activeTab = 'secrets'" class="stat-select-card w-100 text-start"
+          :class="{ 'active': activeTab === 'secrets' }">
           <div class="card-inner border-secret">
             <div class="card-header-icon bg-secret-soft">
               <i class="bi bi-shield-lock-fill text-secret"></i>
@@ -554,7 +558,8 @@ fetchSecrets()
 
     <!-- Main Content Area -->
     <div class="card main-workspace-card shadow-sm">
-      <div class="card-header bg-transparent py-3 px-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div
+        class="card-header bg-transparent py-3 px-4 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
         <!-- Tab Label & Description -->
         <div>
           <h2 class="h5 mb-1 d-flex align-items-center gap-2">
@@ -576,35 +581,20 @@ fetchSecrets()
           <!-- Search input -->
           <div class="search-input-wrapper flex-grow-1">
             <i class="bi bi-search search-icon"></i>
-            <input 
-              type="text" 
-              class="form-control search-input" 
-              :placeholder="'Rechercher...'"
-              v-model="searchQuery"
-            />
+            <input type="text" class="form-control search-input" :placeholder="'Rechercher...'" v-model="searchQuery" />
             <button v-if="searchQuery" @click="searchQuery = ''" class="btn btn-link search-clear-btn p-0">
               <i class="bi bi-x-circle-fill text-muted"></i>
             </button>
           </div>
 
           <!-- Add Button -->
-          <button 
-            v-if="activeTab !== 'secrets' || canManageSecrets"
-            type="button" 
-            class="btn btn-add d-flex align-items-center gap-2"
-            :class="'btn-' + activeTab"
-            data-bs-toggle="modal" 
-            :data-bs-target="'#add' + (activeTab === 'sources' ? 'source' : activeTab === 'items' ? 'item' : activeTab === 'views' ? 'view' : 'secret')"
-          >
+          <button v-if="activeTab !== 'secrets' || canManageSecrets" type="button"
+            class="btn btn-add d-flex align-items-center gap-2" :class="'btn-' + activeTab" data-bs-toggle="modal"
+            :data-bs-target="'#add' + (activeTab === 'sources' ? 'source' : activeTab === 'items' ? 'item' : activeTab === 'views' ? 'view' : 'secret')">
             <i class="bi bi-plus-lg"></i>
             <span class="d-none d-sm-inline">{{ $t('edit.add') }}</span>
           </button>
-          <button 
-            v-else 
-            type="button" 
-            class="btn btn-secondary d-flex align-items-center gap-2" 
-            disabled
-          >
+          <button v-else type="button" class="btn btn-secondary d-flex align-items-center gap-2" disabled>
             <i class="bi bi-plus-lg"></i>
             <span class="d-none d-sm-inline">{{ $t('edit.add') }}</span>
           </button>
@@ -616,27 +606,17 @@ fetchSecrets()
         <div v-if="activeTab === 'sources'">
           <!-- Filtres de type de source -->
           <div class="d-flex flex-wrap gap-2 mb-4">
-            <button 
-              type="button" 
-              class="btn btn-filter"
-              :class="{ 'active': selectedSourceType === 'all' }"
-              @click="selectedSourceType = 'all'"
-            >
+            <button type="button" class="btn btn-filter" :class="{ 'active': selectedSourceType === 'all' }"
+              @click="selectedSourceType = 'all'">
               <i class="bi bi-grid-fill me-2"></i>
               <span>Tous</span>
               <span class="badge rounded-pill ms-2 filter-badge">
                 {{ getCollectionArray(sources).length }}
               </span>
             </button>
-            
-            <button 
-              v-for="typeInfo in sourceTypesList" 
-              :key="typeInfo.type"
-              type="button" 
-              class="btn btn-filter"
-              :class="{ 'active': selectedSourceType === typeInfo.type }"
-              @click="selectedSourceType = typeInfo.type"
-            >
+
+            <button v-for="typeInfo in sourceTypesList" :key="typeInfo.type" type="button" class="btn btn-filter"
+              :class="{ 'active': selectedSourceType === typeInfo.type }" @click="selectedSourceType = typeInfo.type">
               <i :class="typeInfo.icon + ' me-2'"></i>
               <span>{{ typeInfo.label }}</span>
               <span class="badge rounded-pill ms-2 filter-badge">
@@ -656,20 +636,23 @@ fetchSecrets()
                     <div class="min-w-0">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
-                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                        <span
+                          class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
+                          row.id }}</span>
                       </div>
                       <!-- Source type & details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
                         <span class="badge bg-source-soft text-source font-weight-bold small-badge">
                           {{ getSourceDetails(row).type }}
                         </span>
-                        <span v-if="getSourceDetails(row).details" class="text-muted small-text text-truncate max-w-160" :title="getSourceDetails(row).details">
+                        <span v-if="getSourceDetails(row).details" class="text-muted small-text text-truncate max-w-160"
+                          :title="getSourceDetails(row).details">
                           • {{ getSourceDetails(row).details }}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
                     <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
                       @click="$router.push({ name: 'editsource', params: { sourceid: row.id } })">
@@ -702,21 +685,13 @@ fetchSecrets()
                 Commencez par ajouter une source de données pour l'exploiter dans vos objets.
               </span>
             </p>
-            <button 
-              v-if="getCollectionArray(sources).length > 0"
-              type="button" 
+            <button v-if="getCollectionArray(sources).length > 0" type="button"
               class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-              @click="selectedSourceType = 'all'; searchQuery = ''"
-            >
+              @click="selectedSourceType = 'all'; searchQuery = ''">
               <i class="bi bi-x-lg"></i> Réinitialiser les filtres
             </button>
-            <button 
-              v-else
-              type="button" 
-              class="btn btn-source d-inline-flex align-items-center gap-2" 
-              data-bs-toggle="modal" 
-              data-bs-target="#addsource"
-            >
+            <button v-else type="button" class="btn btn-source d-inline-flex align-items-center gap-2"
+              data-bs-toggle="modal" data-bs-target="#addsource">
               <i class="bi bi-plus-lg"></i> Créer une source
             </button>
           </div>
@@ -735,20 +710,24 @@ fetchSecrets()
                     <div class="min-w-0">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
-                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                        <span
+                          class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
+                          row.id }}</span>
                       </div>
                       <!-- Item Template details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
-                        <span class="badge small-badge" :class="getItemDetails(row).isVisual ? 'bg-primary-soft text-primary' : 'bg-secondary-soft text-secondary'">
+                        <span class="badge small-badge"
+                          :class="getItemDetails(row).isVisual ? 'bg-primary-soft text-primary' : 'bg-secondary-soft text-secondary'">
                           {{ getItemDetails(row).label }}
                         </span>
-                        <span class="text-muted small-text text-truncate max-w-160" :title="getItemDetails(row).templateName">
+                        <span class="text-muted small-text text-truncate max-w-160"
+                          :title="getItemDetails(row).templateName">
                           • {{ getItemDetails(row).templateName }}
                         </span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
                     <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
                       @click="$router.push({ name: 'edititem', params: { itemid: row.id } })">
@@ -774,7 +753,8 @@ fetchSecrets()
             </div>
             <h4 class="h5 mb-1">Aucun objet trouvé</h4>
             <p class="text-muted small mb-3">Créez un objet pour modéliser, transformer et préparer vos données.</p>
-            <button type="button" class="btn btn-item d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#additem">
+            <button type="button" class="btn btn-item d-inline-flex align-items-center gap-2" data-bs-toggle="modal"
+              data-bs-target="#additem">
               <i class="bi bi-plus-lg"></i> Créer un objet
             </button>
           </div>
@@ -793,7 +773,9 @@ fetchSecrets()
                     <div class="min-w-0">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
-                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                        <span
+                          class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
+                          row.id }}</span>
                       </div>
                       <!-- View Items count -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -803,7 +785,7 @@ fetchSecrets()
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
                     <button type="button" class="btn btn-action btn-action-edit" :title="$t('global.edit')"
                       @click="$router.push({ name: 'editview', params: { viewid: row.id } })">
@@ -828,8 +810,10 @@ fetchSecrets()
               <i class="bi bi-grid-1x2-fill text-view fs-2"></i>
             </div>
             <h4 class="h5 mb-1">Aucune vue trouvée</h4>
-            <p class="text-muted small mb-3">Créez une vue pour afficher de magnifiques tableaux de bord ou rapports.</p>
-            <button type="button" class="btn btn-view d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addview">
+            <p class="text-muted small mb-3">Créez une vue pour afficher de magnifiques tableaux de bord ou rapports.
+            </p>
+            <button type="button" class="btn btn-view d-inline-flex align-items-center gap-2" data-bs-toggle="modal"
+              data-bs-target="#addview">
               <i class="bi bi-plus-lg"></i> Créer une vue
             </button>
           </div>
@@ -848,14 +832,16 @@ fetchSecrets()
                     <div class="min-w-0">
                       <div class="d-flex align-items-center gap-2 flex-wrap">
                         <h3 class="item-title h6 mb-0 text-truncate">{{ row.name }}</h3>
-                        <span class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{ row.id }}</span>
+                        <span
+                          class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
+                          row.id }}</span>
                       </div>
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
                         <span class="text-muted small-text">••••••••</span>
                       </div>
                     </div>
                   </div>
-                  
+
                   <div class="d-flex align-items-center gap-2 ms-2 flex-shrink-0">
                     <button type="button" class="btn btn-action btn-action-edit"
                       :title="canManageSecrets ? $t('global.edit') : $t('edit.secrets_edit_disabled')"
@@ -879,8 +865,10 @@ fetchSecrets()
               <i class="bi bi-shield-lock-fill text-secret fs-2"></i>
             </div>
             <h4 class="h5 mb-1">Aucun secret trouvé</h4>
-            <p class="text-muted small mb-3">Stockez de manière sécurisée vos clés d'API, mots de passe et jetons d'accès.</p>
-            <button v-if="canManageSecrets" type="button" class="btn btn-secret d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#addsecret">
+            <p class="text-muted small mb-3">Stockez de manière sécurisée vos clés d'API, mots de passe et jetons
+              d'accès.</p>
+            <button v-if="canManageSecrets" type="button" class="btn btn-secret d-inline-flex align-items-center gap-2"
+              data-bs-toggle="modal" data-bs-target="#addsecret">
               <i class="bi bi-plus-lg"></i> Ajouter un secret
             </button>
           </div>
@@ -904,7 +892,7 @@ fetchSecrets()
               <div>
                 <h1 class="modal-title fs-5 mb-0 text-white" :id="'addModalLabel-' + type.type">{{
                   $t('edit.modal_add_secret_title')
-                }}</h1>
+                  }}</h1>
                 <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
               </div>
             </div>
@@ -916,11 +904,12 @@ fetchSecrets()
             <div>
               <h1 class="modal-title fs-5 mb-0 text-white" :id="'addModalLabel-' + type.type">{{ $t('edit.add') }} : {{
                 type.name
-              }}</h1>
+                }}</h1>
               <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t(getAddModalSubtitleKey(type.type)) }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body p-4">
           <template v-if="type.type === 'secret'">
@@ -929,14 +918,15 @@ fetchSecrets()
             </p>
             <div class="mb-3">
               <label :for="'InputSecretName-' + type.type" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
-              <input type="text" class="form-control form-control-modern" :id="'InputSecretName-' + type.type" v-model="NewName"
-                autocomplete="off">
+              <input type="text" class="form-control form-control-modern" :id="'InputSecretName-' + type.type"
+                v-model="NewName" autocomplete="off">
               <div class="form-text text-muted">{{ $t('edit.modal_add_secret_name_help') }}</div>
             </div>
             <div class="mb-0">
-              <label :for="'InputSecretValue-' + type.type" class="form-label fw-semibold">{{ $t('edit.secret_value') }}</label>
-              <input type="password" class="form-control form-control-modern" :id="'InputSecretValue-' + type.type" v-model="NewSecretValue"
-                autocomplete="new-password">
+              <label :for="'InputSecretValue-' + type.type" class="form-label fw-semibold">{{ $t('edit.secret_value')
+                }}</label>
+              <input type="password" class="form-control form-control-modern" :id="'InputSecretValue-' + type.type"
+                v-model="NewSecretValue" autocomplete="new-password">
               <div class="form-text text-muted">{{ $t('edit.modal_add_secret_value_help') }}</div>
             </div>
           </template>
@@ -946,8 +936,8 @@ fetchSecrets()
             </p>
             <div class="mb-0">
               <label :for="'InputName-' + type.type" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
-              <input type="text" class="form-control form-control-modern" :id="'InputName-' + type.type" v-model="NewName"
-                autocomplete="off">
+              <input type="text" class="form-control form-control-modern" :id="'InputName-' + type.type"
+                v-model="NewName" autocomplete="off">
               <div class="form-text text-muted">{{ $t('edit.modal_add_generic_name_help') }}</div>
             </div>
             <div v-if="type.type === 'item'" class="mt-4">
@@ -975,7 +965,8 @@ fetchSecrets()
                 </div>
               </div>
               <div v-if="NewItemMode === 'visual'" class="mt-4">
-                <label for="InputItemTemplate" class="form-label fw-semibold">{{ $t('edit.item_creation.template_label') }}</label>
+                <label for="InputItemTemplate" class="form-label fw-semibold">{{ $t('edit.item_creation.template_label')
+                  }}</label>
                 <select id="InputItemTemplate" class="form-select form-select-modern" v-model="NewItemTemplateKey">
                   <option v-for="template in templateCatalog" :key="`${template.key}:${template.major}`"
                     :value="template.key">
@@ -987,11 +978,12 @@ fetchSecrets()
           </template>
         </div>
         <div class="modal-footer border-0 p-4 pt-0">
-          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
-          }}</button>
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{
+            $t('global.cancel')
+            }}</button>
           <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow"
-            :class="type.type === 'secret' ? 'admin-edit-modal-primary' : ''"
-            @click="AddToDA(type.type)" data-bs-dismiss="modal">{{
+            :class="type.type === 'secret' ? 'admin-edit-modal-primary' : ''" @click="AddToDA(type.type)"
+            data-bs-dismiss="modal">{{
               $t('edit.add') }}</button>
         </div>
       </div>
@@ -1010,12 +1002,15 @@ fetchSecrets()
               <i class="bi bi-trash3-fill text-white"></i>
             </span>
             <div>
-              <h1 class="modal-title fs-5 mb-0 text-white" :id="'deleteModalLabel-' + type.type">{{ $t('global.remove') }} : {{
-                type.name }}</h1>
+              <h1 class="modal-title fs-5 mb-0 text-white" :id="'deleteModalLabel-' + type.type">{{ $t('global.remove')
+                }}
+                : {{
+                  type.name }}</h1>
               <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.modal_delete_subtitle') }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body p-4">
           <p class="admin-edit-delete-warning mb-4">
@@ -1033,13 +1028,15 @@ fetchSecrets()
             </div>
             <div class="admin-edit-delete-row">
               <span class="admin-edit-delete-label text-muted small">{{ $t('edit.name') }}</span>
-              <span class="admin-edit-delete-value fw-semibold text-truncate max-w-200">{{ ToDelete.name || '-' }}</span>
+              <span class="admin-edit-delete-value fw-semibold text-truncate max-w-200">{{ ToDelete.name || '-'
+                }}</span>
             </div>
           </div>
         </div>
         <div class="modal-footer border-0 p-4 pt-0">
-          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
-          }}</button>
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{
+            $t('global.cancel')
+            }}</button>
           <button type="button" class="btn btn-danger px-4 rounded-pill admin-edit-delete-btn"
             @click="DeleteFromDA(type.type, ToDelete.id)" data-bs-dismiss="modal">{{ $t('global.remove') }}</button>
         </div>
@@ -1058,11 +1055,14 @@ fetchSecrets()
               <i class="bi bi-pencil-square text-white"></i>
             </span>
             <div>
-              <h1 class="modal-title fs-5 mb-0 text-white" id="editSecretModalLabel">{{ $t('edit.modal_edit_secret_title') }}</h1>
+              <h1 class="modal-title fs-5 mb-0 text-white" id="editSecretModalLabel">{{
+                $t('edit.modal_edit_secret_title')
+                }}</h1>
               <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.secrets_sources_hint') }}</p>
             </div>
           </div>
-          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" :aria-label="$t('global.close')"></button>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            :aria-label="$t('global.close')"></button>
         </div>
         <div class="modal-body p-4">
           <p class="admin-edit-secret-note mb-4">
@@ -1075,13 +1075,15 @@ fetchSecrets()
           </div>
           <div class="mb-0">
             <label for="EditSecretValue" class="form-label fw-semibold">{{ $t('edit.secret_value') }}</label>
-            <input type="password" class="form-control form-control-modern" id="EditSecretValue" v-model="EditSecret.secret">
+            <input type="password" class="form-control form-control-modern" id="EditSecretValue"
+              v-model="EditSecret.secret">
             <div class="form-text text-muted">{{ $t('edit.modal_edit_secret_value_help') }}</div>
           </div>
         </div>
         <div class="modal-footer border-0 p-4 pt-0">
-          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{ $t('global.cancel')
-          }}</button>
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{
+            $t('global.cancel')
+            }}</button>
           <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow" :disabled="!canManageSecrets"
             @click="UpdateSecret" data-bs-dismiss="modal">{{
               $t('global.edit', 'Modifier') }}</button>
@@ -1090,7 +1092,8 @@ fetchSecrets()
     </div>
   </div>
 
-  <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName" @close="isPreviewOpen = false" />
+  <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName"
+    @close="isPreviewOpen = false" />
 </template>
 
 <style scoped lang="scss">
@@ -1104,34 +1107,83 @@ fetchSecrets()
   --edit-color-view-rgb: 245, 158, 11;
   --edit-color-secret: #8b5cf6;
   --edit-color-secret-rgb: 139, 92, 246;
-  
+
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--bs-body-color);
 }
 
-.text-source { color: var(--edit-color-source) !important; }
-.text-item { color: var(--edit-color-item) !important; }
-.text-view { color: var(--edit-color-view) !important; }
-.text-secret { color: var(--edit-color-secret) !important; }
+.text-source {
+  color: var(--edit-color-source) !important;
+}
 
-.bg-source { background-color: var(--edit-color-source) !important; }
-.bg-item { background-color: var(--edit-color-item) !important; }
-.bg-view { background-color: var(--edit-color-view) !important; }
-.bg-secret { background-color: var(--edit-color-secret) !important; }
+.text-item {
+  color: var(--edit-color-item) !important;
+}
 
-.border-source { border-color: var(--edit-color-source) !important; }
-.border-item { border-color: var(--edit-color-item) !important; }
-.border-view { border-color: var(--edit-color-view) !important; }
-.border-secret { border-color: var(--edit-color-secret) !important; }
+.text-view {
+  color: var(--edit-color-view) !important;
+}
+
+.text-secret {
+  color: var(--edit-color-secret) !important;
+}
+
+.bg-source {
+  background-color: var(--edit-color-source) !important;
+}
+
+.bg-item {
+  background-color: var(--edit-color-item) !important;
+}
+
+.bg-view {
+  background-color: var(--edit-color-view) !important;
+}
+
+.bg-secret {
+  background-color: var(--edit-color-secret) !important;
+}
+
+.border-source {
+  border-color: var(--edit-color-source) !important;
+}
+
+.border-item {
+  border-color: var(--edit-color-item) !important;
+}
+
+.border-view {
+  border-color: var(--edit-color-view) !important;
+}
+
+.border-secret {
+  border-color: var(--edit-color-secret) !important;
+}
 
 /* Soft background accents */
-.bg-source-soft { background-color: rgba(var(--edit-color-source-rgb), 0.1) !important; }
-.bg-item-soft { background-color: rgba(var(--edit-color-item-rgb), 0.1) !important; }
-.bg-view-soft { background-color: rgba(var(--edit-color-view-rgb), 0.1) !important; }
-.bg-secret-soft { background-color: rgba(var(--edit-color-secret-rgb), 0.1) !important; }
+.bg-source-soft {
+  background-color: rgba(var(--edit-color-source-rgb), 0.1) !important;
+}
 
-.bg-primary-soft { background-color: rgba(59, 130, 246, 0.1) !important; }
-.bg-secondary-soft { background-color: rgba(108, 117, 125, 0.1) !important; }
+.bg-item-soft {
+  background-color: rgba(var(--edit-color-item-rgb), 0.1) !important;
+}
+
+.bg-view-soft {
+  background-color: rgba(var(--edit-color-view-rgb), 0.1) !important;
+}
+
+.bg-secret-soft {
+  background-color: rgba(var(--edit-color-secret-rgb), 0.1) !important;
+}
+
+.bg-primary-soft {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+.bg-secondary-soft {
+  background-color: rgba(108, 117, 125, 0.1) !important;
+}
 
 /* Hero Banner */
 .modern-hero {
@@ -1151,9 +1203,8 @@ fetchSecrets()
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 78%);
   pointer-events: none;
-  filter: blur(40px);
 }
 
 .hero-icon-wrapper {
@@ -1196,17 +1247,19 @@ fetchSecrets()
   font-weight: 600;
   display: inline-flex;
   align-items: center;
-  backdrop-filter: blur(8px);
   border: 1px solid rgba(79, 70, 229, 0.12);
 }
+
 .badge-primary {
   background: rgba(79, 70, 229, 0.08);
   color: #4f46e5;
 }
+
 .badge-success {
   background: rgba(16, 185, 129, 0.08);
   color: #059669;
 }
+
 .badge-warning {
   background: rgba(217, 119, 6, 0.08);
   color: #d97706;
@@ -1220,7 +1273,7 @@ fetchSecrets()
   cursor: pointer;
   outline: none;
   transition: transform 0.2s;
-  
+
   &:hover {
     transform: translateY(-3px);
   }
@@ -1281,6 +1334,7 @@ fetchSecrets()
   border-width: 1.5px;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
+
 .stat-select-card.active .card-indicator {
   height: 4px;
 }
@@ -1317,7 +1371,7 @@ fetchSecrets()
   border: 1px solid var(--bs-border-color);
   background-color: var(--bs-tertiary-bg);
   transition: all 0.2s;
-  
+
   &:focus {
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
     border-color: #6366f1;
@@ -1336,7 +1390,7 @@ fetchSecrets()
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   &:hover i {
     color: var(--bs-body-color) !important;
   }
@@ -1350,7 +1404,7 @@ fetchSecrets()
   color: white;
   transition: all 0.2s;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  
+
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
@@ -1360,25 +1414,41 @@ fetchSecrets()
 .btn-sources {
   background-color: var(--edit-color-source);
   border-color: var(--edit-color-source);
-  &:hover { background-color: #0d9488; border-color: #0d9488; }
+
+  &:hover {
+    background-color: #0d9488;
+    border-color: #0d9488;
+  }
 }
 
 .btn-items {
   background-color: var(--edit-color-item);
   border-color: var(--edit-color-item);
-  &:hover { background-color: #2563eb; border-color: #2563eb; }
+
+  &:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+  }
 }
 
 .btn-views {
   background-color: var(--edit-color-view);
   border-color: var(--edit-color-view);
-  &:hover { background-color: #d97706; border-color: #d97706; }
+
+  &:hover {
+    background-color: #d97706;
+    border-color: #d97706;
+  }
 }
 
 .btn-secrets {
   background-color: var(--edit-color-secret);
   border-color: var(--edit-color-secret);
-  &:hover { background-color: #7c3aed; border-color: #7c3aed; }
+
+  &:hover {
+    background-color: #7c3aed;
+    border-color: #7c3aed;
+  }
 }
 
 /* Compact Modern Item Cards */
@@ -1388,8 +1458,8 @@ fetchSecrets()
   border: 1px solid var(--bs-border-color);
   background: var(--bs-body-bg);
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.01);
-  
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+
   &:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.08);
@@ -1451,7 +1521,7 @@ fetchSecrets()
   align-items: center;
   justify-content: center;
   font-size: 0.85rem;
-  
+
   &:hover {
     background-color: var(--bs-secondary-bg);
     color: var(--bs-body-color);
@@ -1497,11 +1567,12 @@ fetchSecrets()
 }
 
 /* Modern Modals */
-.form-control-modern, .form-select-modern {
+.form-control-modern,
+.form-select-modern {
   border-radius: 0.5rem;
   padding: 0.6rem 0.85rem;
   border: 1px solid var(--bs-border-color);
-  
+
   &:focus {
     border-color: #6366f1;
     box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
@@ -1511,12 +1582,12 @@ fetchSecrets()
 .template-choice-box {
   transition: all 0.2s ease;
   border: 1.5px solid var(--bs-border-color);
-  
+
   &.active-primary {
     border-color: var(--edit-color-item);
     background-color: rgba(var(--edit-color-item-rgb), 0.04);
   }
-  
+
   &:hover:not(.active-primary) {
     background-color: var(--bs-tertiary-bg);
   }
@@ -1613,24 +1684,22 @@ fetchSecrets()
     background: rgba(245, 158, 11, 0.15);
     color: #fbbf24;
   }
-  
+
   .card-inner {
     background: rgba(30, 41, 59, 0.45);
-    backdrop-filter: blur(10px);
   }
-  
+
   .item-card {
     background: rgba(30, 41, 59, 0.35);
-    backdrop-filter: blur(8px);
   }
 
   .btn-filter {
     background-color: rgba(30, 41, 59, 0.35);
-    
+
     &:hover {
       background-color: rgba(30, 41, 59, 0.6);
     }
-    
+
     &.active {
       background-color: rgba(var(--edit-color-source-rgb), 0.15);
     }

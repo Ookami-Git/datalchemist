@@ -2,50 +2,56 @@
 
 :root {
   --dc-card-radius: 16px;
-  --dc-card-shadow: 0 6px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 8px -1px rgba(0, 0, 0, 0.04);
-  --dc-card-shadow-hover: 0 16px 32px -4px rgba(59, 130, 246, 0.12), 0 4px 16px -2px rgba(59, 130, 246, 0.06);
+  --dc-card-shadow:
+    0 6px 20px -2px rgba(0, 0, 0, 0.06), 0 2px 8px -1px rgba(0, 0, 0, 0.04);
+  --dc-card-shadow-hover:
+    0 16px 32px -4px rgba(59, 130, 246, 0.12),
+    0 4px 16px -2px rgba(59, 130, 246, 0.06);
   --dc-border-subtle: rgba(0, 0, 0, 0.07);
-  
+
   /* Glassmorphism theme backgrounds */
   --dc-card-bg-glass: rgba(255, 255, 255, 0.78);
   --dc-card-header-bg: rgba(255, 255, 255, 0.88);
-  
+
   /* Stylish blue accents */
   --dc-accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   --dc-hover-border: rgba(59, 130, 246, 0.45);
-  
+
   --dc-transition-fast: all 0.2s ease-in-out;
   --dc-transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 [data-bs-theme="dark"] {
-  --dc-card-shadow: 0 6px 24px -2px rgba(0, 0, 0, 0.4), 0 2px 10px -1px rgba(0, 0, 0, 0.25);
-  --dc-card-shadow-hover: 0 16px 36px -4px rgba(0, 0, 0, 0.55), 0 6px 20px -2px rgba(59, 130, 246, 0.15);
+  --dc-card-shadow:
+    0 6px 24px -2px rgba(0, 0, 0, 0.4), 0 2px 10px -1px rgba(0, 0, 0, 0.25);
+  --dc-card-shadow-hover:
+    0 16px 36px -4px rgba(0, 0, 0, 0.55),
+    0 6px 20px -2px rgba(59, 130, 246, 0.15);
   --dc-border-subtle: rgba(255, 255, 255, 0.08);
-  
+
   /* Neutral dark background to maintain application coherence (No slate/blue tint) */
   --dc-card-bg-glass: rgba(33, 37, 41, 0.82);
   --dc-card-header-bg: rgba(43, 48, 53, 0.9);
-  
+
   /* Bright stylish blue accents for dark mode */
   --dc-accent-gradient: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%);
   --dc-hover-border: rgba(96, 165, 250, 0.5);
 }
 
 /* Card Modern Styling */
-.view-card, .grid-stack-item-content.card {
+.view-card,
+.grid-stack-item-content.card {
   border: 1px solid var(--dc-border-subtle) !important;
   border-radius: var(--dc-card-radius) !important;
   box-shadow: var(--dc-card-shadow);
   background: var(--dc-card-bg-glass) !important;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   transition: var(--dc-transition-smooth) !important;
   overflow: hidden;
 }
 
 /* Re-introducing the stylish hover effect with translation */
-.view-card:hover, .grid-stack-item-content.card:hover {
+.view-card:hover,
+.grid-stack-item-content.card:hover {
   box-shadow: var(--dc-card-shadow-hover);
   transform: translateY(-3px);
   border-color: var(--dc-hover-border) !important;
@@ -78,7 +84,8 @@
 }
 
 /* Header Modern Styling */
-.widget-card-header, .view-card-header {
+.widget-card-header,
+.view-card-header {
   border-bottom: 1px solid var(--dc-border-subtle) !important;
   background: var(--dc-card-header-bg) !important;
   padding: 0.8rem 1.1rem !important;
@@ -90,11 +97,11 @@
   align-items: center;
   gap: 0.5rem;
   flex: 0 0 auto; /* Prevent header from shrinking */
-  
+
   /* Accent indicator bar */
   position: relative;
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 25%;
@@ -130,7 +137,7 @@ table.dataTable {
       text-transform: uppercase;
       letter-spacing: 0.05em;
       padding: 0.75rem 0.95rem !important;
-      
+
       &:first-child {
         border-top-left-radius: 12px !important;
       }
@@ -139,13 +146,23 @@ table.dataTable {
       }
 
       /* Sorting arrows styling */
-      &.sorting, &.sorting_asc, &.sorting_desc, &.dt-orderable-asc, &.dt-orderable-desc {
-        &::before, &::after {
+      &.sorting,
+      &.sorting_asc,
+      &.sorting_desc,
+      &.dt-orderable-asc,
+      &.dt-orderable-desc {
+        &::before,
+        &::after {
           color: var(--bs-secondary-color) !important;
           opacity: 0.35 !important;
-          transition: opacity 0.2s ease, color 0.2s ease;
+          transition:
+            opacity 0.2s ease,
+            color 0.2s ease;
         }
-        &.sorting_asc::before, &.sorting_desc::after, &.dt-ordering.asc::before, &.dt-ordering.desc::after {
+        &.sorting_asc::before,
+        &.sorting_desc::after,
+        &.dt-ordering.asc::before,
+        &.dt-ordering.desc::after {
           color: #3b82f6 !important;
           opacity: 0.95 !important;
         }
@@ -170,7 +187,7 @@ table.dataTable {
       &:hover {
         background-color: rgba(59, 130, 246, 0.04) !important;
       }
-      
+
       &.selected {
         background-color: rgba(59, 130, 246, 0.12) !important;
         color: inherit !important;
@@ -179,12 +196,16 @@ table.dataTable {
   }
 }
 
-div.dataTables_wrapper, div.dt-container {
+div.dataTables_wrapper,
+div.dt-container {
   padding: 0.4rem 0;
 
-  .dataTables_length, .dataTables_filter, .dt-length, .dt-search {
+  .dataTables_length,
+  .dataTables_filter,
+  .dt-length,
+  .dt-search {
     margin-bottom: 1rem;
-    
+
     label {
       font-size: 0.875rem;
       color: var(--bs-secondary-color);
@@ -192,15 +213,16 @@ div.dataTables_wrapper, div.dt-container {
       align-items: center;
       gap: 0.5rem;
     }
-    
-    select, input {
+
+    select,
+    input {
       border-radius: 20px !important; /* Elegant pill shape for search inputs */
       border: 1px solid var(--dc-border-subtle) !important;
       padding: 0.35rem 0.95rem !important;
       background-color: var(--bs-body-bg) !important;
       color: var(--bs-body-color) !important;
       transition: var(--dc-transition-fast);
-      
+
       &:focus {
         border-color: #3b82f6 !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
@@ -210,11 +232,12 @@ div.dataTables_wrapper, div.dt-container {
   }
 
   /* FixedColumns support to prevent visual leakage behind frozen cells */
-  .dtfc-fixed-start, .dtfc-fixed-end {
+  .dtfc-fixed-start,
+  .dtfc-fixed-end {
     background-color: var(--bs-body-bg) !important;
     z-index: 2;
     box-shadow: 4px 0 8px -4px rgba(0, 0, 0, 0.08);
-    
+
     [data-bs-theme="dark"] & {
       background-color: #212529 !important; /* Cohesive opaque dark match */
       box-shadow: 4px 0 12px -4px rgba(0, 0, 0, 0.4);
@@ -245,28 +268,30 @@ div.dataTables_wrapper, div.dt-container {
     }
   }
 
-  .dataTables_info, .dt-info {
+  .dataTables_info,
+  .dt-info {
     font-size: 0.825rem;
     color: var(--bs-secondary-color);
     padding-top: 0.8rem;
   }
 
-  .dataTables_paginate, .dt-paging {
+  .dataTables_paginate,
+  .dt-paging {
     padding-top: 0.8rem;
-    
+
     /* Bootstrap 5 integration (Standard list-based pagination) */
     .pagination {
       gap: 0.35rem;
       display: inline-flex;
       margin: 0;
       padding: 0;
-      
+
       .page-item {
         background: none !important;
         border: none !important;
         padding: 0 !important;
         margin: 0 !important;
-        
+
         .page-link {
           border-radius: 12px !important;
           border: 1px solid var(--dc-border-subtle) !important;
@@ -279,20 +304,20 @@ div.dataTables_wrapper, div.dt-container {
           transition: var(--dc-transition-fast);
           cursor: pointer;
           box-shadow: none !important;
-          
+
           &:hover {
             background-color: var(--bs-tertiary-bg) !important;
             border-color: rgba(59, 130, 246, 0.3) !important;
           }
         }
-        
+
         &.active .page-link {
           background: var(--dc-accent-gradient) !important;
           border-color: transparent !important;
           color: white !important;
           box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
         }
-        
+
         &.disabled .page-link {
           opacity: 0.4;
           background-color: transparent !important;
@@ -303,7 +328,8 @@ div.dataTables_wrapper, div.dt-container {
     }
 
     /* Standard DataTables pagination (if rendered as direct flat buttons) */
-    button.dt-paging-button, a.dt-paging-button {
+    button.dt-paging-button,
+    a.dt-paging-button {
       border-radius: 12px !important;
       border: 1px solid var(--dc-border-subtle) !important;
       background-color: transparent !important;
@@ -318,19 +344,20 @@ div.dataTables_wrapper, div.dt-container {
       align-items: center;
       justify-content: center;
       box-shadow: none !important;
-      
+
       &:hover {
         background-color: var(--bs-tertiary-bg) !important;
         border-color: rgba(59, 130, 246, 0.3) !important;
       }
-      
-      &.current, &.active {
+
+      &.current,
+      &.active {
         background: var(--dc-accent-gradient) !important;
         border-color: transparent !important;
         color: white !important;
         box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
       }
-      
+
       &.disabled {
         opacity: 0.4;
         background-color: transparent !important;
@@ -348,31 +375,31 @@ div.dataTables_wrapper, div.dt-container {
     padding: 1.2rem;
     margin-bottom: 1.2rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
-    
+
     .dtsp-searchPane {
       background-color: var(--bs-body-bg) !important;
       border: 1px solid var(--dc-border-subtle) !important;
       border-radius: 12px;
-      
+
       .dtsp-paneInputButton {
         border-radius: 10px;
         border: 1px solid var(--dc-border-subtle);
         background-color: var(--bs-body-bg);
       }
-      
+
       .dtsp-topRow {
         padding: 0.6rem;
       }
-      
+
       table.dataTable {
         margin: 0 !important;
         border-radius: 0;
-        
+
         tr {
           td {
             padding: 0.45rem 0.75rem !important;
             border-bottom: 1px solid var(--dc-border-subtle) !important;
-            
+
             .dtsp-pill {
               background-color: var(--bs-secondary-bg) !important;
               color: var(--bs-secondary-color) !important;
@@ -382,15 +409,15 @@ div.dataTables_wrapper, div.dt-container {
               padding: 0.2rem 0.5rem;
             }
           }
-          
+
           &:hover {
             background-color: rgba(59, 130, 246, 0.04) !important;
           }
-          
+
           &.selected {
             background-color: rgba(59, 130, 246, 0.1) !important;
             color: inherit !important;
-            
+
             .dtsp-pill {
               background: var(--dc-accent-gradient) !important;
               color: white !important;
@@ -400,9 +427,7 @@ div.dataTables_wrapper, div.dt-container {
       }
     }
   }
-
 }
-
 
 /* Animations */
 @keyframes fadeInUp {
@@ -416,7 +441,8 @@ div.dataTables_wrapper, div.dt-container {
   }
 }
 
-.view-layout-row, .grid-stack {
+.view-layout-row,
+.grid-stack {
   animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -471,8 +497,9 @@ div.dataTables_wrapper, div.dt-container {
   border: 1px solid var(--dc-border-subtle) !important;
   border-radius: var(--dc-card-radius) !important;
   box-shadow: var(--dc-card-shadow) !important;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition:
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   overflow: hidden;
 }
 
@@ -494,8 +521,6 @@ div.dataTables_wrapper, div.dt-container {
 .profile-page .profile-editor,
 .profile-page .profile-loading {
   background: var(--dc-card-bg-glass) !important;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 /* --- Panel heads & card-headers: accent bar + glass background --- */
@@ -512,7 +537,7 @@ div.dataTables_wrapper, div.dt-container {
   padding-left: 1.25rem !important;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 20%;
@@ -526,7 +551,9 @@ div.dataTables_wrapper, div.dt-container {
 /* L'en-tête centré du shell admin n'a pas de barre latérale */
 .admin-frame-header {
   padding-left: 0 !important;
-  &::before { display: none; }
+  &::before {
+    display: none;
+  }
 }
 
 /* --- Inputs focus: cohérent avec le style moderne --- */
@@ -653,14 +680,9 @@ div.dataTables_wrapper, div.dt-container {
 /* Glassmorphism background for the main workspace card on the /edit page */
 .main-workspace-card {
   background: var(--dc-card-bg-glass) !important;
-  backdrop-filter: blur(12px) !important;
-  -webkit-backdrop-filter: blur(12px) !important;
   border: 1px solid var(--dc-border-subtle) !important;
   box-shadow: var(--dc-card-shadow) !important;
-  transition: box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-              border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  transition:
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
-
-
-
-

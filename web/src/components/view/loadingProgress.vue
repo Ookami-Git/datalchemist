@@ -58,7 +58,8 @@ watch(visible, (isVisible) => {
                 <ul class="dc-progress__list">
                     <li v-for="source in sources" :key="source.name" class="dc-progress__source"
                         :class="`is-${source.status}`">
-                        <i class="bi dc-progress__source-icon" :class="statusIcon(source.status)" aria-hidden="true"></i>
+                        <i class="bi dc-progress__source-icon" :class="statusIcon(source.status)"
+                            aria-hidden="true"></i>
 
                         <div class="dc-progress__source-body">
                             <div class="dc-progress__source-head">
@@ -118,7 +119,7 @@ watch(visible, (isVisible) => {
     --progress-primary: #2f7cf4;
     --progress-secondary: #17b897;
     --progress-danger: #dc3545;
-    --progress-surface: rgba(255, 255, 255, 0.88);
+    --progress-surface: rgba(255, 255, 255, 0.97);
     --progress-border: rgba(15, 30, 55, 0.12);
     --progress-track: rgba(15, 30, 55, 0.12);
     --progress-ink: #1f2b3d;
@@ -143,7 +144,7 @@ watch(visible, (isVisible) => {
     --progress-primary: #7ab7ff;
     --progress-secondary: #71e0bf;
     --progress-danger: #ff7b8a;
-    --progress-surface: rgba(24, 31, 43, 0.92);
+    --progress-surface: rgba(24, 31, 43, 0.97);
     --progress-border: rgba(255, 255, 255, 0.14);
     --progress-track: rgba(255, 255, 255, 0.16);
     --progress-ink: #eef4ff;
@@ -161,7 +162,6 @@ watch(visible, (isVisible) => {
     border: 1px solid var(--progress-border);
     border-radius: 999px;
     background: var(--progress-surface);
-    backdrop-filter: blur(10px);
     box-shadow: 0 12px 28px var(--progress-shadow);
     color: var(--progress-ink);
     display: grid;
@@ -239,7 +239,6 @@ watch(visible, (isVisible) => {
     border: 1px solid var(--progress-border);
     border-radius: 0.9rem;
     background: var(--progress-surface);
-    backdrop-filter: blur(12px);
     box-shadow: 0 18px 40px var(--progress-shadow-strong);
     color: var(--progress-ink);
 }
