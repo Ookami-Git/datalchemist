@@ -42,7 +42,8 @@ func SetupRoutes(r *gin.Engine) {
 		protected.Use(middlewares.JwtAuthMiddleware())
 
 		protected.GET("/api/user", controllers.CurrentUser)
-		protected.PUT("/api/user", handlers.UserUpdate)
+		protected.PUT("/api/user", handlers.UserSelfUpdate)
+		protected.POST("/api/user/password", handlers.UserPasswordUpdate)
 		protected.GET("/api/auth/isadmin", controllers.IsAdmin)
 
 		//Require Auth + Admin

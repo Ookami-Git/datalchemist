@@ -35,7 +35,7 @@
     "button": "Créer l'administrateur",
     "error": {
       "username": "Le nom d'utilisateur est obligatoire",
-      "length": "Le mot de passe doit contenir au moins {length} caractères",
+      "policy": "Le mot de passe ne respecte pas les règles",
       "mismatch": "Les mots de passe ne correspondent pas",
       "failed": "Impossible de créer l'administrateur"
     }
@@ -51,14 +51,12 @@
   "profil": {
     "header": "Mon compte",
     "parameters": "Paramètres",
+    "security": "Sécurité",
     "language": "Langue",
     "languageEnglish": "Anglais",
     "languageFrench": "Français",
     "theme": "Thème",
     "defaultPreview": "Thème système",
-    "password": "Nouveau mot de passe",
-    "passwordrepeat": "Confirmer le nouveau mot de passe",
-    "passwordmismatch": "Les mots de passe ne correspondent pas",
     "savesuccess": "Profil sauvegardé avec succès",
     "save": "Sauvegarder les modifications"
   },
@@ -518,6 +516,49 @@
       "running": "Chargement...",
       "done": "Chargée",
       "error": "Erreur"
+    }
+  },
+  "password": {
+    "change": "Changer le mot de passe",
+    "title": "Changer votre mot de passe",
+    "subtitle": "Confirmez votre mot de passe actuel, puis choisissez-en un nouveau.",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer le nouveau mot de passe",
+    "show": "Afficher le mot de passe",
+    "hide": "Masquer le mot de passe",
+    "mismatch": "Les mots de passe ne correspondent pas",
+    "match": "Les mots de passe correspondent",
+    "submit": "Mettre à jour le mot de passe",
+    "success": "Mot de passe mis à jour avec succès",
+    "rule": {
+      "length": "Au moins {length} caractères",
+      "lower": "Une minuscule",
+      "upper": "Une majuscule",
+      "digit": "Un chiffre",
+      "special": "Un caractère spécial"
+    },
+    "strength": {
+      "empty": "Non renseigné",
+      "weak": "Faible",
+      "fair": "Moyen",
+      "good": "Bon",
+      "strong": "Excellent"
+    },
+    "local": {
+      "title": "Mot de passe du compte",
+      "text": "Votre mot de passe protège l'accès à l'application. Changez-le si vous pensez qu'il a été exposé."
+    },
+    "managed": {
+      "title": "Mot de passe géré par l'annuaire",
+      "text": "Ce compte s'authentifie via LDAP. Contactez votre administrateur pour changer votre mot de passe."
+    },
+    "error": {
+      "invalid_current_password": "Le mot de passe actuel est incorrect",
+      "password_unchanged": "Le nouveau mot de passe doit être différent de l'actuel",
+      "weak_password": "Le nouveau mot de passe ne respecte pas les règles",
+      "not_local": "Ce compte est géré par l'annuaire : son mot de passe ne peut pas être changé ici",
+      "unknown": "Impossible de changer le mot de passe"
     }
   }
 }

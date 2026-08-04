@@ -35,7 +35,7 @@
     "button": "Create the administrator",
     "error": {
       "username": "The username is required",
-      "length": "The password must contain at least {length} characters",
+      "policy": "The password does not meet the requirements",
       "mismatch": "The passwords do not match",
       "failed": "Unable to create the administrator"
     }
@@ -51,14 +51,12 @@
   "profil": {
     "header": "My account",
     "parameters": "Settings",
+    "security": "Security",
     "language": "Language",
     "languageEnglish": "English",
     "languageFrench": "French",
     "theme": "Theme",
     "defaultPreview": "System theme",
-    "password": "New password",
-    "passwordrepeat": "Confirm new password",
-    "passwordmismatch": "Passwords do not match",
     "savesuccess": "Profile saved successfully",
     "save": "Save changes"
   },
@@ -518,6 +516,49 @@
       "running": "Loading...",
       "done": "Loaded",
       "error": "Error"
+    }
+  },
+  "password": {
+    "change": "Change password",
+    "title": "Change your password",
+    "subtitle": "Confirm your current password, then choose a new one.",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "show": "Show password",
+    "hide": "Hide password",
+    "mismatch": "The passwords do not match",
+    "match": "The passwords match",
+    "submit": "Update password",
+    "success": "Password updated successfully",
+    "rule": {
+      "length": "At least {length} characters",
+      "lower": "One lowercase letter",
+      "upper": "One uppercase letter",
+      "digit": "One digit",
+      "special": "One special character"
+    },
+    "strength": {
+      "empty": "Not set",
+      "weak": "Weak",
+      "fair": "Fair",
+      "good": "Good",
+      "strong": "Strong"
+    },
+    "local": {
+      "title": "Account password",
+      "text": "Your password protects access to the application. Change it if you suspect it has been exposed."
+    },
+    "managed": {
+      "title": "Password managed by the directory",
+      "text": "This account authenticates through LDAP. Contact your administrator to change your password."
+    },
+    "error": {
+      "invalid_current_password": "The current password is incorrect",
+      "password_unchanged": "The new password must differ from the current one",
+      "weak_password": "The new password does not meet the requirements",
+      "not_local": "This account is managed by the directory: its password cannot be changed here",
+      "unknown": "Unable to change the password"
     }
   }
 }

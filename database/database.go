@@ -7,6 +7,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/glebarez/sqlite"
 	"github.com/spf13/viper"
@@ -365,7 +366,7 @@ func BootstrapAdmin(username string, password string) error {
 	if strings.TrimSpace(username) == "" {
 		return fmt.Errorf("administrator username cannot be empty")
 	}
-	hash, err := adminPasswordHash(password)
+	hash, err := HashPassword(password)
 	if err != nil {
 		return err
 	}
@@ -400,7 +401,7 @@ func ResetAdminPassword(username string, password string) error {
 		return err
 	}
 
-	hash, err := adminPasswordHash(password)
+	hash, err := HashPassword(password)
 	if err != nil {
 		return err
 	}
@@ -423,9 +424,51 @@ func ResetAdminPassword(username string, password string) error {
 	})
 }
 
-func adminPasswordHash(password string) ([]byte, error) {
-	if len(password) < 12 {
-		return nil, fmt.Errorf("administrator password must contain at least 12 characters")
+// PasswordMinLength is the shortest password the application accepts. The web
+// interface mirrors this policy in web/src/utils/password.js: keep both in sync.
+const PasswordMinLength = 12
+
+// ValidatePassword checks a password chosen by a user against the application
+// policy. The returned error is meant to be displayed to that user, so it never
+// echoes the password itself.
+func ValidatePassword(password string) error {
+	if len([]rune(password)) < PasswordMinLength {
+		return fmt.Errorf("password must contain at least %d characters", PasswordMinLength)
+	}
+
+	var hasLower, hasUpper, hasDigit, hasSpecial bool
+	for _, r := range password {
+		switch {
+		case unicode.IsLower(r):
+			hasLower = true
+		case unicode.IsUpper(r):
+			hasUpper = true
+		case unicode.IsDigit(r):
+			hasDigit = true
+		default:
+			hasSpecial = true
+		}
+	}
+
+	switch {
+	case !hasLower:
+		return fmt.Errorf("password must contain at least one lowercase letter")
+	case !hasUpper:
+		return fmt.Errorf("password must contain at least one uppercase letter")
+	case !hasDigit:
+		return fmt.Errorf("password must contain at least one digit")
+	case !hasSpecial:
+		return fmt.Errorf("password must contain at least one special character")
+	}
+
+	return nil
+}
+
+// HashPassword enforces the password policy then returns the bcrypt hash to
+// store. Every path where a user picks their own password goes through it.
+func HashPassword(password string) ([]byte, error) {
+	if err := ValidatePassword(password); err != nil {
+		return nil, err
 	}
 	return bcrypt.GenerateFromPassword([]byte(password), 14)
 }

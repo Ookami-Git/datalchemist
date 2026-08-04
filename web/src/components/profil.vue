@@ -1,14 +1,15 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount, inject, watch } from "vue";
 import axios from 'axios';
+import PasswordChangeModal from '@/components/PasswordChangeModal.vue';
 
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
 
 const user = ref(null)
 const isSaving = ref(false)
-const passwordConfirm = ref('')
-const saveSuccessVisible = ref(false)
+const passwordModal = ref(null)
+const toastMessageKey = ref('')
 let saveSuccessTimer = null
 
 const languageOptions = [
@@ -42,33 +43,18 @@ const currentThemeOption = computed(() => {
     return themeOptions.find((item) => item.id === user.value.theme) || null
 })
 
-const passwordMismatch = computed(() => {
-    if (!user.value) {
-        return false
-    }
-
-    const password = user.value.password || ''
-    const confirmation = passwordConfirm.value || ''
-
-    if (!password && !confirmation) {
-        return false
-    }
-
-    return password !== confirmation
-})
+// LDAP accounts have no local password: the directory owns it, so the whole
+// change-password flow is replaced by an explanation.
+const isLdapUser = computed(() => user.value?.type === 'ldap')
 
 const canSave = computed(() => {
-    return !!user.value && !passwordMismatch.value && !isSaving.value
+    return !!user.value && !isSaving.value
 })
 
 function buildUserPayload() {
     return {
-        id: Number(user.value?.id) || 0,
-        name: user.value?.name || '',
-        type: user.value?.type || '',
         lang: user.value?.lang || 'default',
         theme: user.value?.theme || 'default',
-        password: user.value?.password || '',
     }
 }
 
@@ -79,13 +65,21 @@ function clearSaveSuccessTimer() {
     }
 }
 
-function showSaveSuccessNotice() {
+function showToast(messageKey) {
     clearSaveSuccessTimer()
-    saveSuccessVisible.value = true
+    toastMessageKey.value = messageKey
     saveSuccessTimer = setTimeout(() => {
-        saveSuccessVisible.value = false
+        toastMessageKey.value = ''
         saveSuccessTimer = null
     }, 2600)
+}
+
+function openPasswordModal() {
+    passwordModal.value?.open()
+}
+
+function onPasswordChanged() {
+    showToast('password.success')
 }
 
 const fetchUser = async () => {
@@ -104,16 +98,11 @@ async function UpdateUser() {
 
     isSaving.value = true
     try {
-        const payload = buildUserPayload()
-        await axios.put(`${apiUrl}/user`, payload)
+        await axios.put(`${apiUrl}/user`, buildUserPayload())
         await fetchUser()
-        if (user.value) {
-            user.value.password = ''
-        }
-        passwordConfirm.value = ''
-        showSaveSuccessNotice()
+        showToast('profil.savesuccess')
     } catch (error) {
-        saveSuccessVisible.value = false
+        toastMessageKey.value = ''
         console.error('Erreur lors de la mise a jour du profil', error?.response?.data || error)
     } finally {
         isSaving.value = false
@@ -223,33 +212,6 @@ onBeforeUnmount(() => {
                                 </div>
                             </div>
 
-                            <hr class="my-4">
-
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="inputPassword" class="form-label">{{ $t('profil.password') }}</label>
-                                    <div class="input-group has-validation">
-                                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                                        <input type="password" class="form-control" id="inputPassword"
-                                            v-model="user.password" :class="{ 'is-invalid': passwordMismatch }">
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label for="inputPasswordConfirm" class="form-label">{{ $t('profil.passwordrepeat')
-                                    }}</label>
-                                    <div class="input-group has-validation">
-                                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
-                                        <input type="password" class="form-control" id="inputPasswordConfirm"
-                                            v-model="passwordConfirm" :class="{ 'is-invalid': passwordMismatch }">
-                                    </div>
-                                </div>
-                            </div>
-
-                            <p v-if="passwordMismatch" class="small text-danger mt-3 mb-0">
-                                <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ $t('profil.passwordmismatch') }}
-                            </p>
-
                             <div class="d-flex justify-content-end mt-4">
                                 <button type="button" class="btn btn-primary profile-save-btn" :disabled="!canSave"
                                     @click="UpdateUser()">
@@ -262,8 +224,42 @@ onBeforeUnmount(() => {
                         </div>
                     </article>
                 </div>
+
+                <div class="col-12">
+                    <article class="card profile-editor border-0 shadow-sm">
+                        <div class="card-body p-4 p-xl-5">
+                            <h5 class="card-title mb-3">{{ $t('profil.security') }}</h5>
+
+                            <div class="security-row"
+                                :class="{ 'is-managed': isLdapUser }">
+                                <span class="security-icon" aria-hidden="true">
+                                    <i :class="isLdapUser ? 'bi bi-diagram-3' : 'bi bi-shield-lock'"></i>
+                                </span>
+
+                                <div class="flex-grow-1">
+                                    <p class="security-title mb-1">
+                                        {{ isLdapUser ? $t('password.managed.title') : $t('password.local.title') }}
+                                    </p>
+                                    <p class="mb-0 small text-secondary">
+                                        {{ isLdapUser ? $t('password.managed.text') : $t('password.local.text') }}
+                                    </p>
+                                </div>
+
+                                <button v-if="!isLdapUser" type="button" class="btn btn-outline-primary security-btn"
+                                    @click="openPasswordModal()">
+                                    <i class="bi bi-key me-2"></i>{{ $t('password.change') }}
+                                </button>
+                                <span v-else class="badge rounded-pill text-bg-light profile-pill">
+                                    <i class="bi bi-lock me-1"></i>{{ $t('admin.users.ldap') }}
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
             </div>
 
+            <PasswordChangeModal v-if="!isLdapUser" ref="passwordModal" :username="user.name"
+                @changed="onPasswordChanged" />
         </div>
 
         <div v-else class="card profile-loading border-0 shadow-sm">
@@ -279,10 +275,10 @@ onBeforeUnmount(() => {
 
         <div class="profile-toast-wrapper" aria-live="polite" aria-atomic="true">
             <transition name="profile-toast">
-                <div v-if="saveSuccessVisible"
+                <div v-if="toastMessageKey"
                     class="alert alert-success profile-toast d-inline-flex align-items-center gap-2" role="status">
                     <i class="bi bi-check-circle-fill"></i>
-                    <span>{{ $t('profil.savesuccess') }}</span>
+                    <span>{{ $t(toastMessageKey) }}</span>
                 </div>
             </transition>
         </div>
@@ -486,6 +482,44 @@ onBeforeUnmount(() => {
     border-radius: 0.75rem;
 }
 
+.security-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--bs-border-color-translucent);
+    border-radius: 0.85rem;
+    background: var(--bs-tertiary-bg);
+}
+
+.security-icon {
+    display: grid;
+    place-items: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 0.75rem;
+    font-size: 1.15rem;
+    color: rgb(var(--bs-primary-rgb));
+    background: rgba(var(--bs-primary-rgb), 0.12);
+    flex-shrink: 0;
+}
+
+.security-row.is-managed .security-icon {
+    color: var(--bs-secondary-color);
+    background: var(--bs-secondary-bg);
+}
+
+.security-title {
+    font-weight: 600;
+    color: var(--bs-emphasis-color);
+}
+
+.security-btn {
+    border-radius: 0.75rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
 .profile-toast-wrapper {
     position: fixed;
     right: 1rem;
@@ -541,6 +575,16 @@ onBeforeUnmount(() => {
     }
 
     .profile-save-btn {
+        width: 100%;
+    }
+
+    .security-row {
+        flex-direction: column;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .security-btn {
         width: 100%;
     }
 

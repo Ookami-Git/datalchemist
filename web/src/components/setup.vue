@@ -2,11 +2,11 @@
 import { computed, inject, ref, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import PasswordPolicy from '@/components/PasswordPolicy.vue';
+import { isPasswordValid } from '@/utils/password';
 
 const router = useRouter();
 const i18n = inject('i18n');
-
-const PASSWORD_MIN_LENGTH = 12;
 
 const username = ref('admin');
 const password = ref('');
@@ -91,8 +91,8 @@ const createAdmin = async () => {
         errorMessage.value = i18n.global.t('setup.error.username');
         return;
     }
-    if (password.value.length < PASSWORD_MIN_LENGTH) {
-        errorMessage.value = i18n.global.t('setup.error.length', { length: PASSWORD_MIN_LENGTH });
+    if (!isPasswordValid(password.value)) {
+        errorMessage.value = i18n.global.t('setup.error.policy');
         return;
     }
     if (password.value !== passwordConfirmation.value) {
@@ -183,6 +183,8 @@ const createAdmin = async () => {
                             <label for="password">{{ $t('global.password') }}</label>
                         </div>
 
+                        <PasswordPolicy :password="password" class="mb-3" />
+
                         <div class="form-floating mb-2 login-field">
                             <i class="bi bi-key login-field-icon"></i>
                             <input id="passwordConfirmation" v-model="passwordConfirmation" type="password"
@@ -191,11 +193,7 @@ const createAdmin = async () => {
                             <label for="passwordConfirmation">{{ $t('setup.confirmation') }}</label>
                         </div>
 
-                        <p class="text-body-secondary small mb-4">
-                            {{ $t('setup.error.length', { length: PASSWORD_MIN_LENGTH }) }}
-                        </p>
-
-                        <div class="d-grid">
+                        <div class="d-grid mt-4">
                             <button class="btn btn-primary btn-lg btn-login py-3" type="submit" :disabled="isLoading">
                                 <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status"
                                     aria-hidden="true"></span>

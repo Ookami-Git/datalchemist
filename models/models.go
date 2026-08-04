@@ -115,6 +115,20 @@ type Credentials struct {
 	Username string `json:"username"`
 }
 
+// PasswordChange is the payload of the self-service password change. The
+// current password is mandatory: it proves the session belongs to the account.
+type PasswordChange struct {
+	CurrentPassword string `json:"current_password" binding:"required"`
+	NewPassword     string `json:"new_password" binding:"required"`
+}
+
+// UserPreferences is what a user is allowed to change on their own account.
+// Name, type and password are deliberately excluded.
+type UserPreferences struct {
+	Lang  string `json:"lang"`
+	Theme string `json:"theme"`
+}
+
 type Claims struct {
 	Username string `json:"username"`
 	jwt.RegisteredClaims

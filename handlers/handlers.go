@@ -424,6 +424,9 @@ func UserAdd(c *gin.Context) {
 	c.JSON(200, gin.H{"id": id})
 }
 
+// UserUpdate is the administrator endpoint: it can rename an account, change
+// its type and reset its password. Users editing their own account go through
+// UserSelfUpdate and UserPasswordUpdate instead.
 func UserUpdate(c *gin.Context) {
 	var User models.Users
 	if err := c.BindJSON(&User); err != nil {
@@ -431,21 +434,12 @@ func UserUpdate(c *gin.Context) {
 		return
 	}
 
-	if rawID := c.Param("id"); rawID != "" {
-		id, err := strconv.Atoi(rawID)
-		if err != nil {
-			c.JSON(400, gin.H{"error": "invalid id"})
-			return
-		}
-		User.ID = uint(id)
-	} else {
-		uid, err := token.ExtractTokenID(c)
-		if err != nil {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
-		User.ID = uid
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(400, gin.H{"error": "invalid id"})
+		return
 	}
+	User.ID = uint(id)
 
 	if User.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(User.Password), 14)
@@ -457,6 +451,81 @@ func UserUpdate(c *gin.Context) {
 	}
 
 	database.UserUpdate(User)
+	c.JSON(200, gin.H{"status": "OK"})
+}
+
+// UserSelfUpdate saves the preferences of the logged in user. It only accepts
+// language and theme: the account name, its type and its password cannot be
+// changed here, so a crafted payload cannot bypass UserPasswordUpdate.
+func UserSelfUpdate(c *gin.Context) {
+	uid, err := token.ExtractTokenID(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	var preferences models.UserPreferences
+	if err := c.BindJSON(&preferences); err != nil {
+		c.JSON(400, gin.H{"error": err.Error()})
+		return
+	}
+
+	// gorm skips zero values on Updates, so an omitted field keeps its value.
+	database.UserUpdate(models.Users{
+		ID:    uid,
+		Lang:  preferences.Lang,
+		Theme: preferences.Theme,
+	})
+	c.JSON(200, gin.H{"status": "OK"})
+}
+
+// UserPasswordUpdate changes the password of the logged in user. It requires
+// the current password and applies the shared password policy. The error codes
+// it returns are what the web interface translates.
+func UserPasswordUpdate(c *gin.Context) {
+	uid, err := token.ExtractTokenID(c)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "unauthorized", "code": "unauthorized"})
+		return
+	}
+
+	var input models.PasswordChange
+	if err := c.BindJSON(&input); err != nil {
+		c.JSON(400, gin.H{"error": err.Error(), "code": "invalid_payload"})
+		return
+	}
+
+	User, err := database.UserByIdGet(uid)
+	if err != nil {
+		c.JSON(401, gin.H{"error": "unauthorized", "code": "unauthorized"})
+		return
+	}
+
+	// LDAP accounts have no local password: the directory owns it.
+	if User.Type != "local" {
+		c.JSON(403, gin.H{"error": "password is managed by the directory", "code": "not_local"})
+		return
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(User.Password), []byte(input.CurrentPassword)); err != nil {
+		log.Printf("Rejected password change for user %q: wrong current password", User.Name)
+		c.JSON(400, gin.H{"error": "current password is incorrect", "code": "invalid_current_password"})
+		return
+	}
+
+	if input.NewPassword == input.CurrentPassword {
+		c.JSON(400, gin.H{"error": "the new password must differ from the current one", "code": "password_unchanged"})
+		return
+	}
+
+	hashedPassword, err := database.HashPassword(input.NewPassword)
+	if err != nil {
+		c.JSON(400, gin.H{"error": err.Error(), "code": "weak_password"})
+		return
+	}
+
+	database.UserUpdate(models.Users{ID: uid, Password: string(hashedPassword)})
+	log.Printf("Password changed for user %q", User.Name)
 	c.JSON(200, gin.H{"status": "OK"})
 }
 

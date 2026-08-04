@@ -24,10 +24,10 @@ func TestBootstrapAndResetAdmin(t *testing.T) {
 		t.Fatal("a new database must not contain a default user")
 	}
 
-	if err := BootstrapAdmin("operator", "initial-password"); err != nil {
+	if err := BootstrapAdmin("operator", "Initial-Password1"); err != nil {
 		t.Fatalf("bootstrap administrator: %v", err)
 	}
-	if err := BootstrapAdmin("second", "another-password"); err == nil {
+	if err := BootstrapAdmin("second", "Another-Password1"); err == nil {
 		t.Fatal("bootstrapping must fail after the first user exists")
 	}
 
@@ -35,7 +35,7 @@ func TestBootstrapAndResetAdmin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load bootstrapped administrator: %v", err)
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("initial-password")); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("Initial-Password1")); err != nil {
 		t.Fatalf("verify bootstrapped password: %v", err)
 	}
 	isAdmin, err := UserIdIsAdmin(user.ID)
@@ -43,20 +43,42 @@ func TestBootstrapAndResetAdmin(t *testing.T) {
 		t.Fatalf("bootstrapped user is not an administrator: admin=%t, err=%v", isAdmin, err)
 	}
 
-	if err := ResetAdminPassword("operator", "replacement-password"); err != nil {
+	if err := ResetAdminPassword("operator", "Replacement-Password1"); err != nil {
 		t.Fatalf("reset administrator password: %v", err)
 	}
 	user, err = UserGet("operator")
 	if err != nil {
 		t.Fatalf("load reset administrator: %v", err)
 	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("replacement-password")); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("Replacement-Password1")); err != nil {
 		t.Fatalf("verify reset password: %v", err)
 	}
 }
 
-func TestAdminPasswordHashRejectsShortPassword(t *testing.T) {
-	if _, err := adminPasswordHash("too-short"); err == nil {
-		t.Fatal("short administrator password was accepted")
+func TestValidatePassword(t *testing.T) {
+	rejected := map[string]string{
+		"too short":    "Short-1a",
+		"no lowercase": "UPPERCASE-123",
+		"no uppercase": "lowercase-123",
+		"no digit":     "NoDigitHere-x",
+		"no special":   "NoSpecialHere1",
+		"empty":        "",
+	}
+	for reason, password := range rejected {
+		if err := ValidatePassword(password); err == nil {
+			t.Errorf("password %q was accepted (%s)", password, reason)
+		}
+	}
+
+	for _, password := range []string{"Initial-Password1", "Sup3r Sécurisé!"} {
+		if err := ValidatePassword(password); err != nil {
+			t.Errorf("compliant password %q was rejected: %v", password, err)
+		}
+	}
+}
+
+func TestHashPasswordRejectsWeakPassword(t *testing.T) {
+	if _, err := HashPassword("too-short"); err == nil {
+		t.Fatal("weak administrator password was accepted")
 	}
 }

@@ -55,7 +55,7 @@ func TestSetupCreatesTheFirstAdministratorOnce(t *testing.T) {
 	})
 
 	t.Run("administrator is created", func(t *testing.T) {
-		w := post(t, `{"username":"admin","password":"a-very-long-password"}`)
+		w := post(t, `{"username":"admin","password":"A-very-long-Password1"}`)
 		if w.Code != http.StatusOK {
 			t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
 		}
@@ -65,7 +65,7 @@ func TestSetupCreatesTheFirstAdministratorOnce(t *testing.T) {
 	})
 
 	t.Run("a second administrator cannot be bootstrapped", func(t *testing.T) {
-		w := post(t, `{"username":"pirate","password":"another-long-password"}`)
+		w := post(t, `{"username":"pirate","password":"Another-long-Password1"}`)
 		if w.Code != http.StatusBadRequest {
 			t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
 		}
