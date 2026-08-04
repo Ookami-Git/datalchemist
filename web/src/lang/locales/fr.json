@@ -28,6 +28,18 @@
     "message": "Veuillez saisir votre identifiant et mot de passe",
     "button": "Connexion"
   },
+  "setup": {
+    "title": "Créer l'administrateur",
+    "message": "Aucun compte n'existe encore, créez le premier administrateur pour commencer à utiliser l'application.",
+    "confirmation": "Confirmer le mot de passe",
+    "button": "Créer l'administrateur",
+    "error": {
+      "username": "Le nom d'utilisateur est obligatoire",
+      "length": "Le mot de passe doit contenir au moins {length} caractères",
+      "mismatch": "Les mots de passe ne correspondent pas",
+      "failed": "Impossible de créer l'administrateur"
+    }
+  },
   "menu": {
     "profil": "Mon compte",
     "logout": "Déconnexion",

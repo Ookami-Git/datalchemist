@@ -28,6 +28,18 @@
     "message": "Please enter your username and password",
     "button": "Login"
   },
+  "setup": {
+    "title": "Create the administrator",
+    "message": "No account exists yet, create the first administrator to start using the application.",
+    "confirmation": "Confirm password",
+    "button": "Create the administrator",
+    "error": {
+      "username": "The username is required",
+      "length": "The password must contain at least {length} characters",
+      "mismatch": "The passwords do not match",
+      "failed": "Unable to create the administrator"
+    }
+  },
   "menu": {
     "profil": "My account",
     "logout": "Logout",

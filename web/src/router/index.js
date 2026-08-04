@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 import { i18n } from '@/main.js'
 
 import login from '@/components/login.vue'
+import setup from '@/components/setup.vue'
 import admin from '@/components/admin/admin.vue'
 import edit from '@/components/edit/edit.vue'
 import editsource from '@/components/edit/source.vue'
@@ -19,8 +20,13 @@ const router = createRouter({
     routes: [
         {
             name: "login",
-            path: '/login', 
+            path: '/login',
             component: login
+        },
+        {
+            name: "setup",
+            path: '/setup',
+            component: setup
         },
         {
             name: "home",
@@ -96,12 +102,37 @@ const router = createRouter({
     ]
 })
 
+// Ask the server whether the first administrator still has to be created. Once
+// an account exists the answer cannot change back, so it is only asked once.
+let setupDone = false;
+const setupRequired = async () => {
+    if (setupDone) {
+        return false;
+    }
+    try {
+        const response = await fetch(`${window.location.origin}${window.location.pathname}api/setup`);
+        if (!response.ok) {
+            return false;
+        }
+        const json = await response.json();
+        setupDone = !json.required;
+        return json.required === true;
+    } catch (error) {
+        console.error('Unable to read the setup status', error);
+        return false;
+    }
+}
+
 router.beforeEach(async(to) => {
     i18n.locale = localStorage.getItem('language') || 'en'
 
     // Request the authentication status from the server
     const auth = await fetch(`${window.location.origin}${window.location.pathname}api/auth/status`);
     if (auth.ok) {
+        setupDone = true;
+        if (to.name === 'setup') {
+            return '/';
+        }
         if (to.meta.requiresAdmin) {
             const responseAdmin = await fetch(`${window.location.origin}${window.location.pathname}api/auth/isadmin`);
             const json = await responseAdmin.json();
@@ -116,6 +147,13 @@ router.beforeEach(async(to) => {
             return redirectPath;
         }
     } else {
+        // Empty database: the first administrator is created from the interface
+        if (await setupRequired()) {
+            return to.name === 'setup' ? true : { name: 'setup' };
+        }
+        if (to.name === 'setup') {
+            return '/login';
+        }
         if (to.meta.requiresAuth) {
             localStorage.setItem('reloadparameters', true);
             localStorage.setItem('redirectPath', to.fullPath);

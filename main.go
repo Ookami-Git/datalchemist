@@ -113,25 +113,18 @@ func main() {
 		log.Fatal(err)
 	}
 	if resetPasswordFile := viper.GetString("reset_admin_password_file"); resetPasswordFile != "" {
-		password := readRequiredSecretFile(resetPasswordFile)
-		if err := database.ResetAdminPassword(viper.GetString("reset_admin_username"), password); err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Administrator password reset completed")
+		resetAdmin(viper.GetString("reset_admin_username"), readRequiredSecretFile(resetPasswordFile))
 		return
 	}
 	if bootstrapPasswordFile := viper.GetString("bootstrap_admin_password_file"); bootstrapPasswordFile != "" {
-		password := readRequiredSecretFile(bootstrapPasswordFile)
-		if err := database.BootstrapAdmin(viper.GetString("bootstrap_admin_username"), password); err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Initial administrator created")
+		bootstrapAdmin(viper.GetString("bootstrap_admin_username"), readRequiredSecretFile(bootstrapPasswordFile))
 		return
 	}
-	if hasUsers, err := database.HasUsers(); err != nil {
+	// An empty user database is not an error: the web interface asks for the
+	// first administrator itself, see handlers.SetupStatus / handlers.SetupAdmin.
+	has_users, err := database.HasUsers()
+	if err != nil {
 		log.Fatal(err)
-	} else if !hasUsers {
-		log.Fatal("no users exist; configure bootstrap_admin_password_file to create the first administrator")
 	}
 	// SECRETS ----------------------------
 	if has_secretkey {
@@ -175,6 +168,9 @@ func main() {
 	} else {
 		log.Printf("Enable secrets \t %t (Require secret key)", has_secretkey)
 	}
+	if !has_users {
+		log.Printf("No administrator exists yet, open the web interface to create the first one")
+	}
 
 	// Démarrer le serveur
 	r.Run(listen)
@@ -192,6 +188,20 @@ func loadKeyFromFile(keyName string, fileKeyName string) {
 
 	key = readRequiredSecretFile(fileName)
 	viper.Set(keyName, key)
+}
+
+func bootstrapAdmin(username string, password string) {
+	if err := database.BootstrapAdmin(username, password); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Initial administrator %q created", username)
+}
+
+func resetAdmin(username string, password string) {
+	if err := database.ResetAdminPassword(username, password); err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Administrator password reset completed")
 }
 
 func readRequiredSecretFile(fileName string) string {

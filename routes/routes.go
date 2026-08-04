@@ -15,6 +15,9 @@ func SetupRoutes(r *gin.Engine) {
 	{
 		public.GET("/api/parameters", handlers.ParametersGet)
 
+		public.GET("/api/setup", handlers.SetupStatus)
+		public.POST("/api/setup", handlers.SetupAdmin)
+
 		public.POST("/api/auth/login", controllers.Login)
 		public.GET("/api/auth/logout", controllers.Logout)
 		public.GET("/api/auth/status", controllers.AuthStatus)
