@@ -11,11 +11,24 @@ const props = defineProps({
 
 const expanded = ref(false);
 
-const total = computed(() => props.snapshot?.total || 0);
-const done = computed(() => props.snapshot?.done || 0);
-const errors = computed(() => props.snapshot?.errors || 0);
-const sources = computed(() => props.snapshot?.sources || []);
-const percent = computed(() => Math.max(0, Math.min(100, props.snapshot?.percent || 0)));
+// Le parent remet le snapshot à null dès que la vue est prête. On conserve le
+// dernier instantané reçu pour que le panneau ouvert par l'utilisateur, et son
+// détail, survive à la fin du chargement jusqu'à sa fermeture manuelle.
+const retained = ref(null);
+
+// Chargement réellement en cours (le parent alimente encore le snapshot).
+const loading = computed(() => (props.snapshot?.total || 0) > 0);
+
+watch(() => props.snapshot, (snapshot) => {
+    if ((snapshot?.total || 0) > 0) retained.value = snapshot;
+    else if (!expanded.value) retained.value = null;
+}, { immediate: true });
+
+const total = computed(() => retained.value?.total || 0);
+const done = computed(() => retained.value?.done || 0);
+const errors = computed(() => retained.value?.errors || 0);
+const sources = computed(() => retained.value?.sources || []);
+const percent = computed(() => Math.max(0, Math.min(100, retained.value?.percent || 0)));
 
 // Rien à afficher tant que le backend n'a pas annoncé de source à charger.
 const visible = computed(() => total.value > 0);
@@ -41,18 +54,30 @@ const statusIcon = (status) => {
     }
 };
 
-watch(visible, (isVisible) => {
-    if (!isVisible) expanded.value = false;
-});
+const collapse = () => {
+    expanded.value = false;
+    // Fermeture manuelle : si le chargement est déjà terminé, l'indicateur
+    // n'a plus rien à annoncer et disparaît.
+    if (!loading.value) retained.value = null;
+};
+
+const toggle = () => {
+    if (expanded.value) collapse();
+    else expanded.value = true;
+};
 </script>
 
 <template>
-    <div v-if="visible" class="dc-progress" :class="{ 'is-expanded': expanded }">
+    <div v-if="visible" class="dc-progress" :class="{ 'is-expanded': expanded, 'is-complete': !loading }">
         <transition name="dc-progress-panel">
             <div v-if="expanded" class="dc-progress__panel" role="dialog" :aria-label="$t('dataprogress.title')">
                 <header class="dc-progress__panel-header">
                     <span class="dc-progress__panel-title">{{ $t('dataprogress.title') }}</span>
                     <span class="dc-progress__panel-count">{{ $t('dataprogress.summary', { done, total }) }}</span>
+                    <button type="button" class="dc-progress__close" :aria-label="$t('dataprogress.hide')"
+                        :title="$t('dataprogress.hide')" @click="collapse">
+                        <i class="bi bi-x-lg" aria-hidden="true"></i>
+                    </button>
                 </header>
 
                 <ul class="dc-progress__list">
@@ -96,12 +121,13 @@ watch(visible, (isVisible) => {
         <button type="button" class="dc-progress__bubble" :aria-expanded="expanded"
             :aria-label="expanded ? $t('dataprogress.hide') : $t('dataprogress.show')"
             :title="running.length ? `${done}/${total} — ${running.map((source) => source.name).join(', ')}` : $t('dataprogress.summary', { done, total })"
-            @click="expanded = !expanded">
+            @click="toggle">
             <span class="dc-progress__halo" aria-hidden="true"></span>
 
             <svg class="dc-progress__ring" viewBox="0 0 44 44" aria-hidden="true">
                 <circle class="dc-progress__ring-track" cx="22" cy="22" :r="RADIUS" />
-                <circle class="dc-progress__ring-bar" :class="{ 'has-error': errors }" cx="22" cy="22" :r="RADIUS"
+                <circle class="dc-progress__ring-bar" :class="{ 'has-error': errors, 'is-complete': !loading && !errors }"
+                    cx="22" cy="22" :r="RADIUS"
                     :stroke-dasharray="CIRCUMFERENCE" :stroke-dashoffset="dashOffset" />
             </svg>
 
@@ -214,6 +240,21 @@ watch(visible, (isVisible) => {
     stroke: var(--progress-danger);
 }
 
+.dc-progress__ring-bar.is-complete {
+    stroke: var(--progress-secondary);
+}
+
+// Chargement terminé et panneau maintenu ouvert par l'utilisateur : plus rien
+// ne progresse, l'indicateur se met au repos.
+.dc-progress.is-complete .dc-progress__bubble,
+.dc-progress.is-complete .dc-progress__halo {
+    animation: none;
+}
+
+.dc-progress.is-complete .dc-progress__halo {
+    opacity: 0.3;
+}
+
 .dc-progress__value {
     position: relative;
     display: inline-flex;
@@ -254,14 +295,42 @@ watch(visible, (isVisible) => {
 }
 
 .dc-progress__panel-title {
+    flex: 1 1 auto;
     font-size: 0.85rem;
     font-weight: 600;
 }
 
 .dc-progress__panel-count {
+    flex: 0 0 auto;
     font-size: 0.72rem;
     color: var(--progress-muted);
     white-space: nowrap;
+}
+
+.dc-progress__close {
+    flex: 0 0 auto;
+    // Le header aligne ses enfants sur la ligne de base : le bouton, lui, doit
+    // rester centré verticalement.
+    align-self: center;
+    padding: 0;
+    width: 1.15rem;
+    height: 1.15rem;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--progress-muted);
+    font-size: 0.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dc-progress__close:hover,
+.dc-progress__close:focus-visible {
+    background: var(--progress-track);
+    color: var(--progress-ink);
 }
 
 .dc-progress__list {
