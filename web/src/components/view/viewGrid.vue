@@ -19,7 +19,8 @@ const props = defineProps({
         default: null
     }
 });
-const dataNunjucks = inject('data');
+// Données figées d'un objet, ou null tant que ses sources ne sont pas chargées.
+const itemData = inject('itemData', () => null);
 
 let grid = null;
 
@@ -84,7 +85,7 @@ onMounted(() => {
             <div class="grid-stack-item-content card">
                 <div v-if="item.title" class="card-header widget-card-header" v-html="item.title"></div>
                 <div class="card-body">
-                    <Item v-if="dataNunjucks" :data="dataNunjucks"
+                    <Item v-if="itemData(item.itemid)" :data="itemData(item.itemid)"
                         :itemDescribe="props.viewItems[`i${item.itemid}`]" />
                     <div v-else>
                         <placeHolder />

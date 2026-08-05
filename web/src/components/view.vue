@@ -1,6 +1,6 @@
 <script setup>
 
-import { ref, inject, watch, provide, onBeforeUnmount } from 'vue';
+import { ref, computed, inject, watch, provide, onBeforeUnmount } from 'vue';
 import { useRoute } from 'vue-router';
 import axios from 'axios';
 import jQuery from 'jquery';
@@ -10,6 +10,7 @@ import loadingProgress from './view/loadingProgress.vue';
 import viewGrid from './view/viewGrid.vue';
 import viewRow from './view/viewRow.vue';
 import { fetchDataWithProgress } from '@/utils/dataStream.js';
+import { mergeSnapshots } from '@/utils/progressiveData.js';
 
 const props = defineProps({
     viewid: [String, Number],
@@ -28,10 +29,44 @@ const viewData = ref(props.viewData || null);
 
 provide('data', viewData);
 
+// Données figées par objet : un objet apparaît dès que ses sources sont
+// chargées, les autres restent en attente. La référence d'un instantané ne
+// change plus ensuite, donc un objet affiché n'est pas rendu deux fois.
+const itemSnapshots = ref({});
+const itemData = (itemid) => itemSnapshots.value[String(itemid)] || null;
+provide('itemData', itemData);
+
+// Identifiants des objets de la vue, tels que fournis par /view/:id/items.
+const knownItemIds = () => Object.keys(viewItems.value || {}).map((key) => key.replace(/^i/, ''));
+
+// La mise en page apparaît au premier objet prêt : avant, il n'y aurait que des
+// squelettes, le loader global est plus lisible. Une vue sans objet s'affiche
+// telle quelle.
+const layoutVisible = computed(() => {
+    if (!viewStructure.value || !viewItems.value) return false;
+    return Object.keys(itemSnapshots.value).length > 0 || knownItemIds().length === 0;
+});
+
+const publishSnapshots = (itemids, snapshot) => {
+    itemSnapshots.value = mergeSnapshots(itemSnapshots.value, itemids, snapshot);
+};
+
 const hasLoadError = ref(false);
 const fetchError = ref(null);
 // Avancement du chargement des sources, alimenté par le flux SSE des données.
 const loadProgress = ref(null);
+
+// Données fournies par le parent (aperçu d'objet) : tout est déjà chargé, chaque
+// objet reçoit donc son instantané immédiatement.
+if (props.viewData) {
+    watch([() => props.viewStructure, () => props.viewItems, () => props.viewData], () => {
+        viewStructure.value = props.viewStructure;
+        viewItems.value = props.viewItems;
+        viewData.value = props.viewData;
+        itemSnapshots.value = {};
+        publishSnapshots(knownItemIds(), props.viewData);
+    }, { immediate: true });
+}
 
 function cleanupViewDataTables() {
     if (!viewRoot.value) return;
@@ -106,6 +141,7 @@ if (!props.viewStructure || !props.viewItems) {
         viewStructure.value = null;
         viewData.value = null;
         viewItems.value = null;
+        itemSnapshots.value = {};
         loadProgress.value = null;
 
         const currentViewId = route.params.viewid;
@@ -116,23 +152,38 @@ if (!props.viewStructure || !props.viewItems) {
             onProgress: (snapshot) => {
                 if (canceled || currentCycle !== loadCycle) return;
                 loadProgress.value = snapshot;
+            },
+            // Un objet dont toutes les sources sont arrivées s'affiche sans
+            // attendre le reste de la vue.
+            onItemsReady: (itemids, snapshot) => {
+                if (canceled || currentCycle !== loadCycle) return;
+                publishSnapshots(itemids, snapshot);
             }
         });
 
         try {
-            const [nextStructure, nextData, nextItems] = await Promise.all([
+            // La mise en page et les objets arrivent avant les données : les
+            // premiers objets prêts peuvent alors s'afficher.
+            const [nextStructure, nextItems] = await Promise.all([
                 fetchViewStructure(currentViewId),
-                activeDataStream.promise,
                 fetchViewItems(currentViewId)
             ]);
 
             if (canceled || currentCycle !== loadCycle) return;
 
+            viewStructure.value = nextStructure;
+            viewItems.value = nextItems;
+
+            const nextData = await activeDataStream.promise;
+
+            if (canceled || currentCycle !== loadCycle) return;
+
             activeDataStream = null;
             loadProgress.value = null;
-            viewStructure.value = nextStructure;
             viewData.value = nextData;
-            viewItems.value = nextItems;
+            // Repli JSON, ou objet absent du plan : les objets restés en attente
+            // reçoivent les données complètes.
+            publishSnapshots(knownItemIds(), nextData);
         } catch (error) {
             activeDataStream?.cancel();
             activeDataStream = null;
@@ -157,7 +208,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div ref="viewRoot">
-        <template v-if="viewStructure && viewItems">
+        <template v-if="layoutVisible">
             <viewGrid v-if="viewStructure.version === 2" :structure="viewStructure" :viewItems="viewItems" />
             <viewRow v-else-if="viewStructure.version === 1" :structure="viewStructure" :viewItems="viewItems" />
             <viewRow v-else :structure="{ version: 1, items: viewStructure }" :viewItems="viewItems" />

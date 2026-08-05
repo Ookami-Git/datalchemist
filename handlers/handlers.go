@@ -218,26 +218,19 @@ func ViewData(c *gin.Context) {
 	c.JSON(200, daData)
 }
 
-// ViewDataStream renvoie les données d'une vue via un flux SSE : des événements
-// "progress" pendant le chargement des sources, puis un événement "result"
-// contenant les données complètes.
+// ViewDataStream renvoie les données d'une vue via un flux SSE : le plan de
+// chargement, puis chaque source dès qu'elle est prête, l'avancement, et enfin
+// la fin du chargement.
 func ViewDataStream(c *gin.Context) {
 	id := c.Param("id")
 	daData := utils.MakeData(c)
 
-	tracker := progress.New()
-	sources, err := utils.ViewSources(id)
+	plan, err := utils.PlanForView(id)
 	if err != nil {
-		log.Print("ERROR handlers: list view sources:", err)
-	}
-	for _, source := range sources {
-		tracker.Expect(source.Name, source.ID)
+		log.Print("ERROR handlers: plan view sources:", err)
 	}
 
-	streamData(c, tracker, func() interface{} {
-		utils.ViewToData(id, &daData, tracker)
-		return daData
-	})
+	streamPlan(c, plan, &daData)
 }
 
 // ItemDataStream est l'équivalent de ViewDataStream pour un objet (aperçu).
@@ -245,18 +238,31 @@ func ItemDataStream(c *gin.Context) {
 	id := c.Param("itemid")
 	daData := utils.MakeData(c)
 
-	tracker := progress.New()
-	sources, err := utils.ItemSources(id)
+	plan, err := utils.PlanForItem(id)
 	if err != nil {
-		log.Print("ERROR handlers: list item sources:", err)
-	}
-	for _, source := range sources {
-		tracker.Expect(source.Name, source.ID)
+		log.Print("ERROR handlers: plan item sources:", err)
 	}
 
-	streamData(c, tracker, func() interface{} {
-		utils.ItemToData(id, &daData, tracker)
-		return daData
+	streamPlan(c, plan, &daData)
+}
+
+// streamPlan diffuse le chargement d'un plan. Le frontend reçoit d'abord les
+// sources attendues par chaque objet, puis la valeur de chaque source dès
+// qu'elle est chargée : il affiche un objet sans attendre le reste de la vue.
+func streamPlan(c *gin.Context, plan utils.Plan, data *map[string]interface{}) {
+	tracker := progress.New()
+	for _, name := range plan.Order {
+		tracker.Expect(name, plan.Sources[name].ID)
+	}
+
+	// Les variables d'URL font partie du contexte de rendu des objets : elles
+	// accompagnent le plan, aucune source ne les transporte.
+	header := gin.H{"plan": plan, "get": (*data)["get"]}
+
+	streamData(c, tracker, header, func(publish func(string, interface{})) {
+		utils.RunPlan(plan, data, tracker, func(node utils.Node, value interface{}) {
+			publish("source", gin.H{"name": node.Name, "id": node.ID, "value": value})
+		})
 	})
 }
 
@@ -269,25 +275,47 @@ const (
 	progressKeepAlive = 15 * time.Second
 )
 
-// streamData exécute compute en arrière-plan et diffuse l'avancement du tracker
-// en SSE, puis le résultat. Si le client se déconnecte, la diffusion s'arrête ;
-// le calcul en cours se termine sans être publié (la chaîne de chargement des
-// sources n'est pas annulable).
-func streamData(c *gin.Context, tracker *progress.Tracker, compute func() interface{}) {
-	header := c.Writer.Header()
-	header.Set("Content-Type", "text/event-stream")
-	header.Set("Cache-Control", "no-cache")
-	header.Set("Connection", "keep-alive")
+// streamEvent est un événement publié par le calcul en cours de route, avant la
+// fin du chargement.
+type streamEvent struct {
+	name    string
+	payload interface{}
+}
+
+// streamData exécute compute en arrière-plan et diffuse en SSE l'entête, les
+// événements publiés par le calcul et l'avancement du tracker, puis la fin du
+// chargement. Si le client se déconnecte, la diffusion s'arrête ; le calcul en
+// cours se termine sans être publié (la chaîne de chargement des sources n'est
+// pas annulable).
+func streamData(c *gin.Context, tracker *progress.Tracker, header interface{}, compute func(publish func(string, interface{}))) {
+	responseHeader := c.Writer.Header()
+	responseHeader.Set("Content-Type", "text/event-stream")
+	responseHeader.Set("Cache-Control", "no-cache")
+	responseHeader.Set("Connection", "keep-alive")
 	// Désactive la mise en tampon des reverse-proxies (nginx & co).
-	header.Set("X-Accel-Buffering", "no")
+	responseHeader.Set("X-Accel-Buffering", "no")
 	c.Writer.WriteHeader(200)
 	c.Writer.Flush()
 
+	if header != nil && !sendEvent(c, "plan", header) {
+		return
+	}
+
 	type outcome struct {
-		data interface{}
-		err  string
+		err string
 	}
 	done := make(chan outcome, 1)
+	events := make(chan streamEvent, 64)
+
+	// Les événements traversent un canal : ils sont émis depuis les goroutines de
+	// chargement, mais une seule goroutine peut écrire dans la réponse.
+	publish := func(name string, payload interface{}) {
+		select {
+		case events <- streamEvent{name: name, payload: payload}:
+		case <-c.Request.Context().Done():
+			// Client parti : ne pas bloquer le chargement en cours.
+		}
+	}
 
 	go func() {
 		// Le calcul tourne hors du handler : sans ce recover, une panique dans le
@@ -300,9 +328,9 @@ func streamData(c *gin.Context, tracker *progress.Tracker, compute func() interf
 				done <- outcome{err: fmt.Sprint(recovered)}
 			}
 		}()
-		data := compute()
+		compute(publish)
 		tracker.Finish()
-		done <- outcome{data: data}
+		done <- outcome{}
 	}()
 
 	lastSend := time.Now()
@@ -318,13 +346,29 @@ func streamData(c *gin.Context, tracker *progress.Tracker, compute func() interf
 		select {
 		case <-c.Request.Context().Done():
 			return
+		case event := <-events:
+			if !sendEvent(c, event.name, event.payload) {
+				return
+			}
+			lastSend = time.Now()
 		case result := <-done:
+			// Les dernières sources publiées doivent partir avant la fin du flux.
+			for drained := false; !drained; {
+				select {
+				case event := <-events:
+					if !sendEvent(c, event.name, event.payload) {
+						return
+					}
+				default:
+					drained = true
+				}
+			}
 			sendEvent(c, "progress", tracker.Snapshot())
 			if result.err != "" {
 				sendEvent(c, "failure", gin.H{"message": result.err})
 				return
 			}
-			sendEvent(c, "result", result.data)
+			sendEvent(c, "complete", gin.H{})
 			return
 		case <-ticker.C:
 			version := tracker.Version()

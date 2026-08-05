@@ -1,10 +1,12 @@
 import axios from 'axios';
+import { createDataCollector } from './progressiveData.js';
 
-// Le backend expose les données via un flux SSE (`<url>/stream`) qui émet des
-// événements `progress` pendant le chargement des sources puis un événement
-// `result` avec les données complètes. Si le flux est indisponible (proxy qui
-// tamponne, backend plus ancien, EventSource absent), on retombe sur l'appel
-// JSON classique : le chargement fonctionne, sans suivi détaillé.
+// Le backend expose les données via un flux SSE (`<url>/stream`) qui émet le plan
+// de chargement (`plan`), la valeur de chaque source dès qu'elle est prête
+// (`source`), l'avancement (`progress`), puis la fin du chargement (`complete`).
+// Si le flux est indisponible (proxy qui tamponne, EventSource absent), on
+// retombe sur l'appel JSON classique : le chargement fonctionne, sans suivi
+// détaillé ni affichage progressif.
 
 function buildQueryString(params = {}) {
   const searchParams = new URLSearchParams();
@@ -23,10 +25,13 @@ function buildQueryString(params = {}) {
   return searchParams.toString();
 }
 
-export function fetchDataWithProgress({ url, params = {}, onProgress = null }) {
+// onItemsReady est appelé avec la liste des objets dont toutes les sources sont
+// chargées, et un instantané figé des données à leur passer.
+export function fetchDataWithProgress({ url, params = {}, onProgress = null, onItemsReady = null }) {
   const queryString = buildQueryString(params);
   const streamUrl = `${url}/stream${queryString ? `?${queryString}` : ''}`;
 
+  const collector = createDataCollector();
   let source = null;
   let settled = false;
   let canceled = false;
@@ -78,15 +83,37 @@ export function fetchDataWithProgress({ url, params = {}, onProgress = null }) {
       }
     });
 
-    source.addEventListener('result', (event) => {
+    const notifyReady = (itemids) => {
+      if (!onItemsReady || itemids.length === 0) return;
+      onItemsReady(itemids, collector.snapshot());
+    };
+
+    // Plan de chargement : le frontend sait dès maintenant quelles sources
+    // chaque objet attend, et affiche d'emblée ceux qui n'en ont aucune.
+    source.addEventListener('plan', (event) => {
+      if (canceled || settled) return;
+      try {
+        notifyReady(collector.setPlan(JSON.parse(event.data)));
+      } catch {
+        // Un plan illisible ne doit pas casser le chargement : le résultat
+        // complet reste servi à la fin du flux.
+      }
+    });
+
+    source.addEventListener('source', (event) => {
+      if (canceled || settled) return;
+      try {
+        notifyReady(collector.addSource(JSON.parse(event.data)));
+      } catch {
+        // Idem : une source illisible n'interrompt pas le flux.
+      }
+    });
+
+    source.addEventListener('complete', () => {
       if (canceled || settled) return;
       settled = true;
       closeStream();
-      try {
-        resolve(JSON.parse(event.data));
-      } catch (error) {
-        reject(error);
-      }
+      resolve(collector.data);
     });
 
     // Événement métier volontairement nommé "failure" : un événement SSE nommé

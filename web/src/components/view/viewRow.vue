@@ -15,25 +15,23 @@ const props = defineProps({
     }
 });
 
-const dataNunjucks = inject('data');
+// Données figées d'un objet, ou null tant que ses sources ne sont pas chargées.
+const itemData = inject('itemData', () => null);
 </script>
 
 <template>
     <template v-for="(row, index) in structure.items" :key="index">
         <div class="row view-layout-row">
             <div v-for="(item, indexrow) in row" :key="indexrow" :class="[`col-md-${item.size}`, 'view-layout-col']">
-                <div v-if="dataNunjucks" class="card view-card view-row-card h-100">
+                <!-- La carte reste montée pendant l'attente : seul son contenu change. -->
+                <div class="card view-card view-row-card h-100"
+                    :aria-hidden="itemData(item.itemid) ? null : 'true'">
                     <div v-if="item?.title" class="card-header widget-card-header view-card-header"
                         v-html="item.title"></div>
                     <div class="card-body view-card-body">
-                        <Item :data="dataNunjucks" :itemDescribe="viewItems[`i${item.itemid}`]" />
-                    </div>
-                </div>
-                <div v-else class="card view-card view-row-card h-100" aria-hidden="true">
-                    <div v-if="item.title" class="card-header widget-card-header view-card-header"
-                        v-html="item.title"></div>
-                    <div class="card-body view-card-body">
-                        <placeHolder />
+                        <Item v-if="itemData(item.itemid)" :data="itemData(item.itemid)"
+                            :itemDescribe="viewItems[`i${item.itemid}`]" />
+                        <placeHolder v-else />
                     </div>
                 </div>
             </div>

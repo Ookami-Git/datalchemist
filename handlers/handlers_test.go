@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"datalchemist/database"
 	"datalchemist/models"
@@ -59,7 +60,7 @@ func TestParametersGetDoesNotExposeSecretParameters(t *testing.T) {
 	}
 }
 
-func TestStreamDataEmitsProgressThenResult(t *testing.T) {
+func TestStreamDataEmitsPlanSourcesThenComplete(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	tracker := progress.New()
 	tracker.Expect("source1", 1)
@@ -67,12 +68,13 @@ func TestStreamDataEmitsProgressThenResult(t *testing.T) {
 
 	r := gin.New()
 	r.GET("/stream", func(c *gin.Context) {
-		streamData(c, tracker, func() interface{} {
+		streamData(c, tracker, gin.H{"plan": gin.H{"order": []string{"source1", "source2"}}}, func(publish func(string, interface{})) {
 			tracker.Start("source1", 1)
 			tracker.Done("source1")
+			publish("source", gin.H{"name": "source1", "value": "value"})
 			tracker.Start("source2", 2)
 			tracker.Done("source2")
-			return gin.H{"sn": gin.H{"source1": "value"}}
+			publish("source", gin.H{"name": "source2", "value": "other"})
 		})
 	})
 
@@ -87,21 +89,27 @@ func TestStreamDataEmitsProgressThenResult(t *testing.T) {
 	}
 
 	body := w.Body.String()
-	if !strings.Contains(body, "event: progress") {
-		t.Fatalf("missing progress event: %s", body)
+	planIndex := strings.Index(body, "event: plan")
+	progressIndex := strings.Index(body, "event: progress")
+	sourceIndex := strings.Index(body, "event: source")
+	completeIndex := strings.Index(body, "event: complete")
+
+	// Le plan part avant tout : le frontend doit savoir ce qu'il attend.
+	if planIndex != 0 {
+		t.Fatalf("plan event is not the first one: %s", body)
 	}
-	if !strings.Contains(body, `"total":2`) {
+	if progressIndex == -1 || !strings.Contains(body, `"total":2`) {
 		t.Fatalf("progress payload should expose the expected total: %s", body)
 	}
-	resultIndex := strings.Index(body, "event: result")
-	if resultIndex == -1 {
-		t.Fatalf("missing result event: %s", body)
+	if sourceIndex == -1 || !strings.Contains(body[sourceIndex:], `"value":"value"`) {
+		t.Fatalf("missing source event: %s", body)
 	}
-	if resultIndex < strings.Index(body, "event: progress") {
-		t.Fatalf("result event sent before progress: %s", body)
+	// Les valeurs des sources sont publiées avant la fin du flux.
+	if completeIndex == -1 || completeIndex < sourceIndex {
+		t.Fatalf("complete event is not the last one: %s", body)
 	}
-	if !strings.Contains(body[resultIndex:], `"source1":"value"`) {
-		t.Fatalf("result payload = %s", body[resultIndex:])
+	if !strings.Contains(body[sourceIndex:], `"name":"source2"`) {
+		t.Fatalf("every loaded source should be published: %s", body)
 	}
 }
 
@@ -109,7 +117,7 @@ func TestStreamDataReportsPanicAsFailure(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	r := gin.New()
 	r.GET("/stream", func(c *gin.Context) {
-		streamData(c, progress.New(), func() interface{} {
+		streamData(c, progress.New(), nil, func(publish func(string, interface{})) {
 			panic("source exploded")
 		})
 	})
@@ -121,8 +129,8 @@ func TestStreamDataReportsPanicAsFailure(t *testing.T) {
 	if !strings.Contains(body, "event: failure") || !strings.Contains(body, "source exploded") {
 		t.Fatalf("body = %s", body)
 	}
-	if strings.Contains(body, "event: result") {
-		t.Fatalf("failed stream should not send a result: %s", body)
+	if strings.Contains(body, "event: complete") {
+		t.Fatalf("failed stream should not complete: %s", body)
 	}
 }
 
@@ -136,7 +144,7 @@ func TestViewDataStreamWithoutViewStillCompletes(t *testing.T) {
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/data/view/missing/stream", nil))
 
 	body := w.Body.String()
-	if !strings.Contains(body, "event: result") {
+	if !strings.Contains(body, "event: complete") {
 		t.Fatalf("body = %s", body)
 	}
 	if !strings.Contains(body, `"total":0`) {
@@ -196,13 +204,87 @@ func TestViewDataStreamTracksSourcesAndLoops(t *testing.T) {
 		t.Fatalf("sources were not marked as loaded: %s", body)
 	}
 
-	resultIndex := strings.Index(body, "event: result")
-	if resultIndex == -1 {
-		t.Fatalf("missing result event: %s", body)
+	// Le plan annonce à l'objet les deux sources qu'il attend, dépendance incluse.
+	if !strings.HasPrefix(body, "event: plan") {
+		t.Fatalf("plan event is not the first one: %s", body)
+	}
+	if !strings.Contains(body, fmt.Sprintf(`"%d":["base","looped"]`, itemID)) {
+		t.Fatalf("plan should list the item sources: %s", body)
+	}
+
+	sourceIndex := strings.Index(body, "event: source")
+	if sourceIndex == -1 {
+		t.Fatalf("missing source event: %s", body)
 	}
 	// Gonja rend les nombres du tableau JSON en flottants.
-	if !strings.Contains(body[resultIndex:], `"value 1.0"`) {
-		t.Fatalf("loop result payload = %s", body[resultIndex:])
+	if !strings.Contains(body[sourceIndex:], `"value 1.0"`) {
+		t.Fatalf("loop source payload = %s", body[sourceIndex:])
+	}
+	if !strings.Contains(body, "event: complete") {
+		t.Fatalf("stream did not complete: %s", body)
+	}
+}
+
+func TestViewDataStreamPublishesFastSourceBeforeSlowOne(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDatabase(t)
+
+	slowServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(300 * time.Millisecond)
+		w.Write([]byte("slow-content"))
+	}))
+	defer slowServer.Close()
+
+	fastID, err := database.SourceUpdate(models.Sources{
+		Name: "fast-source",
+		JSON: `{"src":"text","type":"text","query":"fast-content"}`,
+	})
+	if err != nil {
+		t.Fatalf("create fast source: %v", err)
+	}
+	slowID, err := database.SourceUpdate(models.Sources{
+		Name: "slow-source",
+		JSON: fmt.Sprintf(`{"src":"url","type":"text","path":%q}`, slowServer.URL),
+	})
+	if err != nil {
+		t.Fatalf("create slow source: %v", err)
+	}
+
+	fastItemID, err := database.ItemUpdate(models.Items{Name: "fast-item", Template: "<div></div>"})
+	if err != nil {
+		t.Fatalf("create fast item: %v", err)
+	}
+	database.ItemAddRequire(models.Item_sources{Item: fastItemID, Source: fastID})
+
+	slowItemID, err := database.ItemUpdate(models.Items{Name: "slow-item", Template: "<div></div>"})
+	if err != nil {
+		t.Fatalf("create slow item: %v", err)
+	}
+	database.ItemAddRequire(models.Item_sources{Item: slowItemID, Source: slowID})
+
+	viewID, err := database.ViewAdd(models.Views{
+		Name:       "progressive-view",
+		Parameters: fmt.Sprintf(`{"version":2,"items":[{"itemid":%d,"size":6},{"itemid":%d,"size":6}]}`, slowItemID, fastItemID),
+	})
+	if err != nil {
+		t.Fatalf("create view: %v", err)
+	}
+
+	r := gin.New()
+	r.GET("/data/view/:id/stream", ViewDataStream)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, fmt.Sprintf("/data/view/%d/stream", viewID), nil))
+
+	body := w.Body.String()
+	fastIndex := strings.Index(body, "fast-content")
+	slowIndex := strings.Index(body, "slow-content")
+	if fastIndex == -1 || slowIndex == -1 {
+		t.Fatalf("both sources should be published: %s", body)
+	}
+	// L'objet rapide n'attend pas l'objet lent, même s'il est déclaré après lui
+	// dans la vue.
+	if fastIndex > slowIndex {
+		t.Fatalf("fast source was published after the slow one: %s", body)
 	}
 }
 
