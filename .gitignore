@@ -34,6 +34,7 @@ datalchemist.exe
 #Local build
 dist/
 .vite/
+.pnpm-store/
 tmp/
 
 # Local credentials for AI coding CLIs (normally stored in Docker volumes)

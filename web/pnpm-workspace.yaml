@@ -1,0 +1,40 @@
+# pnpm configuration for the Datalchemist frontend.
+#
+# Note: since pnpm 11, only auth/registry settings are read from .npmrc.
+# Every other setting must live here (or in the global config.yaml).
+
+# --- Supply-chain hardening ---------------------------------------------------
+# Ignore any dependency version published less than 24h ago. Compromised
+# releases are typically yanked within hours, so this quarantine window is the
+# main defence against a freshly-published malicious version being pulled in
+# (e.g. the keyv/cacheable "Shai-Hulud" wave of 2026-08-04).
+# 1440 is also the pnpm 11 default; it is pinned explicitly so that the intent
+# survives a future change of defaults.
+minimumReleaseAge: 1440
+
+# Only these dependencies may run install/build lifecycle scripts. Anything
+# else is treated as unreviewed and its scripts are skipped, which neutralises
+# the `preinstall`-based payloads used by the npm worms.
+# Keep this list minimal, and re-review before adding to it.
+allowBuilds:
+  "@parcel/watcher": true # native file-watcher binding (vite/sass dep)
+  esbuild: true # downloads/links its platform binary
+  fsevents: true # macOS-only file-watcher binding
+
+# Fail the install if a dependency has an unreviewed build script rather than
+# silently skipping it, so new script-bearing deps are noticed.
+strictDepBuilds: true
+
+# Refuse to run scripts against a node_modules tree that does not match the
+# lockfile (catches a stale or hand-edited install).
+verifyDepsBeforeRun: error
+
+# --- Forced patched versions of transitive dependencies -----------------------
+# Both are pulled in indirectly (postcss via vue/@vue/compiler-sfc, dompurify
+# via mermaid) so they cannot be fixed by bumping a direct dependency.
+# Re-check on each dependency bump and drop an entry once the parent ships it.
+overrides:
+  # GHSA-r28c-9q8g-f849 + GHSA-fxqj-rqcc-2cmp (sourceMappingURL path traversal)
+  postcss: ">=8.5.23"
+  # GHSA-c2j3-45gr-mqc4 (CUSTOM_ELEMENT_HANDLING sanitiser bypass)
+  dompurify: ">=3.4.12"

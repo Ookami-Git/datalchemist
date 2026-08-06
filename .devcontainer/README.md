@@ -14,7 +14,7 @@ Ce devcontainer encapsule tout votre workflow de développement dans Docker avec
 │   ┌──────────────────┐  ┌──────────────────┐    │
 │   │   Backend (Go)   │  │ Frontend (Vite)  │    │
 │   │   Port: 8080     │  │  Port: 5173      │    │
-│   │  air (live reload│  │  npm run dev     │    │
+│   │  air (live reload│  │  pnpm dev        │    │
 │   │  + logs visibles)│  │  + logs visibles │    │
 │   └──────────────────┘  └──────────────────┘    │
 │                                                 │
@@ -105,7 +105,7 @@ docker-compose -f .devcontainer/docker-compose.yml up --build --force-recreate
 Le devcontainer lance automatiquement via `start.sh`:
 
 - Backend: `air` (rebuild + restart automatique à chaque modif Go)
-- Frontend: `npx vite --host 0.0.0.0 --port 5173` (HMR automatique)
+- Frontend: `pnpm exec vite --host 0.0.0.0 --port 5173` (HMR automatique)
 - Caddy: reverse proxy vers les bonnes routes
 
 ### 2. **Test et debug**
@@ -148,7 +148,7 @@ export NODE_ENV=development
 
 # Commandes personnalisées
 air -c .air.toml &
-npx vite --host 0.0.0.0 --port 5173 &
+pnpm exec vite --host 0.0.0.0 --port 5173 &
 ```
 
 ### Ajouter des variables d'environnement:
@@ -226,11 +226,14 @@ echo 'export DOCKER_PASSWORD="votre_mot_de_passe_ou_token_docker"' >> ~/.bashrc
 | Problème                        | Solution                                                    |
 | ------------------------------- | ----------------------------------------------------------- |
 | "Port 80 déjà utilisé"          | `docker-compose down` puis relancer                         |
-| "npm install échoue"            | Vérifier connexion, `docker-compose up --build`             |
+| "pnpm install échoue"           | Vérifier connexion, `docker-compose up --build`             |
 | "Go ne compile pas"             | Vérifier erreurs dans `docker logs`, corriger code          |
 | "Pas de logs visibles"          | Utiliser `docker logs -f <container>`, pas seulement `echo` |
 | "API ne répond pas"             | Vérifier que `air` tourne: `docker exec -it <id> ps aux`    |
 | "Frontend ne se met pas à jour" | Vérifier que Vite tourne sur 5173                           |
+| `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` | `pnpm install` dans `/workspace/web`. Si l'erreur persiste, un `node_modules` de l'hôte a fuité dans le conteneur : `docker volume rm <projet>_web-node-modules` puis rebuild |
+| Corepack demande `Do you want to continue?` | L'image n'a pas la version de pnpm attendue en cache : rebuild après avoir aligné `PNPM_VERSION` (Dockerfile) sur `packageManager` (`web/package.json`) |
+| `claude native binary not installed` | Le postinstall a été bloqué par npm 12 : le paquet doit figurer dans `--allow-scripts` (voir Dockerfile), puis rebuild |
 
 ## 📌 Notes importantes
 

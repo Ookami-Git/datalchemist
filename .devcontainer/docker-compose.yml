@@ -5,6 +5,11 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspace:cached
+      # node_modules must NOT be shared with the host: pnpm records absolute
+      # project paths and platform-specific binaries (rollup, esbuild,
+      # sass-embedded) in the tree, so a Windows/macOS install is rejected by
+      # `verifyDepsBeforeRun` and unusable in the container anyway.
+      - web-node-modules:/workspace/web/node_modules
       - go-cache:/home/vscode/go
       - go-pkg:/home/vscode/go/pkg
       # CLI sessions (including credential files) live outside the repository.
@@ -35,3 +40,4 @@ volumes:
   go-cache:
   go-pkg:
   ai-cli-home:
+  web-node-modules:
