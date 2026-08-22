@@ -342,6 +342,87 @@ graph TD;
 </pre>
 ```
 
+### Interactive graphs (Vue Flow)
+
+Item templates are rendered as HTML through `v-html`, which cannot instantiate a
+Vue component. Vue Flow is therefore mounted as an *island*: the template only
+declares a container plus a JSON configuration, and the item mounts a real Vue
+Flow instance inside it after rendering.
+
+```html
+<div data-vueflow>
+{
+  "aspectRatio": "16/9",
+  "fitViewOnInit": true,
+  "nodes": [
+    { "id": "1", "type": "input", "position": {"x": 0, "y": 0}, "label": "Source" },
+    { "id": "2", "position": {"x": 220, "y": 0}, "label": "Object" }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2", "type": "smoothstep", "animated": true }
+  ]
+}
+</div>
+```
+
+The configuration can be generated from the item data, `{{ myFlow | dump }}`
+included: HTML entities produced by the Nunjucks autoescape are decoded by the
+browser when the island is read, so `| safe` is not required.
+
+`nodes` and `edges` are passed to Vue Flow untouched, so every node and edge
+option of the library is available. Any key that is not listed below is
+forwarded as a `<VueFlow>` prop (`snapToGrid`, `minZoom`, `connectionMode`,
+`nodesDraggable`, `defaultViewport`, …).
+
+Island-level keys:
+
+| Key               | Default            | Purpose                                                             |
+| ----------------- | ------------------ | ------------------------------------------------------------------- |
+| `height`          | `"400px"`          | Fixed height in pixels, or `"fill"` (see below)                     |
+| `aspectRatio`     | –                  | `"16/9"`, `"16:9"` or a number: height derived from the width        |
+| `minHeight`       | `120px` if computed | Lower bound for the computed modes                                  |
+| `maxHeight`       | –                  | Upper bound                                                         |
+| `fillTarget`      | `".card-body"`     | Reference box for `"fill"`                                          |
+| `fitViewOnResize` | `fitViewOnInit`    | Re-frame the graph after a resize                                   |
+| `background`      | dots               | `false` to disable, or the `<Background>` props                      |
+| `controls`        | enabled            | `false` to disable                                                  |
+| `minimap`         | disabled           | `true`, or the `<MiniMap>` props                                     |
+
+Vue Flow renders nothing in a zero-height container, and the two view layouts do
+not offer the same constraint, so pick the sizing mode accordingly:
+
+- `aspectRatio` — the width is always defined in both layouts, so this is the
+  responsive default and the safest choice for a view mixing grid and row.
+- `height: "fill"` — takes the height left in the surrounding `.card-body`.
+  Intended for a **grid** widget with `autoResize` **off**, where the widget
+  height is fixed by `gs-h`. In a row layout the card is stretched by the
+  tallest column of the line, so the flow fills that height and falls back to
+  `minHeight` when it is the only content. It cannot be combined with a grid
+  widget in `autoResize` mode (the widget would size to the content that sizes
+  itself to the widget); that case logs a warning and falls back to a fixed
+  height. The measurement assumes the island is the last block of the card:
+  markup placed after it is not subtracted and would overflow.
+- `height: "<n>px"` — fixed, predictable everywhere, and the only mode that
+  makes a grid widget in `autoResize` mode grow to the graph.
+
+Vue Flow options that are not JSON-serialisable (`nodeTypes`/`edgeTypes`
+components, validation callbacks, slots) are not available from a template.
+Custom node components must be added to the registry in
+`web/src/components/view/items/VueFlowIsland.vue` and referenced by name:
+`"nodeTypes": { "custom": "statusCard" }`.
+
+Interactions are bridged as DOM events on the container, so the item's
+`javascript` field can react to them:
+
+```js
+document.addEventListener('vueflow:nodeClick', (e) => {
+  console.log(e.detail.node.id);
+});
+```
+
+Available events: `vueflow:nodeClick`, `vueflow:nodeDoubleClick`,
+`vueflow:edgeClick`, `vueflow:connect`, `vueflow:paneClick`.
+
 ## 🧾 Issues & Roadmap
 
 - [x] URL source with proxy + user/password (release 0.2.2)

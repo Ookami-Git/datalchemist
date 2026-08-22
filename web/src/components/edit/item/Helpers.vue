@@ -48,6 +48,56 @@ const codeDatatableJs = `new DataTable('#uniquetableid', { dom: 'Bfrtip', button
 
 // Mermaid
 const codeMermaid = `<pre class="mermaid"></pre>`
+
+// Vue Flow
+const codeVueFlowContainer = `<div data-vueflow>
+{
+  "nodes": [...],
+  "edges": [...]
+}
+</div>`
+const codeVueFlowExample = `<div data-vueflow>
+{
+  "aspectRatio": "16/9",
+  "fitViewOnInit": true,
+  "nodes": [
+    { "id": "1", "type": "input", "position": {"x": 0, "y": 0}, "label": "Source" },
+    { "id": "2", "position": {"x": 220, "y": 0}, "label": "Transform" },
+    { "id": "3", "type": "output", "position": {"x": 440, "y": 0}, "label": "View" }
+  ],
+  "edges": [
+    { "id": "e1-2", "source": "1", "target": "2", "type": "smoothstep", "animated": true },
+    { "id": "e2-3", "source": "2", "target": "3", "markerEnd": "arrowclosed" }
+  ]
+}
+</div>`
+const codeVueFlowDump = `<div data-vueflow>{{ var_flow | dump }}</div>`
+const codeVueFlowAspect = `{ "aspectRatio": "16/9", "maxHeight": "600px" }`
+const codeVueFlowFixed = `{ "height": "420px" }`
+const codeVueFlowFill = `{ "height": "fill", "minHeight": "200px" }`
+const codeVueFlowNodeOptions = `{
+  "id": "1",
+  "position": { "x": 0, "y": 0 },
+  "label": "Server",
+  "type": "input",
+  "class": "bg-success text-white",
+  "sourcePosition": "right",
+  "draggable": false,
+  "data": { "anything": "available in custom nodes" }
+}`
+const codeVueFlowEdgeOptions = `{
+  "id": "e1-2",
+  "source": "1",
+  "target": "2",
+  "type": "smoothstep",
+  "label": "42 rows",
+  "animated": true,
+  "markerEnd": "arrowclosed",
+  "style": { "strokeWidth": 2 }
+}`
+const codeVueFlowEvents = `document.addEventListener('vueflow:nodeClick', (event) => {
+  console.log(event.detail.node.id, event.detail.node.label);
+});`
 </script>
 
 <style>
@@ -175,6 +225,75 @@ const codeMermaid = `<pre class="mermaid"></pre>`
               <div class="mt-2">
                 <a href="https://mermaid.js.org/intro/" target="_blank">https://mermaid.js.org/intro/</a>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showSection('vueflow')" class="accordion-item">
+          <h2 class="accordion-header" id="item-helper-vueflow-heading">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+              data-bs-target="#item-helper-vueflow" aria-expanded="false" aria-controls="item-helper-vueflow">
+              <span class="d-flex align-items-center gap-2">
+                <span class="fw-semibold">Vue Flow</span>
+                <span class="badge text-bg-secondary">Graphs</span>
+              </span>
+            </button>
+          </h2>
+          <div id="item-helper-vueflow" class="accordion-collapse collapse"
+            aria-labelledby="item-helper-vueflow-heading" data-bs-parent="#item-helpers-accordion">
+            <div class="accordion-body">
+              <p class="mb-2">{{ $t('edititem.vueflow.description') }}</p>
+              <div class="mb-3">
+                <a href="https://vueflow.dev/guide/" target="_blank">https://vueflow.dev/guide/</a>
+              </div>
+
+              <p class="fw-semibold mb-2">{{ $t('edititem.global.syntax') }}</p>
+              <highlightjs language="html" :code="codeVueFlowContainer" />
+
+              <div class="mt-3">
+                <div class="small text-secondary mb-1">{{ $t('edititem.vueflow.dump') }}</div>
+                <highlightjs language="nunjucks" :code="codeVueFlowDump" />
+              </div>
+
+              <div class="mt-3 mb-3">
+                <div class="small text-secondary mb-1">{{ $t('edititem.global.examples') }}</div>
+                <highlightjs language="html" :code="codeVueFlowExample" />
+              </div>
+
+              <p class="fw-semibold mb-2">{{ $t('edititem.vueflow.sizing') }}</p>
+              <p class="small text-secondary mb-2">{{ $t('edititem.vueflow.sizing_description') }}</p>
+              <div class="mb-2">
+                <div><code>aspectRatio</code> - {{ $t('edititem.vueflow.sizing_aspect') }}</div>
+                <highlightjs language="json" :code="codeVueFlowAspect" />
+              </div>
+              <div class="mb-2">
+                <div><code>height</code> - {{ $t('edititem.vueflow.sizing_fixed') }}</div>
+                <highlightjs language="json" :code="codeVueFlowFixed" />
+              </div>
+              <div class="mb-3">
+                <div><code>height: "fill"</code> - {{ $t('edititem.vueflow.sizing_fill') }}</div>
+                <highlightjs language="json" :code="codeVueFlowFill" />
+              </div>
+
+              <p class="fw-semibold mb-2">{{ $t('edititem.vueflow.options') }}</p>
+              <p class="small text-secondary mb-2">{{ $t('edititem.vueflow.options_description') }}</p>
+              <div class="mb-2">
+                <div class="small text-secondary mb-1"><code>nodes</code></div>
+                <highlightjs language="json" :code="codeVueFlowNodeOptions" />
+              </div>
+              <div class="mb-3">
+                <div class="small text-secondary mb-1"><code>edges</code></div>
+                <highlightjs language="json" :code="codeVueFlowEdgeOptions" />
+              </div>
+
+              <p class="fw-semibold mb-2">{{ $t('edititem.vueflow.events') }}</p>
+              <p class="small text-secondary mb-2">{{ $t('edititem.vueflow.events_description') }}</p>
+              <div class="mb-2 small">
+                <code>vueflow:nodeClick</code>, <code>vueflow:nodeDoubleClick</code>,
+                <code>vueflow:edgeClick</code>, <code>vueflow:connect</code>,
+                <code>vueflow:paneClick</code>
+              </div>
+              <highlightjs language="javascript" :code="codeVueFlowEvents" />
             </div>
           </div>
         </div>

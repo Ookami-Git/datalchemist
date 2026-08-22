@@ -395,6 +395,19 @@
     "mermaid": {
       "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez-vous à la documentation pour plus d'informations."
     },
+    "vueflow": {
+      "description": "Vue Flow permet de créer des diagrammes interactifs composés de nœuds et de liens. Doit être contenu dans une balise 'div' avec l'attribut 'data-vueflow', qui contient les nœuds et les liens au format JSON. Référez-vous à la documentation pour plus d'informations.",
+      "dump": "La configuration peut aussi être construite depuis les données de vos sources. Le filtre 'safe' n'est pas nécessaire.",
+      "sizing": "Dimensionnement",
+      "sizing_description": "Un diagramme n'a pas de hauteur propre et doit en recevoir une pour s'afficher. Choisissez le mode adapté à votre vue.",
+      "sizing_aspect": "Hauteur calculée depuis la largeur, en conservant les proportions indiquées. Recommandé : s'adapte à toutes les tailles d'écran et aux deux types de vue.",
+      "sizing_fixed": "Hauteur fixe, en pixels. À utiliser quand le diagramme doit toujours conserver la même taille, ou quand l'option « Dimensionnement ajusté » est activée sur l'objet.",
+      "sizing_fill": "Occupe la hauteur restante de l'objet. En vue grille, le diagramme prend la hauteur de son emplacement ; en vue par lignes, celle de l'objet le plus haut de la ligne. Incompatible avec l'option « Dimensionnement ajusté ».",
+      "options": "Options des nœuds et des liens",
+      "options_description": "Toutes les options de la documentation Vue Flow sont disponibles : sur chaque nœud, sur chaque lien, et sur le diagramme lui-même (fitViewOnInit, snapToGrid, minZoom, connectionMode, background, controls, minimap, etc.).",
+      "events": "Interactions",
+      "events_description": "Le diagramme émet un événement à chaque interaction, que le code JavaScript de l'objet peut écouter."
+    },
     "nunjucks": {
       "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez-vous à la documentation pour plus d'informations.",
       "customfilter": "Filtres additionnels",

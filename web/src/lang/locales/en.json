@@ -395,6 +395,19 @@
     "mermaid": {
       "description": "Mermaid allows you to create diagrams. Must be contained in a 'pre' tag with the class 'mermaid'. Refer to the documentation for more information."
     },
+    "vueflow": {
+      "description": "Vue Flow allows you to create interactive diagrams made of nodes and links. Must be contained in a 'div' tag with the 'data-vueflow' attribute, holding the nodes and the edges in JSON. Refer to the documentation for more information.",
+      "dump": "The configuration can also be built from your source data. The 'safe' filter is not needed.",
+      "sizing": "Sizing",
+      "sizing_description": "A diagram has no height of its own and needs one to be displayed. Pick the mode that suits your view.",
+      "sizing_aspect": "Height computed from the width, keeping the given proportions. Recommended: it adapts to every screen size and to both kinds of view.",
+      "sizing_fixed": "Fixed height, in pixels. Use it when the diagram must always keep the same size, or when 'Adjusted sizing' is enabled on the object.",
+      "sizing_fill": "Fills the height left in the object. In a grid view the diagram takes the height of its slot, in a row view the height of the tallest object of the line. Cannot be combined with 'Adjusted sizing'.",
+      "options": "Nodes and edges options",
+      "options_description": "Every option of the Vue Flow documentation is available: on each node, on each edge, and on the diagram itself (fitViewOnInit, snapToGrid, minZoom, connectionMode, background, controls, minimap, and so on).",
+      "events": "Interactions",
+      "events_description": "The diagram emits an event on every interaction, which the JavaScript code of the object can listen to."
+    },
     "nunjucks": {
       "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",
       "customfilter": "Additional filters",

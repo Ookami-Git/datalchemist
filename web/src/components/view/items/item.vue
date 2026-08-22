@@ -7,6 +7,7 @@ import mermaid from 'mermaid';
 import he from 'he';
 import { setDataTablesLanguage } from '@/utils/dataTables.js';
 import { useActiveTheme } from '@/utils/useActiveTheme.js';
+import { mountVueFlowIslands, unmountVueFlowIslands } from '@/utils/vueFlowIslands.js';
 // --- DataTables & Dépendances ---
 import jQuery from "jquery";
 import jszip from 'jszip';
@@ -42,6 +43,7 @@ const hasLoadError = ref(false);
 const fetchError = ref(null);
 const itemRoot = ref(null);
 let renderCycle = 0;
+let vueFlowApps = [];
 
 const resolvedItemDescribe = computed(() => resolveItemRenderDefinition(props.itemDescribe));
 
@@ -174,9 +176,11 @@ watch(
     onCleanup(() => {
       canceled = true;
       cleanupDataTables();
+      unmountVueFlowIslands(vueFlowApps);
     });
 
     cleanupDataTables();
+    unmountVueFlowIslands(vueFlowApps);
     hasLoadError.value = false;
     fetchError.value = null;
     renderedItem.value = null;
@@ -211,6 +215,18 @@ watch(
       await mermaid.run();
       if (canceled || currentCycle !== renderCycle) return;
 
+      // --- Vue Flow : montage des îlots laissés par le template ---
+      // Le chunk est chargé à la demande, donc on peut être annulé pendant l'await.
+      const mountedFlows = await mountVueFlowIslands(itemRoot.value, {
+        theme: getActiveTheme(),
+        provides: { parameters, resizeWidget },
+      });
+      if (canceled || currentCycle !== renderCycle) {
+        unmountVueFlowIslands(mountedFlows);
+        return;
+      }
+      vueFlowApps = mountedFlows;
+
       await nextTick();
       if (canceled || currentCycle !== renderCycle) return;
 
@@ -227,6 +243,7 @@ watch(
 
 onBeforeUnmount(() => {
   cleanupDataTables();
+  unmountVueFlowIslands(vueFlowApps);
   if (globalSearch) globalSearch.value = false;
 });
 </script>

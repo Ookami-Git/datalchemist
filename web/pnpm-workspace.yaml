@@ -20,6 +20,11 @@ allowBuilds:
   "@parcel/watcher": true # native file-watcher binding (vite/sass dep)
   esbuild: true # downloads/links its platform binary
   fsevents: true # macOS-only file-watcher binding
+  # Pulled in by @vue-flow/core. Its postinstall only rewrites lib/index.* to
+  # target Vue 2, and the published default already targets Vue 3 (isVue3=true).
+  # The script is wrapped in its own try/catch upstream, so skipping it is a
+  # no-op here.
+  vue-demi: false
 
 # Fail the install if a dependency has an unreviewed build script rather than
 # silently skipping it, so new script-bearing deps are noticed.
