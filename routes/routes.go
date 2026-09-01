@@ -55,6 +55,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		protected.DELETE("/api/source/:id", handlers.SourceDelete)
 		protected.POST("/api/source", handlers.SourceUpdate)
+		protected.POST("/api/source/:id/duplicate", handlers.SourceDuplicate)
 		protected.GET("/api/source/:id", handlers.SourceGet)
 		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
 		protected.GET("/api/sources", handlers.SourceList)
@@ -64,6 +65,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/api/item/:id", handlers.ItemGet)
 		protected.DELETE("/api/item/:id", handlers.ItemDelete)
 		protected.POST("/api/item", handlers.ItemUpdate)
+		protected.POST("/api/item/:id/duplicate", handlers.ItemDuplicate)
 		protected.GET("/api/items", handlers.ItemList)
 		protected.GET("/api/item/sources/:id", handlers.ItemSourcesList)
 		protected.POST("/api/item/require", handlers.ItemAddRequire)
@@ -71,6 +73,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		protected.DELETE("/api/view/:id", handlers.ViewDelete)
 		protected.POST("/api/view", handlers.ViewAdd)
+		protected.POST("/api/view/:id/duplicate", handlers.ViewDuplicate)
 		protected.GET("/api/views", handlers.ViewList)
 
 		protected.PUT("/api/parameter/:id", handlers.ParametersUpdate)

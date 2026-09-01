@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, inject, unref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { RouterLink, useRoute } from 'vue-router';
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
@@ -36,6 +37,8 @@ const openExport = (seed = null) => {
   isExportOpen.value = true
 }
 
+const { t } = useI18n();
+
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
 
@@ -51,6 +54,33 @@ const ToDelete = ref({
   id: null,
   name: null
 })
+
+const ToDuplicate = ref({
+  type: null,
+  id: null,
+  name: null
+})
+
+const collectionForType = (type) => {
+  switch (type) {
+    case 'source': return getCollectionArray(sources.value);
+    case 'item': return getCollectionArray(items.value);
+    case 'view': return getCollectionArray(views.value);
+  }
+  return [];
+};
+
+const duplicateTypeName = computed(() =>
+  types.find(x => x.type === ToDuplicate.value.type)?.name || ''
+);
+
+// Pré-remplit « nom_1 », ou « nom_2 »… si déjà pris.
+const openDuplicate = (type, row) => {
+  const names = new Set(collectionForType(type).map(x => x.name));
+  let i = 1;
+  while (names.has(`${row.name}_${i}`)) i++;
+  ToDuplicate.value = { type, id: row.id, name: `${row.name}_${i}` };
+};
 
 // Navigation & Search
 const route = useRoute()
@@ -344,6 +374,31 @@ function AddToDA(type) {
     })
     .catch(function (error) {
       apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
+      console.log(error);
+    });
+}
+
+function DuplicateDA(type, id, name) {
+  axios.post(`${apiUrl}/${type}/${id}/duplicate`, { name })
+    .then(function (response) {
+      switch (type) {
+        case 'view':
+          fetchViews()
+          break;
+        case 'item':
+          fetchItems()
+          break;
+        case 'source':
+          fetchSources()
+          break;
+      }
+    })
+    .catch(function (error) {
+      if (error.response?.status === 409) {
+        apiError.value = t('edit.duplicate_name_taken', { name });
+      } else {
+        apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
+      }
       console.log(error);
     });
 }
@@ -698,6 +753,10 @@ fetchSecrets()
                       @click="openSourcePreview(row.id, row.name)">
                       <i class="bi bi-eye-fill"></i>
                     </button>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('source', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-export"
                       :title="$t('edit.bundle.exportentity')"
                       @click="openExport({ type: 'source', name: row.name })">
@@ -778,6 +837,10 @@ fetchSecrets()
                       :to="{ name: 'item', params: { itemid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('item', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-export"
                       :title="$t('edit.bundle.exportentity')"
                       @click="openExport({ type: 'item', name: row.name })">
@@ -841,6 +904,10 @@ fetchSecrets()
                       :to="{ name: 'view', params: { viewid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('view', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-export"
                       :title="$t('edit.bundle.exportentity')"
                       @click="openExport({ type: 'view', name: row.name })">
@@ -1041,6 +1108,48 @@ fetchSecrets()
             :class="type.type === 'secret' ? 'admin-edit-modal-primary' : ''" @click="AddToDA(type.type)"
             data-bs-dismiss="modal">{{
               $t('edit.add') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model for DUPLICATE -->
+  <div class="modal fade admin-edit-modern-modal" id="duplicateentity" tabindex="-1"
+    aria-labelledby="duplicateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0" :class="getAddModalHeaderClass(ToDuplicate.type)">
+          <div class="admin-edit-modal-title-wrap">
+            <span class="admin-edit-modal-icon" :class="getAddModalIconClass(ToDuplicate.type)" aria-hidden="true">
+              <i class="bi bi-copy"></i>
+            </span>
+            <div>
+              <h1 class="modal-title fs-5 mb-0 text-white" id="duplicateModalLabel">{{ $t('global.duplicate') }} : {{
+                duplicateTypeName }}</h1>
+              <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.modal_duplicate_subtitle') }}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            :aria-label="$t('global.close')"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="admin-edit-add-note mb-4">
+            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_duplicate_note') }}
+          </p>
+          <div class="mb-0">
+            <label for="InputDuplicateName" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
+            <input type="text" class="form-control form-control-modern" id="InputDuplicateName"
+              v-model="ToDuplicate.name" autocomplete="off">
+            <div class="form-text text-muted">{{ $t('edit.modal_duplicate_name_help') }}</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{
+            $t('global.cancel')
+            }}</button>
+          <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow" :disabled="!ToDuplicate.name"
+            @click="DuplicateDA(ToDuplicate.type, ToDuplicate.id, ToDuplicate.name)" data-bs-dismiss="modal">{{
+              $t('global.duplicate') }}</button>
         </div>
       </div>
     </div>
@@ -1618,6 +1727,12 @@ fetchSecrets()
   border-color: var(--edit-color-source);
   color: var(--edit-color-source);
   background-color: rgba(var(--edit-color-source-rgb), 0.06);
+}
+
+.btn-action-duplicate:hover {
+  border-color: var(--edit-color-secret);
+  color: var(--edit-color-secret);
+  background-color: rgba(var(--edit-color-secret-rgb), 0.06);
 }
 
 .btn-action-export:hover {

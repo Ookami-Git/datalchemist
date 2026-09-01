@@ -3,6 +3,7 @@ package database
 import (
 	"datalchemist/models"
 	"datalchemist/utils/generator"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -291,6 +292,153 @@ func SourceUpdate(Source models.Sources) (uint, error) {
 
 	return Source.ID, err
 }
+
+// ErrNameTaken signale qu'un nom demandé pour une copie est déjà utilisé.
+var ErrNameTaken = errors.New("name already used")
+
+// duplicateName construit un nom de copie unique dans la table donnée :
+// « base_1 », puis « base_2 », etc.
+func duplicateName(tx *gorm.DB, table string, base string) (string, error) {
+	for i := 1; ; i++ {
+		name := fmt.Sprintf("%s_%d", base, i)
+		var count int64
+		if err := tx.Table(table).Where("name = ?", name).Count(&count).Error; err != nil {
+			return "", err
+		}
+		if count == 0 {
+			return name, nil
+		}
+	}
+}
+
+// resolveDuplicateName valide le nom demandé, ou en génère un s'il est vide.
+func resolveDuplicateName(tx *gorm.DB, table string, base string, requested string) (string, error) {
+	if requested == "" {
+		return duplicateName(tx, table, base)
+	}
+	var count int64
+	if err := tx.Table(table).Where("name = ?", requested).Count(&count).Error; err != nil {
+		return "", err
+	}
+	if count > 0 {
+		return "", ErrNameTaken
+	}
+	return requested, nil
+}
+
+// SourceDuplicate copie une source et ses liens vers les sources requises.
+func SourceDuplicate(id string, requestedName string) (uint, error) {
+	db, err := OpenGorm()
+	if err != nil {
+		return 0, err
+	}
+
+	var source models.Sources
+	if err := db.Where("id = ? OR name = ?", id, id).First(&source).Error; err != nil {
+		return 0, err
+	}
+
+	var newID uint
+	err = db.Transaction(func(tx *gorm.DB) error {
+		name, err := resolveDuplicateName(tx, "sources", source.Name, requestedName)
+		if err != nil {
+			return err
+		}
+		duplicate := models.Sources{Name: name, Parameters: source.Parameters, JSON: source.JSON}
+		if err := tx.Create(&duplicate).Error; err != nil {
+			return err
+		}
+		var requires []models.Source_require
+		if err := tx.Where("source = ?", source.ID).Find(&requires).Error; err != nil {
+			return err
+		}
+		for _, require := range requires {
+			link := models.Source_require{Source: duplicate.ID, Require: require.Require}
+			if err := tx.Create(&link).Error; err != nil {
+				return err
+			}
+		}
+		newID = duplicate.ID
+		return nil
+	})
+
+	return newID, err
+}
+
+// ItemDuplicate copie un item et ses liens vers les sources.
+func ItemDuplicate(id string, requestedName string) (uint, error) {
+	db, err := OpenGorm()
+	if err != nil {
+		return 0, err
+	}
+
+	var item models.Items
+	if err := db.Where("id = ? OR name = ?", id, id).First(&item).Error; err != nil {
+		return 0, err
+	}
+
+	var newID uint
+	err = db.Transaction(func(tx *gorm.DB) error {
+		name, err := resolveDuplicateName(tx, "items", item.Name, requestedName)
+		if err != nil {
+			return err
+		}
+		duplicate := models.Items{
+			Name:       name,
+			Parameters: item.Parameters,
+			Template:   item.Template,
+			Javascript: item.Javascript,
+		}
+		if err := tx.Create(&duplicate).Error; err != nil {
+			return err
+		}
+		var sources []models.Item_sources
+		if err := tx.Where("item = ?", item.ID).Find(&sources).Error; err != nil {
+			return err
+		}
+		for _, source := range sources {
+			link := models.Item_sources{Item: duplicate.ID, Source: source.Source}
+			if err := tx.Create(&link).Error; err != nil {
+				return err
+			}
+		}
+		newID = duplicate.ID
+		return nil
+	})
+
+	return newID, err
+}
+
+// ViewDuplicate copie une vue ; les liens vers les items vivent dans le JSON
+// de paramètres (itemid), copié tel quel. Les ACL ne sont pas reprises.
+func ViewDuplicate(id string, requestedName string) (uint, error) {
+	db, err := OpenGorm()
+	if err != nil {
+		return 0, err
+	}
+
+	var view models.Views
+	if err := db.Where("id = ? OR name = ?", id, id).First(&view).Error; err != nil {
+		return 0, err
+	}
+
+	var newID uint
+	err = db.Transaction(func(tx *gorm.DB) error {
+		name, err := resolveDuplicateName(tx, "views", view.Name, requestedName)
+		if err != nil {
+			return err
+		}
+		duplicate := models.Views{Name: name, Parameters: view.Parameters, Protected: view.Protected}
+		if err := tx.Create(&duplicate).Error; err != nil {
+			return err
+		}
+		newID = duplicate.ID
+		return nil
+	})
+
+	return newID, err
+}
+
 func ParametersGet() map[string]interface{} {
 	db, err := OpenGorm()
 	checkErr(err)
