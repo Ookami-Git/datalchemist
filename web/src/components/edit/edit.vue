@@ -1073,7 +1073,7 @@ fetchSecrets()
             <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_delete_warning')
             }}
           </p>
-          <div class="admin-edit-delete-summary p-3 bg-light rounded-3">
+          <div class="admin-edit-delete-summary p-3 rounded-3">
             <div class="admin-edit-delete-row mb-2">
               <span class="admin-edit-delete-label text-muted small">{{ $t('edit.modal_delete_type') }}</span>
               <span class="admin-edit-delete-value fw-semibold">{{ type.name }}</span>
