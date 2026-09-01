@@ -847,3 +847,45 @@ func SecretsGet() ([]models.Secrets, error) {
 
 	return Secrets, err
 }
+
+// Transaction expose une transaction gorm aux appelants qui doivent écrire
+// plusieurs tables de façon atomique. L'import s'en sert : une archive à moitié
+// appliquée laisserait des références pendantes, pire que pas d'import du tout.
+func Transaction(operation func(tx *gorm.DB) error) error {
+	db, err := OpenGorm()
+	if err != nil {
+		return err
+	}
+	return db.Transaction(operation)
+}
+
+// SourceDependents liste les objets et les sources qui dépendent d'une source,
+// pour prévenir l'utilisateur avant qu'un import ne l'écrase.
+func SourceDependents(sourceID uint) ([]string, []string, error) {
+	var items []string
+	var sources []string
+
+	db, err := OpenGorm()
+	if err != nil {
+		return items, sources, err
+	}
+
+	err = db.Table("item_sources").
+		Select("items.name").
+		Joins("JOIN items ON item_sources.item = items.id").
+		Where("item_sources.source = ?", sourceID).
+		Order("items.name").
+		Scan(&items).Error
+	if err != nil {
+		return items, sources, err
+	}
+
+	err = db.Table("source_requires").
+		Select("sources.name").
+		Joins("JOIN sources ON source_requires.source = sources.id").
+		Where("source_requires.require = ?", sourceID).
+		Order("sources.name").
+		Scan(&sources).Error
+
+	return items, sources, err
+}

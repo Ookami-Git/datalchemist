@@ -136,7 +136,9 @@
         "external": "Lien externe",
         "newtab": "Ouvrir dans un nouvel onglet"
       },
-      "submenu": { "title": "Sous-menu" },
+      "submenu": {
+        "title": "Sous-menu"
+      },
       "actions": {
         "add": "Ajouter un élément",
         "addFirst": "Ajouter le premier élément",
@@ -259,7 +261,80 @@
     "secrets_edit_disabled": "Édition des secrets désactivée",
     "secrets_state_enabled": "Secrets activés",
     "secrets_state_disabled": "Secrets désactivés",
-    "secret_value": "Valeur du secret"
+    "secret_value": "Valeur du secret",
+    "bundle": {
+      "back": "Retour",
+      "exportentity": "Exporter cet élément",
+      "passphrase": "Passphrase",
+      "passphraseconfirm": "Confirmer la passphrase",
+      "passphrasemismatch": "Les deux passphrases diffèrent",
+      "types": {
+        "source": "Sources",
+        "item": "Objets",
+        "view": "Vues",
+        "secret": "Secrets"
+      },
+      "export": {
+        "header": "Export",
+        "selectall": "Tout sélectionner",
+        "clear": "Tout décocher",
+        "selected": "Sélectionnés",
+        "pulled": "Entraînés",
+        "pulledby": "Dépendance",
+        "uncertain": "Ces secrets ont été repérés en lisant les templates, vérifiez qu'ils sont pertinents",
+        "run": "Exporter",
+        "secretshint": "La sélection contient des secrets : une passphrase sera demandée",
+        "done": "Archive {file} téléchargée",
+        "donewarnings": "{count} avertissement(s), voir manifest.json dans l'archive",
+        "passphrasetitle": "Protéger les secrets exportés",
+        "passphrasehelp": "Les secrets sont rechiffrés avec cette passphrase. Elle sera exigée pour les importer, et elle est indépendante de la clé de l'instance.",
+        "passphrasewarning": "Cette passphrase n'est stockée nulle part. Perdue, les secrets de l'archive deviennent illisibles."
+      },
+      "import": {
+        "header": "Import",
+        "file": "Archive à importer",
+        "reading": "Lecture de l'archive...",
+        "exportwarnings": "Avertissements relevés lors de l'export de cette archive",
+        "setall": "Appliquer à toutes les lignes :",
+        "planned": "Prévus",
+        "entity": "Élément",
+        "action": "Action",
+        "finalname": "Nom final",
+        "impact": "Impact local",
+        "result": "Résultat",
+        "outcomes": {
+          "created": "Créé",
+          "updated": "Mis à jour",
+          "skipped": "Ignoré"
+        },
+        "collides": "Nom déjà utilisé",
+        "new": "Nouveau",
+        "actions": {
+          "update": "Mise à jour",
+          "create": "Nouvel élément",
+          "skip": "Ignorer"
+        },
+        "duplicatename": "Deux lignes visent ce nom",
+        "emptyname": "Un nom est requis",
+        "affects": "{count} élément(s) local(aux) en dépendent",
+        "fixfirst": "{count} ligne(s) à corriger",
+        "run": "Importer",
+        "secretshint": "L'archive contient des secrets : la passphrase d'export sera demandée",
+        "passphrasetitle": "Passphrase de l'archive",
+        "passphrasehelp": "Saisissez la passphrase utilisée lors de l'export de cette archive.",
+        "reporttitle": "Import terminé",
+        "created": "Créés",
+        "updated": "Mis à jour",
+        "skipped": "Ignorés"
+      },
+      "errors": {
+        "catalog": "Impossible de charger la liste des éléments",
+        "resolve": "Impossible de calculer les dépendances",
+        "export": "L'export a échoué",
+        "preview": "Impossible de lire cette archive",
+        "import": "L'import a échoué"
+      }
+    }
   },
   "templateVariables": {
     "title": "Variables disponibles",

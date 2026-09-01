@@ -136,7 +136,9 @@
         "external": "External link",
         "newtab": "Open in a new tab"
       },
-      "submenu": { "title": "Submenu" },
+      "submenu": {
+        "title": "Submenu"
+      },
       "actions": {
         "add": "Add item",
         "addFirst": "Add first item",
@@ -259,7 +261,80 @@
     "secrets_edit_disabled": "Secret editing is disabled",
     "secrets_state_enabled": "Secrets enabled",
     "secrets_state_disabled": "Secrets disabled",
-    "secret_value": "Secret value"
+    "secret_value": "Secret value",
+    "bundle": {
+      "back": "Back",
+      "exportentity": "Export this element",
+      "passphrase": "Passphrase",
+      "passphraseconfirm": "Confirm passphrase",
+      "passphrasemismatch": "The two passphrases differ",
+      "types": {
+        "source": "Sources",
+        "item": "Items",
+        "view": "Views",
+        "secret": "Secrets"
+      },
+      "export": {
+        "header": "Export",
+        "selectall": "Select everything",
+        "clear": "Clear",
+        "selected": "Selected",
+        "pulled": "Pulled in",
+        "pulledby": "Dependency",
+        "uncertain": "These secrets were found by scanning templates, check they are relevant",
+        "run": "Export",
+        "secretshint": "The selection contains secrets: a passphrase will be requested",
+        "done": "Archive {file} downloaded",
+        "donewarnings": "{count} warning(s), see manifest.json inside the archive",
+        "passphrasetitle": "Protect the exported secrets",
+        "passphrasehelp": "The secrets are re-encrypted with this passphrase. It will be required to import them, and it is independent from the instance key.",
+        "passphrasewarning": "This passphrase is not stored anywhere. Lost, the secrets in the archive become unreadable."
+      },
+      "import": {
+        "header": "Import",
+        "file": "Archive to import",
+        "reading": "Reading the archive...",
+        "exportwarnings": "Warnings recorded when the archive was exported",
+        "setall": "Apply to every line:",
+        "planned": "Planned",
+        "entity": "Entity",
+        "action": "Action",
+        "finalname": "Final name",
+        "impact": "Local impact",
+        "result": "Result",
+        "outcomes": {
+          "created": "Created",
+          "updated": "Updated",
+          "skipped": "Skipped"
+        },
+        "collides": "Name already used",
+        "new": "New",
+        "actions": {
+          "update": "Update",
+          "create": "New element",
+          "skip": "Skip"
+        },
+        "duplicatename": "Two lines target this name",
+        "emptyname": "A name is required",
+        "affects": "{count} local element(s) depend on it",
+        "fixfirst": "{count} line(s) to fix first",
+        "run": "Import",
+        "secretshint": "The archive contains secrets: the export passphrase will be requested",
+        "passphrasetitle": "Passphrase of the archive",
+        "passphrasehelp": "Enter the passphrase used when this archive was exported.",
+        "reporttitle": "Import completed",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped"
+      },
+      "errors": {
+        "catalog": "Unable to load the list of elements",
+        "resolve": "Unable to compute the dependencies",
+        "export": "Export failed",
+        "preview": "Unable to read this archive",
+        "import": "Import failed"
+      }
+    }
   },
   "templateVariables": {
     "title": "Available variables",

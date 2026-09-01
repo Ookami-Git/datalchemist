@@ -3854,3 +3854,66 @@ body.item-preview-modal-open {
     max-height: 46vh;
   }
 }
+
+/* Shared export / import modal styles */
+.edit-bundle-modal .edit-bundle-panel {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.9rem;
+  background: var(--bs-body-bg);
+}
+
+.edit-bundle-modal .edit-bundle-chip {
+  border: 1px solid var(--bs-border-color);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.edit-bundle-modal .edit-bundle-panel-head {
+  border-bottom: 1px solid var(--bs-border-color);
+  background: var(--bs-tertiary-bg);
+  border-radius: 0.9rem 0.9rem 0 0;
+}
+
+/* La liste defile dans son propre cadre : un catalogue de cent sources ne doit
+   pas repousser le bouton d'export hors de la modale. */
+.edit-bundle-modal .edit-bundle-list {
+  max-height: 15rem;
+  overflow-y: auto;
+}
+
+.edit-bundle-modal .edit-bundle-row {
+  border-bottom: 1px solid var(--bs-border-color-translucent);
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.edit-bundle-modal .edit-bundle-row:last-child {
+  border-bottom: none;
+}
+
+.edit-bundle-modal .edit-bundle-row:hover {
+  background: var(--bs-tertiary-bg);
+}
+
+.edit-bundle-modal .edit-bundle-alert {
+  border-radius: 0.75rem;
+}
+
+.edit-bundle-modal .edit-bundle-table-wrap {
+  border: 1px solid var(--bs-border-color);
+  border-radius: 0.75rem;
+  overflow: auto;
+  max-height: 26rem;
+}
+
+.edit-bundle-modal .edit-bundle-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bs-tertiary-bg);
+}
+
+[data-bs-theme="light"] .edit-bundle-modal .edit-bundle-panel {
+  border-color: var(--bs-border-color);
+  background: #ffffff;
+}

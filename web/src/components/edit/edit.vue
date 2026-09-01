@@ -3,6 +3,8 @@ import { computed, ref, inject, unref } from 'vue';
 import axios from 'axios';
 import { RouterLink, useRoute } from 'vue-router';
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
+import BundleExportModal from './common/BundleExportModal.vue';
+import BundleImportModal from './common/BundleImportModal.vue';
 import { templateCatalog } from '@/templates/catalog.js';
 import {
   createVisualItemParameters,
@@ -23,6 +25,16 @@ const openSourcePreview = (id, name) => {
 const items = ref(null)
 const views = ref(null)
 const secrets = ref(null)
+
+const isExportOpen = ref(false)
+const isImportOpen = ref(false)
+// exportSeed pré-sélectionne une entité : null ouvre le catalogue complet.
+const exportSeed = ref(null)
+
+const openExport = (seed = null) => {
+  exportSeed.value = seed
+  isExportOpen.value = true
+}
 
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
@@ -434,6 +446,14 @@ function BeginEditSecret(secretRow) {
   EditSecret.value.secret = null;
 }
 
+// Un import peut avoir créé ou remplacé n'importe quoi : on recharge tout.
+const refreshAfterImport = () => {
+  fetchSources()
+  fetchItems()
+  fetchViews()
+  fetchSecrets()
+}
+
 fetchSources()
 fetchItems()
 fetchViews()
@@ -471,15 +491,31 @@ fetchSecrets()
           </div>
         </div>
 
-        <!-- Status chips -->
-        <div class="d-flex flex-wrap gap-2">
-          <div class="status-pill badge-primary">
-            <i class="bi bi-grid-3x3-gap-fill me-1"></i>
-            {{ totalEntries }} éléments au total
+        <div class="d-flex flex-column align-items-md-end gap-3">
+          <!-- Status chips -->
+          <div class="d-flex flex-wrap gap-2">
+            <div class="status-pill badge-primary">
+              <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+              {{ totalEntries }} éléments au total
+            </div>
+            <div class="status-pill" :class="canManageSecrets ? 'badge-success' : 'badge-warning'">
+              <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
+              {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+            </div>
           </div>
-          <div class="status-pill" :class="canManageSecrets ? 'badge-success' : 'badge-warning'">
-            <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
-            {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+
+          <!-- Export et import portent sur tout le contenu, pas sur l'onglet
+               courant : leur place est dans le bandeau. -->
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn-hero" :title="$t('edit.bundle.export.header')" @click="openExport()">
+              <i class="bi bi-box-arrow-down"></i>
+              <span>{{ $t('edit.bundle.export.header') }}</span>
+            </button>
+            <button type="button" class="btn-hero" :title="$t('edit.bundle.import.header')"
+              @click="isImportOpen = true">
+              <i class="bi bi-box-arrow-in-up"></i>
+              <span>{{ $t('edit.bundle.import.header') }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -662,6 +698,11 @@ fetchSecrets()
                       @click="openSourcePreview(row.id, row.name)">
                       <i class="bi bi-eye-fill"></i>
                     </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'source', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
                       <i class="bi bi-trash3-fill"></i>
@@ -737,6 +778,11 @@ fetchSecrets()
                       :to="{ name: 'item', params: { itemid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'item', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem">
                       <i class="bi bi-trash3-fill"></i>
@@ -795,6 +841,11 @@ fetchSecrets()
                       :to="{ name: 'view', params: { viewid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'view', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview">
                       <i class="bi bi-trash3-fill"></i>
@@ -849,6 +900,11 @@ fetchSecrets()
                       :data-bs-toggle="canManageSecrets ? 'modal' : null"
                       :data-bs-target="canManageSecrets ? '#editsecret' : null">
                       <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'secret', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
                     </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret">
@@ -1094,6 +1150,9 @@ fetchSecrets()
 
   <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName"
     @close="isPreviewOpen = false" />
+
+  <BundleExportModal :show="isExportOpen" :seed="exportSeed" @close="isExportOpen = false" />
+  <BundleImportModal :show="isImportOpen" @close="isImportOpen = false" @imported="refreshAfterImport" />
 </template>
 
 <style scoped lang="scss">
@@ -1248,6 +1307,27 @@ fetchSecrets()
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(79, 70, 229, 0.12);
+}
+
+/* Actions globales du bandeau */
+.btn-hero {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  background: rgba(255, 255, 255, 0.75);
+  color: #4f46e5;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-hero:hover {
+  background: #ffffff;
+  border-color: rgba(79, 70, 229, 0.4);
+  color: #4338ca;
 }
 
 .badge-primary {
@@ -1540,6 +1620,12 @@ fetchSecrets()
   background-color: rgba(var(--edit-color-source-rgb), 0.06);
 }
 
+.btn-action-export:hover {
+  border-color: var(--edit-color-view);
+  color: var(--edit-color-view);
+  background-color: rgba(var(--edit-color-view-rgb), 0.06);
+}
+
 .btn-action-delete:hover {
   border-color: var(--bs-danger);
   background-color: rgba(var(--bs-danger-rgb), 0.08);
@@ -1656,6 +1742,18 @@ fetchSecrets()
 
   .hero-title {
     color: #ffffff;
+  }
+
+  .btn-hero {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #c7d2fe;
+  }
+
+  .btn-hero:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: #e0e7ff;
   }
 
   .hero-subtitle {

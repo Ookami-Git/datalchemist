@@ -100,5 +100,10 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/api/secret", handlers.SecretAdd)
 		protected.PUT("/api/secret/:id", handlers.SecretUpdate)
 		protected.GET("/api/secrets", handlers.SecretList)
+
+		protected.POST("/api/export/resolve", handlers.ExportResolve)
+		protected.POST("/api/export", handlers.Export)
+		protected.POST("/api/import/preview", handlers.ImportPreview)
+		protected.POST("/api/import/apply", handlers.ImportApply)
 	}
 }
