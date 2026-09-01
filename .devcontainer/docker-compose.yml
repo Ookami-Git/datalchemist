@@ -16,6 +16,11 @@ services:
       - ai-cli-home:/root
     environment:
       - GOPATH=/home/vscode/go
+      # Passphrase de développement : elle active la gestion des secrets
+      # (sans elle, enableSecret est faux et le filtre `| secret` renvoie
+      # "secretkey parameter is required"). En production, préférer
+      # DA_SECRETKEY_FILE, voir compose.yml.
+      - DA_SECRETKEY=dev-secret-key
     stdin_open: true
     tty: true
     command: bash /workspace/.devcontainer/start.sh
