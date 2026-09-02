@@ -2,9 +2,7 @@ package bundle
 
 import (
 	"archive/zip"
-	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -70,8 +68,8 @@ func Export(selection Selection, passphrase string, output io.Writer) (*Manifest
 			return nil, err
 		}
 		manifest.Secrets = &SecretsMeta{
-			Salt:           base64.StdEncoding.EncodeToString(salt),
-			PassphraseHash: PassphraseHash(passphrase),
+			Salt:     base64.StdEncoding.EncodeToString(salt),
+			Verifier: archiveKey.Verifier(),
 		}
 	}
 
@@ -92,13 +90,6 @@ func Export(selection Selection, passphrase string, output io.Writer) (*Manifest
 
 	sort.Strings(manifest.Warnings)
 	return manifest, writer.flush(output)
-}
-
-// PassphraseHash reprend le procédé de utils.SecretInit : il permet de rejeter
-// une mauvaise passphrase à l'import avant d'avoir rien écrit.
-func PassphraseHash(passphrase string) string {
-	sum := sha256.Sum256([]byte(passphrase))
-	return hex.EncodeToString(sum[:])
 }
 
 func exportSources(writer *archiveBuilder, loaded *catalog, included map[string]map[string]bool, names []string) error {

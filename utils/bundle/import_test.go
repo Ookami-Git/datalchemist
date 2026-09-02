@@ -422,8 +422,8 @@ func TestApplySecretsRoundTrip(t *testing.T) {
 	raw := craft(t, archiveSpec{
 		secrets: []SecretPayload{{Name: "imp_secret", Secret: encrypted}},
 		secretsMeta: &SecretsMeta{
-			Salt:           base64.StdEncoding.EncodeToString(salt),
-			PassphraseHash: PassphraseHash("archive-passphrase"),
+			Salt:     base64.StdEncoding.EncodeToString(salt),
+			Verifier: key.Verifier(),
 		},
 	}, Format)
 
@@ -488,14 +488,18 @@ func TestApplyRollsBackOnFailure(t *testing.T) {
 	if err != nil {
 		t.Fatalf("new salt: %v", err)
 	}
+	key, err := secrets.NewKey("archive-passphrase", salt)
+	if err != nil {
+		t.Fatalf("new key: %v", err)
+	}
 	raw := craft(t, archiveSpec{
 		sources: []SourcePayload{{Name: "rollback_source", JSON: "{}"}},
 		// Valeur chiffrée illisible : la passphrase est bonne, mais le
 		// déchiffrement du secret échouera.
 		secrets: []SecretPayload{{Name: "rollback_secret", Secret: "not-a-ciphertext"}},
 		secretsMeta: &SecretsMeta{
-			Salt:           base64.StdEncoding.EncodeToString(salt),
-			PassphraseHash: PassphraseHash("archive-passphrase"),
+			Salt:     base64.StdEncoding.EncodeToString(salt),
+			Verifier: key.Verifier(),
 		},
 	}, Format)
 

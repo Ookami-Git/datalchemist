@@ -33,9 +33,11 @@ type Manifest struct {
 // clair avec les données qu'il protège ; seule la passphrase circule hors bande.
 type SecretsMeta struct {
 	Salt string `json:"salt"` // base64
-	// PassphraseHash permet de rejeter une mauvaise passphrase avant d'écrire
-	// quoi que ce soit, plutôt que d'échouer sur le premier secret.
-	PassphraseHash string `json:"passphrase_hash"` // sha256 hexadécimal
+	// Verifier permet de rejeter une mauvaise passphrase avant d'écrire quoi
+	// que ce soit, plutôt que d'échouer sur le premier secret. C'est une
+	// empreinte de la clé dérivée, pas de la passphrase : la tester impose de
+	// payer scrypt, au même prix qu'un déchiffrement.
+	Verifier string `json:"verifier"` // HMAC-SHA256 hexadécimal
 }
 
 // Entry est une entité de l'archive. Les listes de dépendances sont des noms :

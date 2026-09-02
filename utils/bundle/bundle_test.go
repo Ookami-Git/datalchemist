@@ -3,7 +3,9 @@ package bundle
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -298,10 +300,6 @@ func TestExportSecretsRoundTrip(t *testing.T) {
 	if manifest.Secrets == nil {
 		t.Fatal("manifest carries no secrets metadata")
 	}
-	if manifest.Secrets.PassphraseHash != PassphraseHash("archive-passphrase") {
-		t.Error("passphrase hash mismatch")
-	}
-
 	salt, err := base64.StdEncoding.DecodeString(manifest.Secrets.Salt)
 	if err != nil {
 		t.Fatalf("decode salt: %v", err)
@@ -309,6 +307,9 @@ func TestExportSecretsRoundTrip(t *testing.T) {
 	key, err := secrets.NewKey("archive-passphrase", salt)
 	if err != nil {
 		t.Fatalf("new key: %v", err)
+	}
+	if manifest.Secrets.Verifier != key.Verifier() {
+		t.Error("verifier mismatch")
 	}
 
 	for name, want := range map[string]string{"exp_first": "premier", "exp_second": "second"} {
@@ -330,9 +331,26 @@ func TestExportSecretsRoundTrip(t *testing.T) {
 		}
 	}
 
-	// Mauvaise passphrase : le hash du manifest permet de le voir tout de suite.
-	if manifest.Secrets.PassphraseHash == PassphraseHash("autre") {
-		t.Error("a different passphrase produced the same hash")
+	// Mauvaise passphrase : le vérificateur du manifest permet de le voir tout
+	// de suite, sans rien déchiffrer.
+	other, err := secrets.NewKey("autre", salt)
+	if err != nil {
+		t.Fatalf("new key: %v", err)
+	}
+	if manifest.Secrets.Verifier == other.Verifier() {
+		t.Error("a different passphrase produced the same verifier")
+	}
+
+	// Le manifest ne doit plus transporter d'empreinte de la passphrase
+	// elle-même : un SHA-256 brut se casse en force brute bien plus vite que
+	// scrypt, ce qui annulerait le durcissement de la dérivation.
+	sum := sha256.Sum256([]byte("archive-passphrase"))
+	encoded, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatalf("marshal manifest: %v", err)
+	}
+	if bytes.Contains(encoded, []byte(hex.EncodeToString(sum[:]))) {
+		t.Error("manifest leaks a plain hash of the passphrase")
 	}
 }
 

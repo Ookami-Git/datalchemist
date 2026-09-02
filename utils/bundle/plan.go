@@ -135,15 +135,22 @@ func (archive *Archive) openSecrets(plan *importPlan, passphrase string) (*secre
 	if passphrase == "" {
 		return nil, ErrMissingPassphrase
 	}
-	if PassphraseHash(passphrase) != archive.Manifest.Secrets.PassphraseHash {
-		return nil, ErrWrongPassphrase
-	}
-
 	salt, err := base64.StdEncoding.DecodeString(archive.Manifest.Secrets.Salt)
 	if err != nil {
 		return nil, fmt.Errorf("salt d'archive illisible: %w", err)
 	}
-	return secrets.NewKey(passphrase, salt)
+	// La clé est de toute façon nécessaire pour déchiffrer les secrets : la
+	// dériver ici valide la passphrase avant la première écriture sans coût
+	// supplémentaire. Comparer un vérificateur dérivé de la clé, et non une
+	// empreinte de la passphrase, laisse scrypt à payer pour chaque essai.
+	key, err := secrets.NewKey(passphrase, salt)
+	if err != nil {
+		return nil, err
+	}
+	if key.Verifier() != archive.Manifest.Secrets.Verifier {
+		return nil, ErrWrongPassphrase
+	}
+	return key, nil
 }
 
 // --- écritures
