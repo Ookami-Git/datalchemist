@@ -4,6 +4,7 @@ package main
 import (
 	"bytes"
 	"datalchemist/database"
+	"datalchemist/middlewares"
 	"datalchemist/routes"
 	"datalchemist/utils"
 	"datalchemist/utils/gitsync"
@@ -150,6 +151,9 @@ func main() {
 	// GO GIN (WEB) ----------------------------
 	// Configuration du routeur Gin
 	r := gin.Default()
+
+	// Avant static.Serve, pour couvrir aussi les assets embarqués.
+	r.Use(middlewares.Compression())
 
 	// 1. On tente de charger le dossier
 	embedFS, err := static.EmbedFolder(staticFiles, "web/dist")
