@@ -54,7 +54,7 @@ func RewriteSourceIDs(text string, names map[uint]string) (string, []uint) {
 	seen := map[uint]bool{}
 
 	rewritten := sidPattern.ReplaceAllStringFunc(text, func(match string) string {
-		id, err := strconv.ParseUint(strings.TrimPrefix(match, "sid.s"), 10, 64)
+		id, err := strconv.ParseUint(strings.TrimPrefix(match, "sid.s"), 10, 0)
 		if err != nil {
 			return match
 		}
@@ -134,7 +134,7 @@ func SourceIDRefs(text string) []uint {
 	refs := []uint{}
 	seen := map[uint]bool{}
 	for _, match := range sidPattern.FindAllStringSubmatch(text, -1) {
-		id, err := strconv.ParseUint(match[1], 10, 64)
+		id, err := strconv.ParseUint(match[1], 10, 0)
 		if err != nil || seen[uint(id)] {
 			continue
 		}
