@@ -2,6 +2,7 @@
 import { ref, onBeforeUnmount, onMounted, provide, watch, inject, getCurrentInstance } from 'vue';
 import { onBeforeRouteUpdate, onBeforeRouteLeave, useRoute } from 'vue-router';
 import VueCookies from 'vue-cookies';
+import axios from 'axios';
 import navbar from './components/navbar/navbar.vue'
 import { useActiveTheme } from './utils/useActiveTheme.js';
 
@@ -108,37 +109,31 @@ const myUser = ref({})
 
 const apiUrl = window.location.origin + window.location.pathname + `api`;
 
-const fetchParameters = () => {
-  fetch(`${apiUrl}/parameters`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Réponse réseau incorrecte');
-      }
-      return response.json(); // Cette ligne parse la réponse JSON
-    })
-    .then(data => {
-      parameters.value = data;
-      window.document.title = data.name;
-    })
-    .catch(error => {
-      console.error('Erreur lors de la récupération des données de la navbar', error);
-    });
+// Ces deux appels conditionnent l'affichage de toute l'application. Ils
+// passent par axios, et non par fetch, pour hériter du délai d'expiration et
+// des nouvelles tentatives posés par installHttpResilience : sur un lien
+// dégradé, une réponse tronquée laissait sinon l'interface sans paramètres ni
+// utilisateur, sans rien pour la récupérer.
+//
+// L'échec reste volontairement silencieux côté interface, comme avant : elle
+// s'affiche avec ses valeurs par défaut plutôt que de bloquer sur une erreur.
+const fetchParameters = async () => {
+  try {
+    const { data } = await axios.get(`${apiUrl}/parameters`);
+    parameters.value = data;
+    window.document.title = data.name;
+  } catch (error) {
+    console.error('Erreur lors de la récupération des données de la navbar', error);
+  }
 };
 
-const fetchUser = () => {
-  fetch(`${apiUrl}/user`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Réponse spécée incorrecte');
-      }
-      return response.json(); // Cette ligne parse la réponse JSON
-    })
-    .then(data => {
-      myUser.value = data;
-    })
-    .catch(error => {
-      console.error('Erreur lors de la sélection de l\'utilisateur', error);
-    });
+const fetchUser = async () => {
+  try {
+    const { data } = await axios.get(`${apiUrl}/user`);
+    myUser.value = data;
+  } catch (error) {
+    console.error('Erreur lors de la sélection de l\'utilisateur', error);
+  }
 };
 
 const { getActiveTheme } = useActiveTheme(parameters);

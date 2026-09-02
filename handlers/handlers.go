@@ -10,6 +10,7 @@ import (
 	"datalchemist/utils/token"
 
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -106,6 +107,36 @@ func SourceDeleteRequire(c *gin.Context) {
 	database.SourceDeleteRequire(id, sid)
 }
 
+// duplicateRequest porte le nom choisi pour la copie ; vide, le serveur
+// génère « nom_1 », « nom_2 », etc.
+type duplicateRequest struct {
+	Name string `json:"name"`
+}
+
+func duplicateEntity(c *gin.Context, duplicate func(id string, name string) (uint, error)) {
+	var request duplicateRequest
+	c.ShouldBindJSON(&request)
+	newID, err := duplicate(c.Param("id"), request.Name)
+	if errors.Is(err, database.ErrNameTaken) {
+		c.AbortWithStatusJSON(409, gin.H{"message": "name already used"})
+		return
+	}
+	checkErr(err, c)
+	c.JSON(200, newID)
+}
+
+func SourceDuplicate(c *gin.Context) {
+	duplicateEntity(c, database.SourceDuplicate)
+}
+
+func ItemDuplicate(c *gin.Context) {
+	duplicateEntity(c, database.ItemDuplicate)
+}
+
+func ViewDuplicate(c *gin.Context) {
+	duplicateEntity(c, database.ViewDuplicate)
+}
+
 func ViewAdd(c *gin.Context) {
 	var View models.Views
 	c.BindJSON(&View)
@@ -159,7 +190,7 @@ func ParametersGet(c *gin.Context) {
 			has_secretkey := viper.GetString("secretkey") != ""
 			if has_secretkey {
 				Parameters["enableSecret"] = true
-			} else {	
+			} else {
 				Parameters["enableSecret"] = false
 			}
 		}
@@ -202,6 +233,18 @@ func SourceData(c *gin.Context) {
 	data := utils.MakeData(c)
 	daData := utils.SourceToData(id, &data, nil)
 	c.JSON(200, daData)
+}
+
+// SourceDataDebug charge une source comme SourceData, mais renvoie aussi le
+// diagnostic de chargement de chaque source du plan (dépendances incluses) :
+// statut, durée, et raison d'un échec. C'est l'aperçu de l'éditeur de source.
+func SourceDataDebug(c *gin.Context) {
+	id := c.Param("sourceid")
+	data := utils.MakeData(c)
+	tracker := progress.New()
+	daData := utils.SourceToData(id, &data, tracker)
+	tracker.Finish()
+	c.JSON(200, gin.H{"value": daData, "sources": tracker.Snapshot().Sources})
 }
 
 func ItemData(c *gin.Context) {

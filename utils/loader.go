@@ -283,7 +283,13 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 		if !ok {
 			return nil
 		}
-		return GetSourceContent(rendered)
+		value, err := GetSourceContent(rendered)
+		if err != nil {
+			log.Print("ERROR utils: source ", source.Name, ": ", err)
+			tracker.Fail(source.Name, source.ID, err.Error())
+			return nil
+		}
+		return value
 	}
 
 	// AVEC BOUCLE : chaque itération est indépendante, on parallélise. Le
@@ -303,11 +309,7 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 				defer wg.Done()
 				defer func() { <-semaphore }()
 				defer tracker.LoopStep(source.Name)
-				context := copyDataForGoroutine(data)
-				context["item"] = value
-				if rendered, ok := RenderAllStrings(daSource, context).(map[string]interface{}); ok {
-					daMap[index] = GetSourceContent(rendered)
-				}
+				daMap[index] = loopIteration(daSource, data, strconv.Itoa(index), value, source, tracker)
 			}()
 		}
 		wg.Wait()
@@ -326,12 +328,7 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 				defer wg.Done()
 				defer func() { <-semaphore }()
 				defer tracker.LoopStep(source.Name)
-				context := copyDataForGoroutine(data)
-				context["item"] = value
-				var content interface{}
-				if rendered, ok := RenderAllStrings(daSource, context).(map[string]interface{}); ok {
-					content = GetSourceContent(rendered)
-				}
+				content := loopIteration(daSource, data, key, value, source, tracker)
 				resultMutex.Lock()
 				daMap[key] = content
 				resultMutex.Unlock()
@@ -342,6 +339,35 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 	}
 
 	return nil
+}
+
+// loopIteration charge une itération de boucle. Une itération défaillante
+// (erreur de récupération, de décodage, ou panique) vaut nil dans les données
+// et est comptée par le tracker ; les autres itérations et la source
+// continuent. Le recover est indispensable : chaque itération tourne dans sa
+// propre goroutine, hors de portée de celui de runNode.
+func loopIteration(daSource map[string]interface{}, data map[string]interface{}, key string, item interface{}, source models.Sources, tracker *progress.Tracker) (content interface{}) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			log.Print("ERROR utils: source ", source.Name, " loop item ", key, " panic: ", recovered)
+			tracker.LoopFail(source.Name, key, fmt.Sprint(recovered))
+			content = nil
+		}
+	}()
+
+	context := copyDataForGoroutine(data)
+	context["item"] = item
+	rendered, ok := RenderAllStrings(daSource, context).(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	content, err := GetSourceContent(rendered)
+	if err != nil {
+		log.Print("ERROR utils: source ", source.Name, " loop item ", key, ": ", err)
+		tracker.LoopFail(source.Name, key, err.Error())
+		return nil
+	}
+	return content
 }
 
 // ensureDataMaps garantit la présence des maps de résultats attendues par le

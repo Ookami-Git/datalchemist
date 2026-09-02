@@ -1,8 +1,11 @@
 <script setup>
 import { computed, ref, inject, unref } from 'vue';
+import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { RouterLink, useRoute } from 'vue-router';
 import SourcePreviewModal from './common/SourcePreviewModal.vue';
+import BundleExportModal from './common/BundleExportModal.vue';
+import BundleImportModal from './common/BundleImportModal.vue';
 import { templateCatalog } from '@/templates/catalog.js';
 import {
   createVisualItemParameters,
@@ -24,6 +27,18 @@ const items = ref(null)
 const views = ref(null)
 const secrets = ref(null)
 
+const isExportOpen = ref(false)
+const isImportOpen = ref(false)
+// exportSeed pré-sélectionne une entité : null ouvre le catalogue complet.
+const exportSeed = ref(null)
+
+const openExport = (seed = null) => {
+  exportSeed.value = seed
+  isExportOpen.value = true
+}
+
+const { t } = useI18n();
+
 const apiUrl = inject('apiUrl');
 const parameter = inject('parameters');
 
@@ -39,6 +54,33 @@ const ToDelete = ref({
   id: null,
   name: null
 })
+
+const ToDuplicate = ref({
+  type: null,
+  id: null,
+  name: null
+})
+
+const collectionForType = (type) => {
+  switch (type) {
+    case 'source': return getCollectionArray(sources.value);
+    case 'item': return getCollectionArray(items.value);
+    case 'view': return getCollectionArray(views.value);
+  }
+  return [];
+};
+
+const duplicateTypeName = computed(() =>
+  types.find(x => x.type === ToDuplicate.value.type)?.name || ''
+);
+
+// Pré-remplit « nom_1 », ou « nom_2 »… si déjà pris.
+const openDuplicate = (type, row) => {
+  const names = new Set(collectionForType(type).map(x => x.name));
+  let i = 1;
+  while (names.has(`${row.name}_${i}`)) i++;
+  ToDuplicate.value = { type, id: row.id, name: `${row.name}_${i}` };
+};
 
 // Navigation & Search
 const route = useRoute()
@@ -336,6 +378,31 @@ function AddToDA(type) {
     });
 }
 
+function DuplicateDA(type, id, name) {
+  axios.post(`${apiUrl}/${type}/${id}/duplicate`, { name })
+    .then(function (response) {
+      switch (type) {
+        case 'view':
+          fetchViews()
+          break;
+        case 'item':
+          fetchItems()
+          break;
+        case 'source':
+          fetchSources()
+          break;
+      }
+    })
+    .catch(function (error) {
+      if (error.response?.status === 409) {
+        apiError.value = t('edit.duplicate_name_taken', { name });
+      } else {
+        apiError.value = error.response?.data?.message || error.message || 'Erreur inconnue';
+      }
+      console.log(error);
+    });
+}
+
 function DeleteFromDA(type, id) {
   axios.delete(`${apiUrl}/${type}/${id}`)
     .then(function (response) {
@@ -393,6 +460,25 @@ const fetchViews = async () => {
     });
 };
 
+// État du connecteur Git : les entités en conflit portent un marqueur qui
+// renvoie vers l'onglet d'arbitrage. Une erreur (connecteur absent, réseau)
+// laisse simplement l'éditeur sans marqueur.
+const syncStatus = ref(null)
+const fetchSyncStatus = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/connector/git/status`)
+    syncStatus.value = response.data
+  } catch (error) {
+    syncStatus.value = null
+  }
+}
+const syncConflictKeys = computed(() =>
+  new Set((syncStatus.value?.conflicts || []).map((conflict) => `${conflict.kind}:${conflict.id}`))
+)
+const syncConflictCount = computed(() => syncConflictKeys.value.size)
+const isInSyncConflict = (kind, id) => syncConflictKeys.value.has(`${kind}:${id}`)
+const syncConflictsRoute = { name: 'admin', params: { page: 'connectors' }, query: { connector: 'git' } }
+
 const fetchSecrets = async () => {
   axios.get(`${apiUrl}/secrets`)
     .then(function (response) {
@@ -434,8 +520,17 @@ function BeginEditSecret(secretRow) {
   EditSecret.value.secret = null;
 }
 
+// Un import peut avoir créé ou remplacé n'importe quoi : on recharge tout.
+const refreshAfterImport = () => {
+  fetchSources()
+  fetchItems()
+  fetchViews()
+  fetchSecrets()
+}
+
 fetchSources()
 fetchItems()
+fetchSyncStatus()
 fetchViews()
 fetchSecrets()
 </script>
@@ -471,15 +566,36 @@ fetchSecrets()
           </div>
         </div>
 
-        <!-- Status chips -->
-        <div class="d-flex flex-wrap gap-2">
-          <div class="status-pill badge-primary">
-            <i class="bi bi-grid-3x3-gap-fill me-1"></i>
-            {{ totalEntries }} éléments au total
+        <div class="d-flex flex-column align-items-md-end gap-3">
+          <!-- Status chips -->
+          <div class="d-flex flex-wrap gap-2">
+            <div class="status-pill badge-primary">
+              <i class="bi bi-grid-3x3-gap-fill me-1"></i>
+              {{ totalEntries }} éléments au total
+            </div>
+            <div class="status-pill" :class="canManageSecrets ? 'badge-success' : 'badge-warning'">
+              <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
+              {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+            </div>
+            <RouterLink v-if="syncConflictCount > 0" :to="syncConflictsRoute" class="status-pill badge-warning text-decoration-none"
+              :title="$t('edit.sync.conflict')">
+              <i class="bi bi-git me-1"></i>
+              {{ $t('edit.sync.conflicts', { count: syncConflictCount }) }}
+            </RouterLink>
           </div>
-          <div class="status-pill" :class="canManageSecrets ? 'badge-success' : 'badge-warning'">
-            <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
-            {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
+
+          <!-- Export et import portent sur tout le contenu, pas sur l'onglet
+               courant : leur place est dans le bandeau. -->
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn-hero" :title="$t('edit.bundle.export.header')" @click="openExport()">
+              <i class="bi bi-box-arrow-down"></i>
+              <span>{{ $t('edit.bundle.export.header') }}</span>
+            </button>
+            <button type="button" class="btn-hero" :title="$t('edit.bundle.import.header')"
+              @click="isImportOpen = true">
+              <i class="bi bi-box-arrow-in-up"></i>
+              <span>{{ $t('edit.bundle.import.header') }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -639,6 +755,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('source', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- Source type & details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -661,6 +781,15 @@ fetchSecrets()
                     <button type="button" class="btn btn-action btn-action-preview" :title="$t('global.preview')"
                       @click="openSourcePreview(row.id, row.name)">
                       <i class="bi bi-eye-fill"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('source', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'source', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
                     </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesource">
@@ -713,6 +842,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('item', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- Item Template details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -737,6 +870,15 @@ fetchSecrets()
                       :to="{ name: 'item', params: { itemid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('item', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'item', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteitem">
                       <i class="bi bi-trash3-fill"></i>
@@ -776,6 +918,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('view', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- View Items count -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -795,6 +941,15 @@ fetchSecrets()
                       :to="{ name: 'view', params: { viewid: row.id } }" target="_blank">
                       <i class="bi bi-eye-fill"></i>
                     </RouterLink>
+                    <button type="button" class="btn btn-action btn-action-duplicate" :title="$t('global.duplicate')"
+                      @click="openDuplicate('view', row)" data-bs-toggle="modal" data-bs-target="#duplicateentity">
+                      <i class="bi bi-copy"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'view', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
+                    </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deleteview">
                       <i class="bi bi-trash3-fill"></i>
@@ -835,6 +990,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('secret', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
                         <span class="text-muted small-text">••••••••</span>
@@ -849,6 +1008,11 @@ fetchSecrets()
                       :data-bs-toggle="canManageSecrets ? 'modal' : null"
                       :data-bs-target="canManageSecrets ? '#editsecret' : null">
                       <i class="bi bi-pencil-square"></i>
+                    </button>
+                    <button type="button" class="btn btn-action btn-action-export"
+                      :title="$t('edit.bundle.exportentity')"
+                      @click="openExport({ type: 'secret', name: row.name })">
+                      <i class="bi bi-box-arrow-down"></i>
                     </button>
                     <button type="button" class="btn btn-action btn-action-delete" :title="$t('global.remove')"
                       @click="ToDelete = row" data-bs-toggle="modal" data-bs-target="#deletesecret">
@@ -990,6 +1154,48 @@ fetchSecrets()
     </div>
   </div>
 
+  <!-- Model for DUPLICATE -->
+  <div class="modal fade admin-edit-modern-modal" id="duplicateentity" tabindex="-1"
+    aria-labelledby="duplicateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header border-0" :class="getAddModalHeaderClass(ToDuplicate.type)">
+          <div class="admin-edit-modal-title-wrap">
+            <span class="admin-edit-modal-icon" :class="getAddModalIconClass(ToDuplicate.type)" aria-hidden="true">
+              <i class="bi bi-copy"></i>
+            </span>
+            <div>
+              <h1 class="modal-title fs-5 mb-0 text-white" id="duplicateModalLabel">{{ $t('global.duplicate') }} : {{
+                duplicateTypeName }}</h1>
+              <p class="admin-edit-modal-subtitle text-white-50 mb-0">{{ $t('edit.modal_duplicate_subtitle') }}</p>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+            :aria-label="$t('global.close')"></button>
+        </div>
+        <div class="modal-body p-4">
+          <p class="admin-edit-add-note mb-4">
+            <i class="bi bi-info-circle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_duplicate_note') }}
+          </p>
+          <div class="mb-0">
+            <label for="InputDuplicateName" class="form-label fw-semibold">{{ $t('edit.name') }}</label>
+            <input type="text" class="form-control form-control-modern" id="InputDuplicateName"
+              v-model="ToDuplicate.name" autocomplete="off">
+            <div class="form-text text-muted">{{ $t('edit.modal_duplicate_name_help') }}</div>
+          </div>
+        </div>
+        <div class="modal-footer border-0 p-4 pt-0">
+          <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" data-bs-dismiss="modal">{{
+            $t('global.cancel')
+            }}</button>
+          <button type="button" class="btn btn-primary px-4 rounded-pill btn-glow" :disabled="!ToDuplicate.name"
+            @click="DuplicateDA(ToDuplicate.type, ToDuplicate.id, ToDuplicate.name)" data-bs-dismiss="modal">{{
+              $t('global.duplicate') }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Model for DELETE -->
   <div v-for="(type, index) in types" :key="'delete-' + type.type"
     class="modal fade admin-edit-modern-modal admin-edit-delete-modal" :id="'delete' + type.type" tabindex="-1"
@@ -1017,7 +1223,7 @@ fetchSecrets()
             <i class="bi bi-exclamation-triangle-fill me-2" aria-hidden="true"></i>{{ $t('edit.modal_delete_warning')
             }}
           </p>
-          <div class="admin-edit-delete-summary p-3 bg-light rounded-3">
+          <div class="admin-edit-delete-summary p-3 rounded-3">
             <div class="admin-edit-delete-row mb-2">
               <span class="admin-edit-delete-label text-muted small">{{ $t('edit.modal_delete_type') }}</span>
               <span class="admin-edit-delete-value fw-semibold">{{ type.name }}</span>
@@ -1094,9 +1300,36 @@ fetchSecrets()
 
   <SourcePreviewModal :show="isPreviewOpen" :sourceId="previewSourceId" :sourceName="previewSourceName"
     @close="isPreviewOpen = false" />
+
+  <BundleExportModal :show="isExportOpen" :seed="exportSeed" @close="isExportOpen = false" />
+  <BundleImportModal :show="isImportOpen" @close="isImportOpen = false" @imported="refreshAfterImport" />
 </template>
 
 <style scoped lang="scss">
+.sync-conflict-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  color: #7a4b00;
+  background: #ffe8b3;
+  border: 1px solid #f2c266;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sync-conflict-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.6rem rgba(242, 194, 102, 0.45);
+  color: #5c3800;
+}
+
+[data-bs-theme='dark'] .sync-conflict-badge {
+  color: #ffd98a;
+  background: rgba(255, 193, 7, 0.16);
+  border-color: rgba(255, 193, 7, 0.45);
+}
+
 /* Colors & Variables */
 .modern-edit-page {
   --edit-color-source: #10b981;
@@ -1248,6 +1481,27 @@ fetchSecrets()
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(79, 70, 229, 0.12);
+}
+
+/* Actions globales du bandeau */
+.btn-hero {
+  padding: 0.5rem 0.9rem;
+  border-radius: 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid rgba(79, 70, 229, 0.18);
+  background: rgba(255, 255, 255, 0.75);
+  color: #4f46e5;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-hero:hover {
+  background: #ffffff;
+  border-color: rgba(79, 70, 229, 0.4);
+  color: #4338ca;
 }
 
 .badge-primary {
@@ -1540,6 +1794,18 @@ fetchSecrets()
   background-color: rgba(var(--edit-color-source-rgb), 0.06);
 }
 
+.btn-action-duplicate:hover {
+  border-color: var(--edit-color-secret);
+  color: var(--edit-color-secret);
+  background-color: rgba(var(--edit-color-secret-rgb), 0.06);
+}
+
+.btn-action-export:hover {
+  border-color: var(--edit-color-view);
+  color: var(--edit-color-view);
+  background-color: rgba(var(--edit-color-view-rgb), 0.06);
+}
+
 .btn-action-delete:hover {
   border-color: var(--bs-danger);
   background-color: rgba(var(--bs-danger-rgb), 0.08);
@@ -1656,6 +1922,18 @@ fetchSecrets()
 
   .hero-title {
     color: #ffffff;
+  }
+
+  .btn-hero {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: #c7d2fe;
+  }
+
+  .btn-hero:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.24);
+    color: #e0e7ff;
   }
 
   .hero-subtitle {

@@ -5,12 +5,22 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspace:cached
+      # node_modules must NOT be shared with the host: pnpm records absolute
+      # project paths and platform-specific binaries (rollup, esbuild,
+      # sass-embedded) in the tree, so a Windows/macOS install is rejected by
+      # `verifyDepsBeforeRun` and unusable in the container anyway.
+      - web-node-modules:/workspace/web/node_modules
       - go-cache:/home/vscode/go
       - go-pkg:/home/vscode/go/pkg
       # CLI sessions (including credential files) live outside the repository.
       - ai-cli-home:/root
     environment:
       - GOPATH=/home/vscode/go
+      # Passphrase de développement : elle active la gestion des secrets
+      # (sans elle, enableSecret est faux et le filtre `| secret` renvoie
+      # "secretkey parameter is required"). En production, préférer
+      # DA_SECRETKEY_FILE, voir compose.yml.
+      - DA_SECRETKEY=dev-secret-key
     stdin_open: true
     tty: true
     command: bash /workspace/.devcontainer/start.sh
@@ -35,3 +45,4 @@ volumes:
   go-cache:
   go-pkg:
   ai-cli-home:
+  web-node-modules:

@@ -4,8 +4,10 @@ package main
 import (
 	"bytes"
 	"datalchemist/database"
+	"datalchemist/middlewares"
 	"datalchemist/routes"
 	"datalchemist/utils"
+	"datalchemist/utils/gitsync"
 	"embed"
 	"fmt"
 	"log"
@@ -139,9 +141,19 @@ func main() {
 		}
 	}
 
+	// CONNECTORS ----------------------------
+	// Le connecteur Git ne démarre qu'après les secrets : son jeton est chiffré
+	// avec la clé de l'instance.
+	if err := gitsync.Start(); err != nil {
+		log.Fatal(err)
+	}
+
 	// GO GIN (WEB) ----------------------------
 	// Configuration du routeur Gin
 	r := gin.Default()
+
+	// Avant static.Serve, pour couvrir aussi les assets embarqués.
+	r.Use(middlewares.Compression())
 
 	// 1. On tente de charger le dossier
 	embedFS, err := static.EmbedFolder(staticFiles, "web/dist")

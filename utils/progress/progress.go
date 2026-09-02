@@ -12,26 +12,46 @@ const (
 	StatusRunning = "running"
 	StatusDone    = "done"
 	StatusError   = "error"
+	// StatusPartial : la source est chargée mais certaines itérations de sa
+	// boucle ont échoué. Leur valeur est null dans les données.
+	StatusPartial = "partial"
 )
+
+// maxLoopFailures borne le détail des itérations en échec conservé par source :
+// le compteur reste exact, seul le détail est tronqué.
+const maxLoopFailures = 50
+
+// LoopFailure décrit une itération de boucle en échec.
+type LoopFailure struct {
+	// Key est l'index (boucle sur une liste) ou la clé (boucle sur un objet).
+	Key     string `json:"key"`
+	Message string `json:"message"`
+}
 
 // Entry décrit l'état de chargement d'une source.
 type Entry struct {
-	Name      string  `json:"name"`
-	ID        uint    `json:"id"`
-	Status    string  `json:"status"`
-	Loop      bool    `json:"loop"`
-	LoopDone  int     `json:"loopdone"`
-	LoopTotal int     `json:"looptotal"`
-	Percent   float64 `json:"percent"`
-	Duration  int64   `json:"duration"`
-	Error     string  `json:"error,omitempty"`
+	Name      string `json:"name"`
+	ID        uint   `json:"id"`
+	Status    string `json:"status"`
+	Loop      bool   `json:"loop"`
+	LoopDone  int    `json:"loopdone"`
+	LoopTotal int    `json:"looptotal"`
+	// LoopErrors compte les itérations dont la valeur a été remplacée par null.
+	LoopErrors int     `json:"looperrors"`
+	Percent    float64 `json:"percent"`
+	Duration   int64   `json:"duration"`
+	Error      string  `json:"error,omitempty"`
+	// Failures détaille les itérations en échec (au plus maxLoopFailures).
+	Failures []LoopFailure `json:"failures,omitempty"`
 }
 
 // Snapshot décrit l'état global d'un chargement de données.
 type Snapshot struct {
-	Total    int     `json:"total"`
-	Done     int     `json:"done"`
-	Running  int     `json:"running"`
+	Total   int `json:"total"`
+	Done    int `json:"done"`
+	Running int `json:"running"`
+	// Errors compte les sources en erreur, y compris celles chargées
+	// partiellement : le badge doit signaler qu'une erreur a eu lieu.
 	Errors   int     `json:"errors"`
 	Percent  float64 `json:"percent"`
 	Finished bool    `json:"finished"`
@@ -39,15 +59,17 @@ type Snapshot struct {
 }
 
 type entry struct {
-	name      string
-	id        uint
-	status    string
-	loop      bool
-	loopDone  int
-	loopTotal int
-	started   time.Time
-	duration  time.Duration
-	err       string
+	name       string
+	id         uint
+	status     string
+	loop       bool
+	loopDone   int
+	loopTotal  int
+	loopErrors int
+	failures   []LoopFailure
+	started    time.Time
+	duration   time.Duration
+	err        string
 }
 
 // Tracker suit le chargement des sources d'une vue ou d'un objet.
@@ -140,7 +162,30 @@ func (t *Tracker) LoopStep(name string) {
 	t.version++
 }
 
-// Done marque une source comme chargée.
+// LoopFail signale qu'une itération de boucle a échoué : sa valeur est null
+// dans les données, la source continue de se charger. Le premier message
+// devient l'erreur de la source ; le détail par itération est conservé jusqu'à
+// maxLoopFailures.
+func (t *Tracker) LoopFail(name string, key string, message string) {
+	if t == nil {
+		return
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	e := t.get(name, 0)
+	e.loop = true
+	e.loopErrors++
+	if e.err == "" {
+		e.err = message
+	}
+	if len(e.failures) < maxLoopFailures {
+		e.failures = append(e.failures, LoopFailure{Key: key, Message: message})
+	}
+	t.version++
+}
+
+// Done marque une source comme chargée. Si des itérations de sa boucle ont
+// échoué, elle est chargée partiellement.
 func (t *Tracker) Done(name string) {
 	if t == nil {
 		return
@@ -148,10 +193,13 @@ func (t *Tracker) Done(name string) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	e := t.get(name, 0)
-	if e.status == StatusDone || e.status == StatusError {
+	if e.status == StatusDone || e.status == StatusPartial || e.status == StatusError {
 		return
 	}
 	e.status = StatusDone
+	if e.loopErrors > 0 {
+		e.status = StatusPartial
+	}
 	if !e.started.IsZero() {
 		e.duration = time.Since(e.started)
 	}
@@ -221,6 +269,11 @@ func (t *Tracker) Snapshot() Snapshot {
 		switch e.status {
 		case StatusDone:
 			snap.Done++
+		case StatusPartial:
+			// Les données sont disponibles (Done) mais une erreur a eu lieu
+			// (Errors) : les deux compteurs progressent.
+			snap.Done++
+			snap.Errors++
 		case StatusRunning:
 			snap.Running++
 		case StatusError:
@@ -229,15 +282,17 @@ func (t *Tracker) Snapshot() Snapshot {
 		progressSum += ratio
 
 		snap.Sources = append(snap.Sources, Entry{
-			Name:      e.name,
-			ID:        e.id,
-			Status:    e.status,
-			Loop:      e.loop,
-			LoopDone:  e.loopDone,
-			LoopTotal: e.loopTotal,
-			Percent:   round1(ratio * 100),
-			Duration:  e.duration.Milliseconds(),
-			Error:     e.err,
+			Name:       e.name,
+			ID:         e.id,
+			Status:     e.status,
+			Loop:       e.loop,
+			LoopDone:   e.loopDone,
+			LoopTotal:  e.loopTotal,
+			LoopErrors: e.loopErrors,
+			Percent:    round1(ratio * 100),
+			Duration:   e.duration.Milliseconds(),
+			Error:      e.err,
+			Failures:   append([]LoopFailure(nil), e.failures...),
 		})
 	}
 
@@ -255,7 +310,7 @@ func (t *Tracker) Snapshot() Snapshot {
 // atomique (0 ou 1).
 func entryRatio(e *entry) float64 {
 	switch e.status {
-	case StatusDone, StatusError:
+	case StatusDone, StatusPartial, StatusError:
 		return 1
 	case StatusRunning:
 		if e.loop && e.loopTotal > 0 {

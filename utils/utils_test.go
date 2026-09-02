@@ -11,14 +11,24 @@ import (
 )
 
 func TestStructuredContentParsers(t *testing.T) {
-	jsonValue := JsonToObject(`{"profile":{"name":"Ada"},"items":[1]}`)
+	jsonValue, err := JsonToObject(`{"profile":{"name":"Ada"},"items":[1]}`)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got := SearchInMap(jsonValue.(map[string]interface{}), "{profile}").(map[string]interface{})["name"]; got != "Ada" {
 		t.Fatalf("search result = %#v", got)
 	}
-	if got := YamlToObject("name: Ada\n").(map[string]interface{})["name"]; got != "Ada" {
+	yamlValue, err := YamlToObject("name: Ada\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := yamlValue.(map[string]interface{})["name"]; got != "Ada" {
 		t.Fatalf("yaml value = %#v", got)
 	}
-	csvValue := CsvToObject("name,age\nAda,36\n")
+	csvValue, err := CsvToObject("name,age\nAda,36\n")
+	if err != nil {
+		t.Fatal(err)
+	}
 	want := []map[string]interface{}{{"name": "Ada", "age": "36"}}
 	if !reflect.DeepEqual(csvValue, want) {
 		t.Fatalf("csv = %#v", csvValue)
@@ -35,8 +45,29 @@ func TestRenderAllStringsAndFileContent(t *testing.T) {
 	if err := os.WriteFile(path, []byte("content"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if got := FileContent(path); got != "content" {
-		t.Fatalf("file content = %q", got)
+	if got, err := FileContent(path); err != nil || got != "content" {
+		t.Fatalf("file content = %q, %v", got, err)
+	}
+	if _, err := FileContent(filepath.Join(t.TempDir(), "missing.txt")); err == nil {
+		t.Fatal("missing file should be an error")
+	}
+}
+
+func TestParsersReportInvalidContent(t *testing.T) {
+	if _, err := JsonToObject("{not json"); err == nil {
+		t.Fatal("invalid json should be an error")
+	}
+	if _, err := JsonToObject(""); err == nil {
+		t.Fatal("empty json should be an error")
+	}
+	if _, err := YamlToObject("a: [unclosed"); err == nil {
+		t.Fatal("invalid yaml should be an error")
+	}
+	if _, err := XmlToObject("<a><b></a>"); err == nil {
+		t.Fatal("invalid xml should be an error")
+	}
+	if _, err := CsvToObject("a,b\n\"unclosed"); err == nil {
+		t.Fatal("invalid csv should be an error")
 	}
 }
 
@@ -48,13 +79,28 @@ func TestUrlContentSendsConfiguredRequest(t *testing.T) {
 		w.Write([]byte("ok"))
 	}))
 	defer server.Close()
-	got := UrlContent(server.URL, map[string]interface{}{
+	got, err := UrlContent(server.URL, map[string]interface{}{
 		"method":  "POST",
 		"headers": []interface{}{map[string]interface{}{"key": "X-Test", "value": "yes"}},
 		"data":    `{"message":"hello"}`,
 	})
-	if got != "ok" {
-		t.Fatalf("response = %q", got)
+	if err != nil || got != "ok" {
+		t.Fatalf("response = %q, %v", got, err)
+	}
+}
+
+func TestUrlContentReportsHTTPErrors(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Error(w, "nope", http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	if _, err := UrlContent(server.URL, nil); err == nil || !strings.Contains(err.Error(), "404") {
+		t.Fatalf("error = %v", err)
+	}
+	server.Close()
+	if _, err := UrlContent(server.URL, nil); err == nil {
+		t.Fatal("unreachable server should be an error")
 	}
 }
 
@@ -62,7 +108,23 @@ func TestPayloadHashAndExecuteContent(t *testing.T) {
 	if got := payloadHash(strings.NewReader("abc")); got != "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad" {
 		t.Fatalf("hash = %s", got)
 	}
-	if got := ExecuteContent("printf test-output"); got != "test-output" {
-		t.Fatalf("command output = %q", got)
+	if got, err := ExecuteContent("printf test-output"); err != nil || got != "test-output" {
+		t.Fatalf("command output = %q, %v", got, err)
+	}
+	if _, err := ExecuteContent("exit 3"); err == nil {
+		t.Fatal("failing command should be an error")
+	}
+}
+
+func TestGetSourceContentReportsMissingFields(t *testing.T) {
+	if _, err := GetSourceContent(map[string]interface{}{"src": "file", "type": "text"}); err == nil {
+		t.Fatal("missing path should be an error")
+	}
+	if _, err := GetSourceContent(map[string]interface{}{"src": "text", "type": "sqlite", "query": "select 1"}); err == nil {
+		t.Fatal("missing sql path should be an error")
+	}
+	value, err := GetSourceContent(map[string]interface{}{"src": "text", "type": "json", "query": `{"a":1}`})
+	if err != nil || value.(map[string]interface{})["a"] != float64(1) {
+		t.Fatalf("value = %#v, %v", value, err)
 	}
 }

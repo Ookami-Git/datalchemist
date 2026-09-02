@@ -38,6 +38,28 @@ const previewQueryInput = ref('');
 const previewQueryParams = ref({});
 const loadedSourceConfig = ref(null);
 const loadTime = ref(null);
+// Diagnostic de chargement : une entrée par source du plan (dépendances
+// incluses), avec la raison d'un échec. Répond à « pourquoi ma source est
+// vide ? » sans aller lire les logs du serveur.
+const diagnostics = ref([]);
+const diagnosticsOpen = ref(false);
+
+const failedDiagnostics = computed(() => diagnostics.value.filter((entry) => entry.status === 'error' || entry.status === 'partial'));
+
+const diagnosticIcon = (status) => {
+  switch (status) {
+    case 'done': return 'bi-check-circle-fill text-success';
+    case 'partial': return 'bi-exclamation-circle-fill text-danger';
+    case 'error': return 'bi-exclamation-triangle-fill text-danger';
+    default: return 'bi-clock text-secondary';
+  }
+};
+
+const formatDuration = (milliseconds) => {
+  if (!milliseconds) return '';
+  if (milliseconds < 1000) return `${milliseconds} ms`;
+  return `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 1 : 0)} s`;
+};
 
 const effectiveSourceConfig = computed(() => props.sourceConfig || loadedSourceConfig.value);
 const detectedGetVariables = computed(() => extractGetVariableNames(effectiveSourceConfig.value));
@@ -74,13 +96,18 @@ const fetchSourceData = async () => {
   error.value = null;
   formattedJson.value = '';
   loadTime.value = null;
+  diagnostics.value = [];
   const startTime = performance.now();
   try {
-    const response = await axios.get(`${apiUrl}/data/source/${props.sourceId}`, {
+    const response = await axios.get(`${apiUrl}/data/source/${props.sourceId}/debug`, {
       params: previewQueryParams.value
     });
     loadTime.value = Math.round(performance.now() - startTime);
-    formattedJson.value = JSON.stringify(response.data, null, 2);
+    formattedJson.value = JSON.stringify(response.data?.value ?? null, null, 2);
+    diagnostics.value = Array.isArray(response.data?.sources) ? response.data.sources : [];
+    // Le détail s'ouvre seul quand quelque chose a échoué : c'est ce que
+    // l'utilisateur est venu chercher.
+    diagnosticsOpen.value = failedDiagnostics.value.length > 0;
   } catch (err) {
     console.error(err);
     error.value = err.response?.data?.error || err.message || "Erreur de chargement";
@@ -197,6 +224,53 @@ onBeforeUnmount(() => {
 
           <!-- Contenu JSON -->
           <div v-else>
+            <!-- Diagnostic de chargement -->
+            <section v-if="diagnostics.length" class="source-preview-diagnostics border-bottom border-secondary-subtle">
+              <button type="button" class="source-preview-diagnostics__toggle d-flex align-items-center gap-2 w-100 px-3 py-2 text-start"
+                :aria-expanded="diagnosticsOpen" @click="diagnosticsOpen = !diagnosticsOpen">
+                <i class="bi" :class="failedDiagnostics.length ? 'bi-bug-fill text-danger' : 'bi-check-circle-fill text-success'"></i>
+                <span class="fw-semibold">{{ $t('editsource.debug.title') }}</span>
+                <span class="small" :class="failedDiagnostics.length ? 'text-danger' : 'text-secondary'">
+                  {{ failedDiagnostics.length
+                    ? $t('editsource.debug.has_errors', failedDiagnostics.length)
+                    : $t('editsource.debug.all_ok', diagnostics.length) }}
+                </span>
+                <i class="bi ms-auto" :class="diagnosticsOpen ? 'bi-chevron-up' : 'bi-chevron-down'"></i>
+              </button>
+
+              <ul v-if="diagnosticsOpen" class="source-preview-diagnostics__list list-unstyled mb-0 px-3 pb-2">
+                <li v-for="entry in diagnostics" :key="entry.name" class="source-preview-diagnostics__entry py-2">
+                  <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <i class="bi" :class="diagnosticIcon(entry.status)" aria-hidden="true"></i>
+                    <span class="fw-semibold font-monospace">{{ entry.name }}</span>
+                    <span class="badge rounded-pill text-bg-secondary">{{ $t(`dataprogress.status.${entry.status}`) }}</span>
+                    <span v-if="entry.loop" class="badge rounded-pill text-bg-primary">
+                      <i class="bi bi-arrow-repeat me-1"></i>{{ $t('dataprogress.loop') }}
+                      <template v-if="entry.looptotal"> {{ entry.loopdone }}/{{ entry.looptotal }}</template>
+                    </span>
+                    <span v-if="entry.looperrors" class="small text-danger">
+                      {{ $t('dataprogress.loopErrors', entry.looperrors) }}
+                    </span>
+                    <span v-if="entry.duration" class="small text-secondary ms-auto">
+                      <i class="bi bi-stopwatch me-1"></i>{{ formatDuration(entry.duration) }}
+                    </span>
+                  </div>
+
+                  <pre v-if="entry.error && !entry.failures?.length" class="source-preview-diagnostics__message text-danger mb-0 mt-1">{{ entry.error }}</pre>
+
+                  <ul v-if="entry.failures?.length" class="source-preview-diagnostics__failures list-unstyled mb-0 mt-1">
+                    <li v-for="failure in entry.failures" :key="failure.key" class="d-flex gap-2">
+                      <span class="badge text-bg-dark font-monospace flex-shrink-0">{{ $t('editsource.debug.iteration', { key: failure.key }) }}</span>
+                      <pre class="source-preview-diagnostics__message text-danger mb-0">{{ failure.message }}</pre>
+                    </li>
+                    <li v-if="entry.looperrors > entry.failures.length" class="small text-secondary">
+                      {{ $t('editsource.debug.more_failures', entry.looperrors - entry.failures.length) }}
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </section>
+
             <!-- Zone code scrollable -->
             <div class="json-code-container bg-dark p-3" style="max-height: 70vh; overflow: auto; border-bottom-left-radius: var(--bs-border-radius-lg); border-bottom-right-radius: var(--bs-border-radius-lg);">
               <highlightjs language="json" :code="formattedJson" />
@@ -235,6 +309,37 @@ onBeforeUnmount(() => {
 }
 .source-preview-query-group {
   width: min(42vw, 34rem);
+}
+.source-preview-diagnostics {
+  background: var(--bs-tertiary-bg);
+  color: var(--bs-body-color);
+}
+.source-preview-diagnostics__toggle {
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+.source-preview-diagnostics__toggle:hover {
+  background: var(--bs-secondary-bg);
+}
+.source-preview-diagnostics__list {
+  max-height: 40vh;
+  overflow: auto;
+  font-size: 0.85rem;
+}
+.source-preview-diagnostics__entry + .source-preview-diagnostics__entry {
+  border-top: 1px dashed var(--bs-border-color);
+}
+.source-preview-diagnostics__message {
+  font-size: 0.78rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.source-preview-diagnostics__failures {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 1.4rem;
 }
 
 @media (max-width: 768px) {

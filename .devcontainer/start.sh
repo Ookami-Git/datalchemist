@@ -2,10 +2,10 @@
 set -e
 
 echo "📦 Installing frontend deps..."
-cd /workspace/web && npm install
+cd /workspace/web && pnpm install --frozen-lockfile
 
 echo "🚀 Starting Vite (background)..."
-cd /workspace/web && npx vite --host 0.0.0.0 --port 5173 2>&1 | tee /tmp/vite.log &
+cd /workspace/web && pnpm exec vite --host 0.0.0.0 --port 5173 2>&1 | tee /tmp/vite.log &
 
 echo "🔥 Starting Air (Go live reload)..."
 cd /workspace && air 2>&1 | tee /tmp/air.log &

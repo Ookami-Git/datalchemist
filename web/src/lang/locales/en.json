@@ -12,6 +12,7 @@
     "remove": "Remove",
     "copy": "Copy",
     "copied": "Copied",
+    "duplicate": "Duplicate",
     "edit": "Edit",
     "preview": "Preview",
     "preview_saved_hint": "Preview of the saved version",
@@ -136,7 +137,9 @@
         "external": "External link",
         "newtab": "Open in a new tab"
       },
-      "submenu": { "title": "Submenu" },
+      "submenu": {
+        "title": "Submenu"
+      },
       "actions": {
         "add": "Add item",
         "addFirst": "Add first item",
@@ -219,6 +222,112 @@
       "public": "Public",
       "toggleprotection": "Toggle protection",
       "allowgroups": "Allow groups"
+    },
+    "connectors": {
+      "header": "Connectors",
+      "subtitle": "Link the instance to external services",
+      "unavailable": "The instance secret key (DA_SECRETKEY) is required to store connector credentials.",
+      "git": {
+        "title": "Git connector (GitLab / GitHub)",
+        "description": "The repository mirrors the server content: sources, items, views and secrets, identifiers preserved. Every local change is pushed automatically, every repository change is pulled. Anything changed on both sides becomes a conflict to settle here.",
+        "saved": "Configuration saved",
+        "copied": "Address copied",
+        "state": {
+          "disabled": "Inactive",
+          "enabled": "Synchronization active",
+          "running": "Synchronizing",
+          "error": "Error",
+          "conflicts": "{count} conflict(s)"
+        },
+        "form": {
+          "provider": "Provider",
+          "url": "Repository HTTPS address",
+          "urlPlaceholder": "https://gitlab.example.org/group/project.git",
+          "branch": "Branch",
+          "directory": "Folder in the repository",
+          "directoryHelp": "Empty for the repository root.",
+          "pollInterval": "Repository check (seconds)",
+          "username": "Username",
+          "usernameHelp": "Ignored with a personal token; defaults to “git”.",
+          "token": "Access token (write_repository / repo)",
+          "passphrase": "Secrets passphrase",
+          "passphraseHelp": "Encrypts secrets in the repository. Without a passphrase, secrets are not synchronized.",
+          "webhookSecret": "Webhook secret",
+          "webhookHelp": "Register this push webhook on GitLab or GitHub with this secret for immediate pulls:",
+          "author": "Commit author",
+          "authorName": "Name",
+          "authorEmail": "E-mail",
+          "unchanged": "Unchanged (leave empty to keep)",
+          "clear": "Clear",
+          "notSet": "Not set",
+          "set": "Set"
+        },
+        "actions": {
+          "test": "Test connection",
+          "save": "Save",
+          "enable": "Enable synchronization",
+          "disable": "Disable",
+          "sync": "Synchronize now",
+          "compare": "Compare",
+          "keepLocal": "Keep server",
+          "keepRemote": "Keep repository",
+          "cancel": "Cancel",
+          "close": "Close"
+        },
+        "test": {
+          "ok": "Repository reachable",
+          "empty": "the repository is empty, enabling will push all content.",
+          "branchFound": "branch “{branch}” found.",
+          "branchMissing": "Branch “{branch}” does not exist. Available branches: {branches}"
+        },
+        "status": {
+          "title": "Status",
+          "lastSync": "Last synchronization",
+          "lastCommit": "Last commit",
+          "lastError": "Last error",
+          "never": "Never",
+          "pushed": "pushed",
+          "pulled": "pulled",
+          "warnings": "Warnings",
+          "saveFirst": "Save the configuration before enabling."
+        },
+        "enableModal": {
+          "title": "Initial alignment",
+          "intro": "The repository already has content. How should differences with the server be settled?",
+          "merge": "Merge",
+          "mergeHelp": "Identical entries are kept; every difference becomes a conflict to settle.",
+          "local": "Server wins",
+          "localHelp": "The repository is rewritten to match the server. Anything only in the repository is removed from it.",
+          "remote": "Repository wins",
+          "remoteHelp": "The database is rewritten to match the repository. Anything only on the server is removed from it."
+        },
+        "disableModal": {
+          "title": "Disable synchronization",
+          "body": "The repository and the server stop being aligned. Nothing is deleted on either side; enabling again starts a fresh comparison."
+        },
+        "conflicts": {
+          "title": "Conflicts",
+          "empty": "No conflict.",
+          "help": "Changed on both sides since the last synchronization, these entries are frozen until you decide.",
+          "entity": "Entry",
+          "reason": "Reason",
+          "localVersion": "Server version",
+          "remoteVersion": "Repository version",
+          "deleted": "(deleted)"
+        },
+        "kinds": {
+          "source": "Source",
+          "item": "Item",
+          "view": "View",
+          "secret": "Secret"
+        },
+        "cardTitle": "Git Synchronization",
+        "cardDescription": "Automatic mirror of the content (sources, items, views, secrets) in a GitLab or GitHub repository, with conflict arbitration."
+      },
+      "list": {
+        "open": "Open",
+        "notConfigured": "Not configured"
+      }
     }
   },
   "edit": {
@@ -253,13 +362,94 @@
     "modal_edit_secret_note": "Changes are encrypted on the backend.",
     "modal_edit_secret_name_help": "Reference name used in your source templates",
     "modal_edit_secret_value_help": "New value encrypted in database",
+    "modal_duplicate_subtitle": "Copy of the element and its links",
+    "modal_duplicate_note": "The copy keeps the content and links of the original. Choose the name of the copy.",
+    "modal_duplicate_name_help": "The name must be unique.",
+    "duplicate_name_taken": "The name “{name}” is already used.",
     "modal_delete_subtitle": "Permanent deletion",
     "modal_delete_warning": "This action cannot be undone.",
     "modal_delete_type": "Element",
     "secrets_edit_disabled": "Secret editing is disabled",
     "secrets_state_enabled": "Secrets enabled",
     "secrets_state_disabled": "Secrets disabled",
-    "secret_value": "Secret value"
+    "secret_value": "Secret value",
+    "bundle": {
+      "back": "Back",
+      "exportentity": "Export this element",
+      "passphrase": "Passphrase",
+      "passphraseconfirm": "Confirm passphrase",
+      "passphrasemismatch": "The two passphrases differ",
+      "types": {
+        "source": "Sources",
+        "item": "Items",
+        "view": "Views",
+        "secret": "Secrets"
+      },
+      "export": {
+        "header": "Export",
+        "selectall": "Select everything",
+        "clear": "Clear",
+        "selected": "Selected",
+        "pulled": "Pulled in",
+        "pulledby": "Dependency",
+        "uncertain": "These secrets were found by scanning templates, check they are relevant",
+        "run": "Export",
+        "secretshint": "The selection contains secrets: a passphrase will be requested",
+        "done": "Archive {file} downloaded",
+        "donewarnings": "{count} warning(s), see manifest.json inside the archive",
+        "passphrasetitle": "Protect the exported secrets",
+        "passphrasehelp": "The secrets are re-encrypted with this passphrase. It will be required to import them, and it is independent from the instance key.",
+        "passphrasewarning": "This passphrase is not stored anywhere. Lost, the secrets in the archive become unreadable."
+      },
+      "import": {
+        "header": "Import",
+        "file": "Archive to import",
+        "reading": "Reading the archive...",
+        "exportwarnings": "Warnings recorded when the archive was exported",
+        "setall": "Apply to every line:",
+        "planned": "Planned",
+        "entity": "Entity",
+        "action": "Action",
+        "finalname": "Final name",
+        "impact": "Local impact",
+        "result": "Result",
+        "outcomes": {
+          "created": "Created",
+          "updated": "Updated",
+          "skipped": "Skipped"
+        },
+        "collides": "Name already used",
+        "new": "New",
+        "actions": {
+          "update": "Update",
+          "create": "New element",
+          "skip": "Skip"
+        },
+        "duplicatename": "Two lines target this name",
+        "emptyname": "A name is required",
+        "affects": "{count} local element(s) depend on it",
+        "fixfirst": "{count} line(s) to fix first",
+        "run": "Import",
+        "secretshint": "The archive contains secrets: the export passphrase will be requested",
+        "passphrasetitle": "Passphrase of the archive",
+        "passphrasehelp": "Enter the passphrase used when this archive was exported.",
+        "reporttitle": "Import completed",
+        "created": "Created",
+        "updated": "Updated",
+        "skipped": "Skipped"
+      },
+      "errors": {
+        "catalog": "Unable to load the list of elements",
+        "resolve": "Unable to compute the dependencies",
+        "export": "Export failed",
+        "preview": "Unable to read this archive",
+        "import": "Import failed"
+      }
+    },
+    "sync": {
+      "conflict": "Conflicts with the Git repository: settle it in Settings › Connectors",
+      "conflicts": "{count} Git conflict(s)"
+    }
   },
   "templateVariables": {
     "title": "Available variables",
@@ -395,6 +585,19 @@
     "mermaid": {
       "description": "Mermaid allows you to create diagrams. Must be contained in a 'pre' tag with the class 'mermaid'. Refer to the documentation for more information."
     },
+    "vueflow": {
+      "description": "Vue Flow allows you to create interactive diagrams made of nodes and links. Must be contained in a 'div' tag with the 'data-vueflow' attribute, holding the nodes and the edges in JSON. Refer to the documentation for more information.",
+      "dump": "The configuration can also be built from your source data. The 'safe' filter is not needed.",
+      "sizing": "Sizing",
+      "sizing_description": "A diagram has no height of its own and needs one to be displayed. Pick the mode that suits your view.",
+      "sizing_aspect": "Height computed from the width, keeping the given proportions. Recommended: it adapts to every screen size and to both kinds of view.",
+      "sizing_fixed": "Fixed height, in pixels. Use it when the diagram must always keep the same size, or when 'Adjusted sizing' is enabled on the object.",
+      "sizing_fill": "Fills the height left in the object. In a grid view the diagram takes the height of its slot, in a row view the height of the tallest object of the line. Cannot be combined with 'Adjusted sizing'.",
+      "options": "Nodes and edges options",
+      "options_description": "Every option of the Vue Flow documentation is available: on each node, on each edge, and on the diagram itself (fitViewOnInit, snapToGrid, minZoom, connectionMode, background, controls, minimap, and so on).",
+      "events": "Interactions",
+      "events_description": "The diagram emits an event on every interaction, which the JavaScript code of the object can listen to."
+    },
     "nunjucks": {
       "description": "Nunjucks allows you to define templates. Use the data from your sources to build your structure on these data (loops, conditions, ...). Refer to the documentation for more information.",
       "customfilter": "Additional filters",
@@ -425,6 +628,13 @@
       "execute": "Execute a command or a script",
       "database": "Database",
       "text": "Creation"
+    },
+    "debug": {
+      "title": "Loading diagnostics",
+      "all_ok": "no source | {n} source loaded without error | {n} sources loaded without error",
+      "has_errors": "{n} source failed | {n} sources failed",
+      "iteration": "Iteration {key}",
+      "more_failures": "and {n} more failed iteration not detailed | and {n} more failed iterations not detailed"
     },
     "header": "Source",
     "subtitle": "Configure source type, output format, and retrieval logic",
@@ -511,11 +721,13 @@
     "show": "Show loading details",
     "hide": "Hide loading details",
     "loop": "Loop",
+    "loopErrors": "no failed iteration | {n} failed iteration | {n} failed iterations",
     "status": {
       "pending": "Pending",
       "running": "Loading...",
       "done": "Loaded",
-      "error": "Error"
+      "error": "Error",
+      "partial": "Loaded with errors"
     }
   },
   "password": {

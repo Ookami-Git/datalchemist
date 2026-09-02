@@ -12,6 +12,7 @@
     "remove": "Supprimer",
     "copy": "Copier",
     "copied": "Copié",
+    "duplicate": "Dupliquer",
     "edit": "Modifier",
     "preview": "Aperçu",
     "preview_saved_hint": "Aperçu de la version sauvegardée",
@@ -136,7 +137,9 @@
         "external": "Lien externe",
         "newtab": "Ouvrir dans un nouvel onglet"
       },
-      "submenu": { "title": "Sous-menu" },
+      "submenu": {
+        "title": "Sous-menu"
+      },
       "actions": {
         "add": "Ajouter un élément",
         "addFirst": "Ajouter le premier élément",
@@ -219,6 +222,112 @@
       "public": "Publique",
       "toggleprotection": "Activer ou désactiver la protection",
       "allowgroups": "Autoriser des groupes"
+    },
+    "connectors": {
+      "header": "Connecteurs",
+      "subtitle": "Reliez l'instance à des services externes",
+      "unavailable": "La clé de secrets de l'instance (DA_SECRETKEY) est requise pour stocker les identifiants d'un connecteur.",
+      "git": {
+        "title": "Connecteur Git (GitLab / GitHub)",
+        "description": "Le dépôt est le miroir du contenu du serveur : sources, objets, vues et secrets, identifiants conservés. Chaque modification locale est poussée automatiquement, chaque modification du dépôt est récupérée. Ce qui change des deux côtés devient un conflit à arbitrer ici.",
+        "saved": "Configuration enregistrée",
+        "copied": "Adresse copiée",
+        "state": {
+          "disabled": "Inactif",
+          "enabled": "Synchronisation active",
+          "running": "Synchronisation en cours",
+          "error": "Erreur",
+          "conflicts": "{count} conflit(s)"
+        },
+        "form": {
+          "provider": "Fournisseur",
+          "url": "Adresse HTTPS du dépôt",
+          "urlPlaceholder": "https://gitlab.example.org/groupe/projet.git",
+          "branch": "Branche",
+          "directory": "Dossier dans le dépôt",
+          "directoryHelp": "Vide pour la racine du dépôt.",
+          "pollInterval": "Vérification du dépôt (secondes)",
+          "username": "Nom d'utilisateur",
+          "usernameHelp": "Indifférent avec un jeton personnel ; « git » par défaut.",
+          "token": "Jeton d'accès (write_repository / repo)",
+          "passphrase": "Passphrase des secrets",
+          "passphraseHelp": "Chiffre les secrets dans le dépôt. Sans passphrase, les secrets ne sont pas synchronisés.",
+          "webhookSecret": "Secret du webhook",
+          "webhookHelp": "Déclarez ce webhook (push) côté GitLab ou GitHub avec ce secret pour une récupération immédiate :",
+          "author": "Auteur des commits",
+          "authorName": "Nom",
+          "authorEmail": "E-mail",
+          "unchanged": "Inchangé (laisser vide pour conserver)",
+          "clear": "Effacer",
+          "notSet": "Non renseigné",
+          "set": "Renseigné"
+        },
+        "actions": {
+          "test": "Tester la connexion",
+          "save": "Enregistrer",
+          "enable": "Activer la synchronisation",
+          "disable": "Désactiver",
+          "sync": "Synchroniser maintenant",
+          "compare": "Comparer",
+          "keepLocal": "Garder le serveur",
+          "keepRemote": "Garder le dépôt",
+          "cancel": "Annuler",
+          "close": "Fermer"
+        },
+        "test": {
+          "ok": "Dépôt accessible",
+          "empty": "le dépôt est vide, l'activation y poussera tout le contenu.",
+          "branchFound": "branche « {branch} » trouvée.",
+          "branchMissing": "La branche « {branch} » n'existe pas. Branches disponibles : {branches}"
+        },
+        "status": {
+          "title": "État",
+          "lastSync": "Dernière synchronisation",
+          "lastCommit": "Dernier commit",
+          "lastError": "Dernière erreur",
+          "never": "Jamais",
+          "pushed": "poussé(s)",
+          "pulled": "récupéré(s)",
+          "warnings": "Avertissements",
+          "saveFirst": "Enregistrez la configuration avant d'activer."
+        },
+        "enableModal": {
+          "title": "Premier alignement",
+          "intro": "Le dépôt contient déjà du contenu. Comment départager les différences avec le serveur ?",
+          "merge": "Fusionner",
+          "mergeHelp": "Ce qui est identique est conservé ; chaque différence devient un conflit à arbitrer.",
+          "local": "Le serveur fait autorité",
+          "localHelp": "Le dépôt est réécrit à l'image du serveur. Ce qui n'existe que dans le dépôt en est supprimé.",
+          "remote": "Le dépôt fait autorité",
+          "remoteHelp": "La base est réécrite à l'image du dépôt. Ce qui n'existe que sur le serveur en est supprimé."
+        },
+        "disableModal": {
+          "title": "Désactiver la synchronisation",
+          "body": "Le dépôt et le serveur cessent d'être alignés. Rien n'est supprimé d'aucun côté ; une réactivation repartira d'une nouvelle comparaison."
+        },
+        "conflicts": {
+          "title": "Conflits",
+          "empty": "Aucun conflit.",
+          "help": "Modifiés des deux côtés depuis la dernière synchronisation, ces éléments sont gelés jusqu'à votre choix.",
+          "entity": "Élément",
+          "reason": "Raison",
+          "localVersion": "Version du serveur",
+          "remoteVersion": "Version du dépôt",
+          "deleted": "(supprimé)"
+        },
+        "kinds": {
+          "source": "Source",
+          "item": "Objet",
+          "view": "Vue",
+          "secret": "Secret"
+        },
+        "cardTitle": "Git Synchronisation",
+        "cardDescription": "Miroir automatique du contenu (sources, objets, vues, secrets) dans un dépôt GitLab ou GitHub, avec arbitrage des conflits."
+      },
+      "list": {
+        "open": "Ouvrir",
+        "notConfigured": "Non configuré"
+      }
     }
   },
   "edit": {
@@ -253,13 +362,94 @@
     "modal_edit_secret_note": "Les changements sont chiffrés côté backend.",
     "modal_edit_secret_name_help": "Nom de référence utilisé dans vos templates de source",
     "modal_edit_secret_value_help": "Nouvelle valeur chiffrée en base",
+    "modal_duplicate_subtitle": "Copie de l’élément et de ses liens",
+    "modal_duplicate_note": "La copie reprend le contenu et les liens de l’original. Choisissez le nom de la copie.",
+    "modal_duplicate_name_help": "Le nom doit être unique.",
+    "duplicate_name_taken": "Le nom « {name} » est déjà utilisé.",
     "modal_delete_subtitle": "Suppression définitive",
     "modal_delete_warning": "Cette action est irréversible.",
     "modal_delete_type": "Élément",
     "secrets_edit_disabled": "Édition des secrets désactivée",
     "secrets_state_enabled": "Secrets activés",
     "secrets_state_disabled": "Secrets désactivés",
-    "secret_value": "Valeur du secret"
+    "secret_value": "Valeur du secret",
+    "bundle": {
+      "back": "Retour",
+      "exportentity": "Exporter cet élément",
+      "passphrase": "Passphrase",
+      "passphraseconfirm": "Confirmer la passphrase",
+      "passphrasemismatch": "Les deux passphrases diffèrent",
+      "types": {
+        "source": "Sources",
+        "item": "Objets",
+        "view": "Vues",
+        "secret": "Secrets"
+      },
+      "export": {
+        "header": "Export",
+        "selectall": "Tout sélectionner",
+        "clear": "Tout décocher",
+        "selected": "Sélectionnés",
+        "pulled": "Entraînés",
+        "pulledby": "Dépendance",
+        "uncertain": "Ces secrets ont été repérés en lisant les templates, vérifiez qu'ils sont pertinents",
+        "run": "Exporter",
+        "secretshint": "La sélection contient des secrets : une passphrase sera demandée",
+        "done": "Archive {file} téléchargée",
+        "donewarnings": "{count} avertissement(s), voir manifest.json dans l'archive",
+        "passphrasetitle": "Protéger les secrets exportés",
+        "passphrasehelp": "Les secrets sont rechiffrés avec cette passphrase. Elle sera exigée pour les importer, et elle est indépendante de la clé de l'instance.",
+        "passphrasewarning": "Cette passphrase n'est stockée nulle part. Perdue, les secrets de l'archive deviennent illisibles."
+      },
+      "import": {
+        "header": "Import",
+        "file": "Archive à importer",
+        "reading": "Lecture de l'archive...",
+        "exportwarnings": "Avertissements relevés lors de l'export de cette archive",
+        "setall": "Appliquer à toutes les lignes :",
+        "planned": "Prévus",
+        "entity": "Élément",
+        "action": "Action",
+        "finalname": "Nom final",
+        "impact": "Impact local",
+        "result": "Résultat",
+        "outcomes": {
+          "created": "Créé",
+          "updated": "Mis à jour",
+          "skipped": "Ignoré"
+        },
+        "collides": "Nom déjà utilisé",
+        "new": "Nouveau",
+        "actions": {
+          "update": "Mise à jour",
+          "create": "Nouvel élément",
+          "skip": "Ignorer"
+        },
+        "duplicatename": "Deux lignes visent ce nom",
+        "emptyname": "Un nom est requis",
+        "affects": "{count} élément(s) local(aux) en dépendent",
+        "fixfirst": "{count} ligne(s) à corriger",
+        "run": "Importer",
+        "secretshint": "L'archive contient des secrets : la passphrase d'export sera demandée",
+        "passphrasetitle": "Passphrase de l'archive",
+        "passphrasehelp": "Saisissez la passphrase utilisée lors de l'export de cette archive.",
+        "reporttitle": "Import terminé",
+        "created": "Créés",
+        "updated": "Mis à jour",
+        "skipped": "Ignorés"
+      },
+      "errors": {
+        "catalog": "Impossible de charger la liste des éléments",
+        "resolve": "Impossible de calculer les dépendances",
+        "export": "L'export a échoué",
+        "preview": "Impossible de lire cette archive",
+        "import": "L'import a échoué"
+      }
+    },
+    "sync": {
+      "conflict": "En conflit avec le dépôt Git : à arbitrer dans Paramètres › Connecteurs",
+      "conflicts": "{count} conflit(s) Git"
+    }
   },
   "templateVariables": {
     "title": "Variables disponibles",
@@ -395,6 +585,19 @@
     "mermaid": {
       "description": "Mermaid permet de créer des graphiques. Doit être contenu dans une balise 'pre' avec la classe 'mermaid'. Référez-vous à la documentation pour plus d'informations."
     },
+    "vueflow": {
+      "description": "Vue Flow permet de créer des diagrammes interactifs composés de nœuds et de liens. Doit être contenu dans une balise 'div' avec l'attribut 'data-vueflow', qui contient les nœuds et les liens au format JSON. Référez-vous à la documentation pour plus d'informations.",
+      "dump": "La configuration peut aussi être construite depuis les données de vos sources. Le filtre 'safe' n'est pas nécessaire.",
+      "sizing": "Dimensionnement",
+      "sizing_description": "Un diagramme n'a pas de hauteur propre et doit en recevoir une pour s'afficher. Choisissez le mode adapté à votre vue.",
+      "sizing_aspect": "Hauteur calculée depuis la largeur, en conservant les proportions indiquées. Recommandé : s'adapte à toutes les tailles d'écran et aux deux types de vue.",
+      "sizing_fixed": "Hauteur fixe, en pixels. À utiliser quand le diagramme doit toujours conserver la même taille, ou quand l'option « Dimensionnement ajusté » est activée sur l'objet.",
+      "sizing_fill": "Occupe la hauteur restante de l'objet. En vue grille, le diagramme prend la hauteur de son emplacement ; en vue par lignes, celle de l'objet le plus haut de la ligne. Incompatible avec l'option « Dimensionnement ajusté ».",
+      "options": "Options des nœuds et des liens",
+      "options_description": "Toutes les options de la documentation Vue Flow sont disponibles : sur chaque nœud, sur chaque lien, et sur le diagramme lui-même (fitViewOnInit, snapToGrid, minZoom, connectionMode, background, controls, minimap, etc.).",
+      "events": "Interactions",
+      "events_description": "Le diagramme émet un événement à chaque interaction, que le code JavaScript de l'objet peut écouter."
+    },
     "nunjucks": {
       "description": "Nunjucks permet de définir des templates. Utilisez les données de vos sources pour construire votre structure sur ces données (boucles, conditions, ...). Référez-vous à la documentation pour plus d'informations.",
       "customfilter": "Filtres additionnels",
@@ -425,6 +628,13 @@
       "execute": "Exécuter une commande ou un script",
       "database": "Base de données",
       "text": "Création"
+    },
+    "debug": {
+      "title": "Diagnostic de chargement",
+      "all_ok": "aucune source | {n} source chargée sans erreur | {n} sources chargées sans erreur",
+      "has_errors": "{n} source en erreur | {n} sources en erreur",
+      "iteration": "Itération {key}",
+      "more_failures": "et {n} autre itération en erreur non détaillée | et {n} autres itérations en erreur non détaillées"
     },
     "header": "Source",
     "subtitle": "Configurez le type de source, son format et sa logique de récupération",
@@ -511,11 +721,13 @@
     "show": "Afficher le détail du chargement",
     "hide": "Masquer le détail du chargement",
     "loop": "Boucle",
+    "loopErrors": "aucune itération en erreur | {n} itération en erreur | {n} itérations en erreur",
     "status": {
       "pending": "En attente",
       "running": "Chargement...",
       "done": "Chargée",
-      "error": "Erreur"
+      "error": "Erreur",
+      "partial": "Chargée avec erreurs"
     }
   },
   "password": {

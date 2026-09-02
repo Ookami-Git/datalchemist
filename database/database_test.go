@@ -1,8 +1,12 @@
 package database
 
 import (
+	"errors"
 	"path/filepath"
+	"strconv"
 	"testing"
+
+	"datalchemist/models"
 
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
@@ -80,5 +84,113 @@ func TestValidatePassword(t *testing.T) {
 func TestHashPasswordRejectsWeakPassword(t *testing.T) {
 	if _, err := HashPassword("too-short"); err == nil {
 		t.Fatal("weak administrator password was accepted")
+	}
+}
+
+func TestDuplicateCopiesEntityAndLinks(t *testing.T) {
+	dbGorm = nil
+	viper.Set("database", filepath.Join(t.TempDir(), "test.sqlite"))
+	defer func() { dbGorm = nil }()
+
+	if err := Init(); err != nil {
+		t.Fatalf("initialize database: %v", err)
+	}
+
+	baseID, err := SourceUpdate(models.Sources{Name: "dup base", JSON: `{"src":"text"}`})
+	if err != nil {
+		t.Fatalf("create base source: %v", err)
+	}
+	sourceID, err := SourceUpdate(models.Sources{Name: "dup source", Parameters: "params", JSON: `{"src":"url"}`})
+	if err != nil {
+		t.Fatalf("create source: %v", err)
+	}
+	SourceAddRequire(models.Source_require{Source: sourceID, Require: baseID})
+
+	copyID, err := SourceDuplicate(strconv.Itoa(int(sourceID)), "")
+	if err != nil {
+		t.Fatalf("duplicate source: %v", err)
+	}
+	if copyID == sourceID || copyID == 0 {
+		t.Fatalf("duplicate source id = %d", copyID)
+	}
+	sourceCopy, err := SourceGet(strconv.Itoa(int(copyID)))
+	if err != nil {
+		t.Fatalf("load duplicated source: %v", err)
+	}
+	if sourceCopy.Name != "dup source_1" {
+		t.Fatalf("duplicated source name = %q", sourceCopy.Name)
+	}
+	if sourceCopy.Parameters != "params" || sourceCopy.JSON != `{"src":"url"}` {
+		t.Fatalf("duplicated source content = %+v", sourceCopy)
+	}
+	requires, err := SourceRequire(strconv.Itoa(int(copyID)))
+	if err != nil {
+		t.Fatalf("load duplicated source requires: %v", err)
+	}
+	if len(requires) != 1 || requires[0].ID != baseID {
+		t.Fatalf("duplicated source requires = %+v, want [%d]", requires, baseID)
+	}
+
+	// Un second doublon sans nom doit être suffixé « _2 ».
+	secondID, err := SourceDuplicate(strconv.Itoa(int(sourceID)), "")
+	if err != nil {
+		t.Fatalf("duplicate source twice: %v", err)
+	}
+	second, err := SourceGet(strconv.Itoa(int(secondID)))
+	if err != nil {
+		t.Fatalf("load second duplicate: %v", err)
+	}
+	if second.Name != "dup source_2" {
+		t.Fatalf("second duplicate name = %q", second.Name)
+	}
+
+	itemID, err := ItemUpdate(models.Items{Name: "dup item", Parameters: "p", Template: "tpl", Javascript: "js"})
+	if err != nil {
+		t.Fatalf("create item: %v", err)
+	}
+	ItemAddRequire(models.Item_sources{Item: itemID, Source: sourceID})
+
+	itemCopyID, err := ItemDuplicate(strconv.Itoa(int(itemID)), "custom name")
+	if err != nil {
+		t.Fatalf("duplicate item: %v", err)
+	}
+	itemCopy, err := ItemGet(strconv.Itoa(int(itemCopyID)))
+	if err != nil {
+		t.Fatalf("load duplicated item: %v", err)
+	}
+	if itemCopy.Name != "custom name" || itemCopy.Template != "tpl" || itemCopy.Javascript != "js" || itemCopy.Parameters != "p" {
+		t.Fatalf("duplicated item = %+v", itemCopy)
+	}
+	itemSources, err := ItemSources(strconv.Itoa(int(itemCopyID)))
+	if err != nil {
+		t.Fatalf("load duplicated item sources: %v", err)
+	}
+	if len(itemSources) != 1 || itemSources[0].ID != sourceID {
+		t.Fatalf("duplicated item sources = %+v, want [%d]", itemSources, sourceID)
+	}
+
+	viewID, err := ViewAdd(models.Views{Name: "dup view", Parameters: `{"version":2,"items":[{"itemid":1}]}`, Protected: true})
+	if err != nil {
+		t.Fatalf("create view: %v", err)
+	}
+	viewCopyID, err := ViewDuplicate(strconv.Itoa(int(viewID)), "")
+	if err != nil {
+		t.Fatalf("duplicate view: %v", err)
+	}
+	viewCopy, err := ViewGet(strconv.Itoa(int(viewCopyID)))
+	if err != nil {
+		t.Fatalf("load duplicated view: %v", err)
+	}
+	if viewCopy.Name != "dup view_1" || viewCopy.Parameters != `{"version":2,"items":[{"itemid":1}]}` || !viewCopy.Protected {
+		t.Fatalf("duplicated view = %+v", viewCopy)
+	}
+
+	// Un nom demandé déjà pris doit être refusé.
+	if _, err := SourceDuplicate(strconv.Itoa(int(sourceID)), "dup base"); !errors.Is(err, ErrNameTaken) {
+		t.Fatalf("duplicate with taken name: err = %v, want ErrNameTaken", err)
+	}
+
+	if _, err := SourceDuplicate("404404", ""); err == nil {
+		t.Fatal("duplicating a missing source must fail")
 	}
 }

@@ -1,2 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Files consumed by Linux (containers, CI) must always keep LF,
+# otherwise the CR breaks the shebang/interpreter.
+*.sh        text eol=lf
+Dockerfile  text eol=lf
+*.Dockerfile text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf

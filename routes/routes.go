@@ -5,6 +5,7 @@ import (
 	"datalchemist/controllers"
 	"datalchemist/handlers"
 	"datalchemist/middlewares"
+	"datalchemist/utils/gitsync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,6 +22,9 @@ func SetupRoutes(r *gin.Engine) {
 		public.POST("/api/auth/login", controllers.Login)
 		public.GET("/api/auth/logout", controllers.Logout)
 		public.GET("/api/auth/status", controllers.AuthStatus)
+
+		// Webhook GitLab/GitHub : authentifié par son secret, pas par session.
+		public.POST("/api/webhook/git", handlers.ConnectorGitWebhook)
 	}
 
 	acl := r.Group("/")
@@ -48,13 +52,17 @@ func SetupRoutes(r *gin.Engine) {
 
 		//Require Auth + Admin
 		protected.Use(middlewares.AdminMiddleware())
+		// Toute écriture sur le contenu réveille la synchronisation Git.
+		protected.Use(middlewares.ContentChangeNotifier(gitsync.Touch))
 
 		protected.GET("/api/data/item/:itemid", handlers.ItemData)
 		protected.GET("/api/data/item/:itemid/stream", handlers.ItemDataStream)
 		protected.GET("/api/data/source/:sourceid", handlers.SourceData)
+		protected.GET("/api/data/source/:sourceid/debug", handlers.SourceDataDebug)
 
 		protected.DELETE("/api/source/:id", handlers.SourceDelete)
 		protected.POST("/api/source", handlers.SourceUpdate)
+		protected.POST("/api/source/:id/duplicate", handlers.SourceDuplicate)
 		protected.GET("/api/source/:id", handlers.SourceGet)
 		protected.GET("/api/source/sources/:id", handlers.SourceSourcesList)
 		protected.GET("/api/sources", handlers.SourceList)
@@ -64,6 +72,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/api/item/:id", handlers.ItemGet)
 		protected.DELETE("/api/item/:id", handlers.ItemDelete)
 		protected.POST("/api/item", handlers.ItemUpdate)
+		protected.POST("/api/item/:id/duplicate", handlers.ItemDuplicate)
 		protected.GET("/api/items", handlers.ItemList)
 		protected.GET("/api/item/sources/:id", handlers.ItemSourcesList)
 		protected.POST("/api/item/require", handlers.ItemAddRequire)
@@ -71,6 +80,7 @@ func SetupRoutes(r *gin.Engine) {
 
 		protected.DELETE("/api/view/:id", handlers.ViewDelete)
 		protected.POST("/api/view", handlers.ViewAdd)
+		protected.POST("/api/view/:id/duplicate", handlers.ViewDuplicate)
 		protected.GET("/api/views", handlers.ViewList)
 
 		protected.PUT("/api/parameter/:id", handlers.ParametersUpdate)
@@ -100,5 +110,20 @@ func SetupRoutes(r *gin.Engine) {
 		protected.POST("/api/secret", handlers.SecretAdd)
 		protected.PUT("/api/secret/:id", handlers.SecretUpdate)
 		protected.GET("/api/secrets", handlers.SecretList)
+
+		protected.POST("/api/export/resolve", handlers.ExportResolve)
+		protected.POST("/api/export", handlers.Export)
+		protected.POST("/api/import/preview", handlers.ImportPreview)
+		protected.POST("/api/import/apply", handlers.ImportApply)
+
+		protected.GET("/api/connector/git", handlers.ConnectorGitGet)
+		protected.PUT("/api/connector/git", handlers.ConnectorGitSave)
+		protected.GET("/api/connector/git/status", handlers.ConnectorGitStatus)
+		protected.POST("/api/connector/git/test", handlers.ConnectorGitTest)
+		protected.POST("/api/connector/git/enable", handlers.ConnectorGitEnable)
+		protected.POST("/api/connector/git/disable", handlers.ConnectorGitDisable)
+		protected.POST("/api/connector/git/sync", handlers.ConnectorGitSync)
+		protected.GET("/api/connector/git/conflict/:kind/:id", handlers.ConnectorGitConflict)
+		protected.POST("/api/connector/git/conflict/:kind/:id/resolve", handlers.ConnectorGitResolve)
 	}
 }
