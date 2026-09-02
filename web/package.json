@@ -11,7 +11,7 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
-    "test": "node --test src/templates/catalog.test.js src/utils/getVariables.test.js src/utils/password.test.js src/utils/progressiveData.test.js src/utils/vueFlowConfig.test.js src/utils/vueFlowSize.test.js",
+    "test": "node --test src/templates/catalog.test.js src/utils/getVariables.test.js src/utils/http.test.js src/utils/password.test.js src/utils/progressiveData.test.js src/utils/vueFlowConfig.test.js src/utils/vueFlowSize.test.js",
     "build": "vite build",
     "preview": "vite preview"
   },

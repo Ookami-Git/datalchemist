@@ -2,6 +2,7 @@ import { createApp } from "vue";
 import App from "./App.vue";
 
 import router from "@/router";
+import { installHttpResilience } from "@/utils/http";
 import VueCookies from "vue-cookies";
 import { createI18n } from "vue-i18n";
 import messages from "./lang";
@@ -21,6 +22,9 @@ export const i18n = new createI18n({
   fallbackLocale: "en",
   messages,
 });
+
+// Avant tout appel : l'application partage l'instance axios par défaut.
+installHttpResilience();
 
 const app = createApp(App);
 app.use(VueCookies);
