@@ -477,7 +477,7 @@ const syncConflictKeys = computed(() =>
 )
 const syncConflictCount = computed(() => syncConflictKeys.value.size)
 const isInSyncConflict = (kind, id) => syncConflictKeys.value.has(`${kind}:${id}`)
-const syncConflictsRoute = { name: 'admin', params: { page: 'connectors' } }
+const syncConflictsRoute = { name: 'admin', params: { page: 'connectors' }, query: { connector: 'git' } }
 
 const fetchSecrets = async () => {
   axios.get(`${apiUrl}/secrets`)

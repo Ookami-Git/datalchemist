@@ -1,11 +1,30 @@
 <script setup>
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import axios from 'axios';
 
 const apiUrl = inject('apiUrl');
 const save = inject('save');
+const route = useRoute();
+const router = useRouter();
 
 save.value.safe();
+
+// La liste des connecteurs est la vue par défaut ; le connecteur ouvert est
+// porté par l'URL (?connector=git) pour que l'éditeur puisse y renvoyer.
+const CONNECTORS = [
+    { id: 'git', icon: 'bi bi-git', titleKey: 'admin.connectors.git.cardTitle', descriptionKey: 'admin.connectors.git.cardDescription' },
+];
+
+const selected = computed(() => CONNECTORS.find((connector) => connector.id === route.query.connector) || null);
+
+function openConnector(id) {
+    router.push({ name: 'admin', params: { page: 'connectors' }, query: { connector: id } });
+}
+
+function backToList() {
+    router.push({ name: 'admin', params: { page: 'connectors' } });
+}
 
 const PROVIDERS = [
     { id: 'gitlab', label: 'GitLab', icon: 'bi bi-gitlab' },
@@ -350,14 +369,19 @@ onBeforeUnmount(() => {
             <header class="card admin-connectors-hero shadow-sm">
                 <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center gap-3">
                     <div class="admin-connectors-hero-icon">
-                        <i class="bi bi-plug-fill"></i>
+                        <i :class="selected ? selected.icon : 'bi bi-plug-fill'"></i>
                     </div>
                     <div class="flex-grow-1">
-                        <p class="admin-connectors-kicker mb-1">{{ $t('admin.header') }}</p>
-                        <h4 class="mb-1">{{ $t('admin.connectors.header') }}</h4>
-                        <p class="mb-0 text-secondary">{{ $t('admin.connectors.subtitle') }}</p>
+                        <p class="admin-connectors-kicker mb-1">
+                            <a v-if="selected" href="#" class="admin-connectors-back" @click.prevent="backToList">
+                                <i class="bi bi-arrow-left me-1"></i>{{ $t('admin.connectors.header') }}
+                            </a>
+                            <template v-else>{{ $t('admin.header') }}</template>
+                        </p>
+                        <h4 class="mb-1">{{ selected ? $t(selected.titleKey) : $t('admin.connectors.header') }}</h4>
+                        <p class="mb-0 text-secondary">{{ selected ? $t(selected.descriptionKey) : $t('admin.connectors.subtitle') }}</p>
                     </div>
-                    <span class="badge rounded-pill admin-connectors-state-chip" :class="stateChip.classes">
+                    <span v-if="selected" class="badge rounded-pill admin-connectors-state-chip" :class="stateChip.classes">
                         <i :class="stateChip.icon" class="me-1"></i>
                         {{ $t(`admin.connectors.git.state.${stateChip.key}`, { count: conflicts.length }) }}
                     </span>
@@ -375,7 +399,42 @@ onBeforeUnmount(() => {
                 <button type="button" class="btn-close" aria-label="Close" @click="error = ''"></button>
             </div>
 
-            <div class="row g-3 g-xxl-4">
+            <!-- Liste des connecteurs -->
+            <div v-if="!selected" class="row g-3 g-xxl-4">
+                <div v-for="connector in CONNECTORS" :key="connector.id" class="col-12 col-md-6 col-xxl-4">
+                    <article class="card admin-connectors-card shadow-sm h-100" role="button" tabindex="0"
+                        @click="openConnector(connector.id)" @keydown.enter.prevent="openConnector(connector.id)"
+                        @keydown.space.prevent="openConnector(connector.id)">
+                        <div class="card-body p-4 d-flex flex-column gap-3">
+                            <div class="d-flex align-items-start justify-content-between gap-3">
+                                <div class="admin-connectors-card-icon">
+                                    <i :class="connector.icon"></i>
+                                </div>
+                                <span class="badge rounded-pill admin-connectors-state-chip" :class="stateChip.classes">
+                                    <i :class="stateChip.icon" class="me-1"></i>
+                                    {{ $t(`admin.connectors.git.state.${stateChip.key}`, { count: conflicts.length }) }}
+                                </span>
+                            </div>
+                            <div>
+                                <h5 class="admin-connectors-panel-title mb-1">{{ $t(connector.titleKey) }}</h5>
+                                <p class="text-secondary small mb-0">{{ $t(connector.descriptionKey) }}</p>
+                            </div>
+                            <div class="mt-auto d-flex align-items-center justify-content-between">
+                                <span v-if="settings?.config?.url" class="small text-secondary text-truncate admin-connectors-card-target"
+                                    :title="settings.config.url">
+                                    <i class="bi bi-link-45deg me-1"></i>{{ settings.config.url }}
+                                </span>
+                                <span v-else class="small text-secondary">{{ $t('admin.connectors.list.notConfigured') }}</span>
+                                <span class="admin-connectors-card-open ms-2">
+                                    {{ $t('admin.connectors.list.open') }} <i class="bi bi-chevron-right"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+
+            <div v-else class="row g-3 g-xxl-4">
                 <!-- Configuration -->
                 <div class="col-12 col-xl-7">
                     <article class="card admin-connectors-panel shadow-sm h-100">

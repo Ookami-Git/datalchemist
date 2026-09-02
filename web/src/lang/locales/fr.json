@@ -320,7 +320,13 @@
           "item": "Objet",
           "view": "Vue",
           "secret": "Secret"
-        }
+        },
+        "cardTitle": "Git Synchronisation",
+        "cardDescription": "Miroir automatique du contenu (sources, objets, vues, secrets) dans un dépôt GitLab ou GitHub, avec arbitrage des conflits."
+      },
+      "list": {
+        "open": "Ouvrir",
+        "notConfigured": "Non configuré"
       }
     }
   },

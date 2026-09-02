@@ -320,7 +320,13 @@
           "item": "Item",
           "view": "View",
           "secret": "Secret"
-        }
+        },
+        "cardTitle": "Git Synchronization",
+        "cardDescription": "Automatic mirror of the content (sources, items, views, secrets) in a GitLab or GitHub repository, with conflict arbitration."
+      },
+      "list": {
+        "open": "Open",
+        "notConfigured": "Not configured"
       }
     }
   },
