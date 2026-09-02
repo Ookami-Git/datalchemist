@@ -17,6 +17,17 @@ const (
 	StatusPartial = "partial"
 )
 
+// maxLoopFailures borne le détail des itérations en échec conservé par source :
+// le compteur reste exact, seul le détail est tronqué.
+const maxLoopFailures = 50
+
+// LoopFailure décrit une itération de boucle en échec.
+type LoopFailure struct {
+	// Key est l'index (boucle sur une liste) ou la clé (boucle sur un objet).
+	Key     string `json:"key"`
+	Message string `json:"message"`
+}
+
 // Entry décrit l'état de chargement d'une source.
 type Entry struct {
 	Name      string `json:"name"`
@@ -30,6 +41,8 @@ type Entry struct {
 	Percent    float64 `json:"percent"`
 	Duration   int64   `json:"duration"`
 	Error      string  `json:"error,omitempty"`
+	// Failures détaille les itérations en échec (au plus maxLoopFailures).
+	Failures []LoopFailure `json:"failures,omitempty"`
 }
 
 // Snapshot décrit l'état global d'un chargement de données.
@@ -53,6 +66,7 @@ type entry struct {
 	loopDone   int
 	loopTotal  int
 	loopErrors int
+	failures   []LoopFailure
 	started    time.Time
 	duration   time.Duration
 	err        string
@@ -149,9 +163,10 @@ func (t *Tracker) LoopStep(name string) {
 }
 
 // LoopFail signale qu'une itération de boucle a échoué : sa valeur est null
-// dans les données, la source continue de se charger. Le premier message est
-// conservé, les suivants ne font qu'incrémenter le compteur.
-func (t *Tracker) LoopFail(name string, message string) {
+// dans les données, la source continue de se charger. Le premier message
+// devient l'erreur de la source ; le détail par itération est conservé jusqu'à
+// maxLoopFailures.
+func (t *Tracker) LoopFail(name string, key string, message string) {
 	if t == nil {
 		return
 	}
@@ -162,6 +177,9 @@ func (t *Tracker) LoopFail(name string, message string) {
 	e.loopErrors++
 	if e.err == "" {
 		e.err = message
+	}
+	if len(e.failures) < maxLoopFailures {
+		e.failures = append(e.failures, LoopFailure{Key: key, Message: message})
 	}
 	t.version++
 }
@@ -274,6 +292,7 @@ func (t *Tracker) Snapshot() Snapshot {
 			Percent:    round1(ratio * 100),
 			Duration:   e.duration.Milliseconds(),
 			Error:      e.err,
+			Failures:   append([]LoopFailure(nil), e.failures...),
 		})
 	}
 

@@ -309,7 +309,7 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 				defer wg.Done()
 				defer func() { <-semaphore }()
 				defer tracker.LoopStep(source.Name)
-				daMap[index] = loopIteration(daSource, data, value, source, tracker)
+				daMap[index] = loopIteration(daSource, data, strconv.Itoa(index), value, source, tracker)
 			}()
 		}
 		wg.Wait()
@@ -328,7 +328,7 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 				defer wg.Done()
 				defer func() { <-semaphore }()
 				defer tracker.LoopStep(source.Name)
-				content := loopIteration(daSource, data, value, source, tracker)
+				content := loopIteration(daSource, data, key, value, source, tracker)
 				resultMutex.Lock()
 				daMap[key] = content
 				resultMutex.Unlock()
@@ -346,11 +346,11 @@ func loadSource(node Node, data map[string]interface{}, tracker *progress.Tracke
 // et est comptée par le tracker ; les autres itérations et la source
 // continuent. Le recover est indispensable : chaque itération tourne dans sa
 // propre goroutine, hors de portée de celui de runNode.
-func loopIteration(daSource map[string]interface{}, data map[string]interface{}, item interface{}, source models.Sources, tracker *progress.Tracker) (content interface{}) {
+func loopIteration(daSource map[string]interface{}, data map[string]interface{}, key string, item interface{}, source models.Sources, tracker *progress.Tracker) (content interface{}) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			log.Print("ERROR utils: source ", source.Name, " loop item panic: ", recovered)
-			tracker.LoopFail(source.Name, fmt.Sprint(recovered))
+			log.Print("ERROR utils: source ", source.Name, " loop item ", key, " panic: ", recovered)
+			tracker.LoopFail(source.Name, key, fmt.Sprint(recovered))
 			content = nil
 		}
 	}()
@@ -363,8 +363,8 @@ func loopIteration(daSource map[string]interface{}, data map[string]interface{},
 	}
 	content, err := GetSourceContent(rendered)
 	if err != nil {
-		log.Print("ERROR utils: source ", source.Name, " loop item: ", err)
-		tracker.LoopFail(source.Name, err.Error())
+		log.Print("ERROR utils: source ", source.Name, " loop item ", key, ": ", err)
+		tracker.LoopFail(source.Name, key, err.Error())
 		return nil
 	}
 	return content

@@ -338,6 +338,10 @@ func TestRunPlanLoopIterationPanicYieldsNull(t *testing.T) {
 	if entry.Status != progress.StatusPartial || entry.LoopErrors != 1 || entry.LoopDone != 3 || entry.Error == "" {
 		t.Fatalf("looped entry = %+v", entry)
 	}
+	// L'itération fautive est identifiée par son index.
+	if len(entry.Failures) != 1 || entry.Failures[0].Key != "1" {
+		t.Fatalf("looped failures = %+v", entry.Failures)
+	}
 	if tracker.Snapshot().Errors != 1 {
 		t.Fatalf("snapshot = %+v", tracker.Snapshot())
 	}
@@ -367,8 +371,19 @@ func TestRunPlanLoopMapIterationPanicYieldsNull(t *testing.T) {
 	if values["ok"] != "value" || values["ko"] != nil {
 		t.Fatalf("looped values = %#v", values)
 	}
-	if tracker.Snapshot().Errors != 1 {
-		t.Fatalf("snapshot = %+v", tracker.Snapshot())
+	snap := tracker.Snapshot()
+	if snap.Errors != 1 {
+		t.Fatalf("snapshot = %+v", snap)
+	}
+	// L'itération fautive est identifiée par sa clé.
+	var failures []progress.LoopFailure
+	for _, source := range snap.Sources {
+		if source.Name == "loop_map_panic_looped" {
+			failures = source.Failures
+		}
+	}
+	if len(failures) != 1 || failures[0].Key != "ko" {
+		t.Fatalf("looped failures = %+v", failures)
 	}
 }
 

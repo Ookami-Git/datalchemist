@@ -519,6 +519,13 @@
       "database": "Database",
       "text": "Creation"
     },
+    "debug": {
+      "title": "Loading diagnostics",
+      "all_ok": "no source | {n} source loaded without error | {n} sources loaded without error",
+      "has_errors": "{n} source failed | {n} sources failed",
+      "iteration": "Iteration {key}",
+      "more_failures": "and {n} more failed iteration not detailed | and {n} more failed iterations not detailed"
+    },
     "header": "Source",
     "subtitle": "Configure source type, output format, and retrieval logic",
     "loading": "Loading source...",

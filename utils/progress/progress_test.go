@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"fmt"
 	"sync"
 	"testing"
 )
@@ -140,9 +141,9 @@ func TestTrackerLoopFailMarksSourcePartial(t *testing.T) {
 	tracker.Start("looped", 3)
 	tracker.SetLoop("looped", 3)
 	tracker.LoopStep("looped")
-	tracker.LoopFail("looped", "first boom")
+	tracker.LoopFail("looped", "1", "first boom")
 	tracker.LoopStep("looped")
-	tracker.LoopFail("looped", "second boom")
+	tracker.LoopFail("looped", "2", "second boom")
 	tracker.LoopStep("looped")
 	tracker.Done("looped")
 	tracker.Finish()
@@ -156,9 +157,12 @@ func TestTrackerLoopFailMarksSourcePartial(t *testing.T) {
 	if entry.Status != StatusPartial || entry.LoopErrors != 2 || entry.LoopDone != 3 {
 		t.Fatalf("entry = %+v", entry)
 	}
-	// Seul le premier message est conservé.
+	// Le premier message est l'erreur de la source, le détail liste tout.
 	if entry.Error != "first boom" {
 		t.Fatalf("entry error = %q", entry.Error)
+	}
+	if len(entry.Failures) != 2 || entry.Failures[0] != (LoopFailure{Key: "1", Message: "first boom"}) || entry.Failures[1].Key != "2" {
+		t.Fatalf("entry failures = %+v", entry.Failures)
 	}
 
 	// Une source partielle ne doit pas repasser en "done".
@@ -179,5 +183,17 @@ func TestTrackerDoneWithoutLoopErrorsStaysDone(t *testing.T) {
 	snap := tracker.Snapshot()
 	if snap.Errors != 0 || snap.Sources[0].Status != StatusDone || snap.Sources[0].LoopErrors != 0 {
 		t.Fatalf("snapshot = %+v", snap)
+	}
+}
+
+func TestTrackerLoopFailDetailIsBounded(t *testing.T) {
+	tracker := New()
+	tracker.Start("looped", 1)
+	for i := 0; i < maxLoopFailures+10; i++ {
+		tracker.LoopFail("looped", fmt.Sprint(i), "boom")
+	}
+	entry := tracker.Snapshot().Sources[0]
+	if entry.LoopErrors != maxLoopFailures+10 || len(entry.Failures) != maxLoopFailures {
+		t.Fatalf("entry = %d errors, %d failures", entry.LoopErrors, len(entry.Failures))
 	}
 }

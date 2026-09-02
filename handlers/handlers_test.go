@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -296,5 +297,57 @@ func TestViewGetReturns404ForMissingView(t *testing.T) {
 	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/view/missing", nil))
 	if w.Code != http.StatusNotFound {
 		t.Fatalf("status = %d, body = %s", w.Code, w.Body.String())
+	}
+}
+
+func TestSourceDataDebugReportsWhySourceFailed(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	setupTestDatabase(t)
+
+	baseID, err := database.SourceUpdate(models.Sources{
+		Name: "debug_base",
+		JSON: `{"src":"text","type":"json","query":"[\"{\\\"ok\\\":1}\",\"{broken\"]"}`,
+	})
+	if err != nil {
+		t.Fatalf("create base source: %v", err)
+	}
+	loopedID, err := database.SourceUpdate(models.Sources{
+		Name: "debug_looped",
+		JSON: `{"src":"text","type":"json","query":"{{ item }}","loop":"sn.debug_base"}`,
+	})
+	if err != nil {
+		t.Fatalf("create looped source: %v", err)
+	}
+	database.SourceAddRequire(models.Source_require{Source: loopedID, Require: baseID})
+
+	r := gin.New()
+	r.GET("/data/source/:sourceid/debug", SourceDataDebug)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodGet, fmt.Sprintf("/data/source/%d/debug", loopedID), nil))
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d", w.Code)
+	}
+
+	var payload struct {
+		Value   []interface{}    `json:"value"`
+		Sources []progress.Entry `json:"sources"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &payload); err != nil {
+		t.Fatalf("decode body: %v: %s", err, w.Body.String())
+	}
+	// La valeur reste celle de SourceData : l'itération fautive vaut null.
+	if len(payload.Value) != 2 || payload.Value[1] != nil || payload.Value[0].(map[string]interface{})["ok"] != float64(1) {
+		t.Fatalf("value = %#v", payload.Value)
+	}
+	// Le diagnostic couvre la dépendance et la source, avec la raison de l'échec.
+	if len(payload.Sources) != 2 || payload.Sources[0].Name != "debug_base" || payload.Sources[0].Status != progress.StatusDone {
+		t.Fatalf("sources = %+v", payload.Sources)
+	}
+	looped := payload.Sources[1]
+	if looped.Status != progress.StatusPartial || looped.LoopErrors != 1 || len(looped.Failures) != 1 {
+		t.Fatalf("looped = %+v", looped)
+	}
+	if looped.Failures[0].Key != "1" || !strings.Contains(looped.Failures[0].Message, "json") {
+		t.Fatalf("failure = %+v", looped.Failures[0])
 	}
 }

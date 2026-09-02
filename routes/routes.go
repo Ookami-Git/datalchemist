@@ -52,6 +52,7 @@ func SetupRoutes(r *gin.Engine) {
 		protected.GET("/api/data/item/:itemid", handlers.ItemData)
 		protected.GET("/api/data/item/:itemid/stream", handlers.ItemDataStream)
 		protected.GET("/api/data/source/:sourceid", handlers.SourceData)
+		protected.GET("/api/data/source/:sourceid/debug", handlers.SourceDataDebug)
 
 		protected.DELETE("/api/source/:id", handlers.SourceDelete)
 		protected.POST("/api/source", handlers.SourceUpdate)

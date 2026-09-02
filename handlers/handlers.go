@@ -235,6 +235,18 @@ func SourceData(c *gin.Context) {
 	c.JSON(200, daData)
 }
 
+// SourceDataDebug charge une source comme SourceData, mais renvoie aussi le
+// diagnostic de chargement de chaque source du plan (dépendances incluses) :
+// statut, durée, et raison d'un échec. C'est l'aperçu de l'éditeur de source.
+func SourceDataDebug(c *gin.Context) {
+	id := c.Param("sourceid")
+	data := utils.MakeData(c)
+	tracker := progress.New()
+	daData := utils.SourceToData(id, &data, tracker)
+	tracker.Finish()
+	c.JSON(200, gin.H{"value": daData, "sources": tracker.Snapshot().Sources})
+}
+
 func ItemData(c *gin.Context) {
 	id := c.Param("itemid")
 	daData := utils.MakeData(c)

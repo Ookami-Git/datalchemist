@@ -519,6 +519,13 @@
       "database": "Base de données",
       "text": "Création"
     },
+    "debug": {
+      "title": "Diagnostic de chargement",
+      "all_ok": "aucune source | {n} source chargée sans erreur | {n} sources chargées sans erreur",
+      "has_errors": "{n} source en erreur | {n} sources en erreur",
+      "iteration": "Itération {key}",
+      "more_failures": "et {n} autre itération en erreur non détaillée | et {n} autres itérations en erreur non détaillées"
+    },
     "header": "Source",
     "subtitle": "Configurez le type de source, son format et sa logique de récupération",
     "loading": "Chargement de la source...",
