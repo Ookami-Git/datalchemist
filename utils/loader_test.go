@@ -443,7 +443,10 @@ func TestRunPlanReportsHTTPAndParsingErrors(t *testing.T) {
 	if single.Status != progress.StatusError || !strings.Contains(single.Error, "404") {
 		t.Fatalf("single entry = %+v", single)
 	}
-	if snap := tracker.Snapshot(); snap.Errors != 2 || snap.Done != 2 {
+	// Les trois sources sont terminées, donc comptées dans Done, et deux
+	// d'entre elles ont échoué : le compteur atteint son total pendant que
+	// Errors signale les échecs.
+	if snap := tracker.Snapshot(); snap.Errors != 2 || snap.Done != 3 || snap.Done != snap.Total {
 		t.Fatalf("snapshot = %+v", snap)
 	}
 }

@@ -269,15 +269,17 @@ func (t *Tracker) Snapshot() Snapshot {
 		switch e.status {
 		case StatusDone:
 			snap.Done++
-		case StatusPartial:
-			// Les données sont disponibles (Done) mais une erreur a eu lieu
-			// (Errors) : les deux compteurs progressent.
+		case StatusPartial, StatusError:
+			// Done compte les sources terminées, pas seulement les réussies :
+			// c'est la lecture qu'en fait entryRatio, qui rend 1 pour ces trois
+			// statuts et porte l'anneau à 100 %. Exclure les sources en erreur
+			// laissait le compteur sous son total pendant que l'anneau était
+			// plein, ce qui se lit comme un chargement qui n'en finit pas.
+			// L'échec reste signalé par Errors, qui colore l'indicateur.
 			snap.Done++
 			snap.Errors++
 		case StatusRunning:
 			snap.Running++
-		case StatusError:
-			snap.Errors++
 		}
 		progressSum += ratio
 

@@ -64,7 +64,10 @@ func TestTrackerFailAndFinish(t *testing.T) {
 	tracker.Finish()
 
 	snap := tracker.Snapshot()
-	if snap.Errors != 1 || !snap.Finished || snap.Percent != 100 {
+	// Une source en erreur est terminée : elle compte dans Done, comme
+	// l'anneau la compte déjà dans Percent. Sans quoi le compteur reste sous
+	// son total alors que le chargement est fini.
+	if snap.Errors != 1 || snap.Done != 1 || snap.Done != snap.Total || !snap.Finished || snap.Percent != 100 {
 		t.Fatalf("snapshot = %+v", snap)
 	}
 	if snap.Sources[0].Error != "boom" || snap.Sources[0].Status != StatusError {
