@@ -6,12 +6,14 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	"datalchemist/database"
 	"datalchemist/models"
+	"datalchemist/utils/progress"
 
 	"github.com/spf13/viper"
 )
@@ -297,5 +299,136 @@ func TestRunPlanBreaksCircularDependencies(t *testing.T) {
 	case <-finished:
 	case <-time.After(5 * time.Second):
 		t.Fatal("circular dependency deadlocked the loader")
+	}
+}
+
+// Une itération de boucle qui panique (ici : type "sqlite" sans "path", donc
+// assertion de type sur nil) ne doit ni faire tomber le process ni la source :
+// sa valeur vaut nil et le tracker signale un chargement partiel.
+func TestRunPlanLoopIterationPanicYieldsNull(t *testing.T) {
+	setupTestDatabase(t)
+
+	baseID := createSource(t, "loop_panic_base", `{"src":"text","type":"json","query":"[{\"type\":\"text\"},{\"type\":\"sqlite\"},{\"type\":\"text\"}]"}`)
+	loopedID := createSource(t, "loop_panic_looped", `{"src":"text","type":"{{ item.type }}","query":"value","loop":"sn.loop_panic_base"}`)
+	database.SourceAddRequire(models.Source_require{Source: loopedID, Require: baseID})
+
+	plan, _, err := PlanForSource(fmt.Sprint(loopedID))
+	if err != nil {
+		t.Fatalf("plan source: %v", err)
+	}
+
+	tracker := progress.New()
+	data := newTestData()
+	RunPlan(plan, &data, tracker, nil)
+
+	values, ok := data["sn"].(map[string]interface{})["loop_panic_looped"].([]interface{})
+	if !ok || len(values) != 3 {
+		t.Fatalf("looped source = %#v", data["sn"].(map[string]interface{})["loop_panic_looped"])
+	}
+	if values[0] != "value" || values[1] != nil || values[2] != "value" {
+		t.Fatalf("looped values = %#v", values)
+	}
+
+	var entry progress.Entry
+	for _, source := range tracker.Snapshot().Sources {
+		if source.Name == "loop_panic_looped" {
+			entry = source
+		}
+	}
+	if entry.Status != progress.StatusPartial || entry.LoopErrors != 1 || entry.LoopDone != 3 || entry.Error == "" {
+		t.Fatalf("looped entry = %+v", entry)
+	}
+	if tracker.Snapshot().Errors != 1 {
+		t.Fatalf("snapshot = %+v", tracker.Snapshot())
+	}
+}
+
+// Même garantie pour une boucle sur un objet : la clé fautive vaut nil.
+func TestRunPlanLoopMapIterationPanicYieldsNull(t *testing.T) {
+	setupTestDatabase(t)
+
+	baseID := createSource(t, "loop_map_panic_base", `{"src":"text","type":"json","query":"{\"ok\":{\"type\":\"text\"},\"ko\":{\"type\":\"sqlite\"}}"}`)
+	loopedID := createSource(t, "loop_map_panic_looped", `{"src":"text","type":"{{ item.type }}","query":"value","loop":"sn.loop_map_panic_base"}`)
+	database.SourceAddRequire(models.Source_require{Source: loopedID, Require: baseID})
+
+	plan, _, err := PlanForSource(fmt.Sprint(loopedID))
+	if err != nil {
+		t.Fatalf("plan source: %v", err)
+	}
+
+	tracker := progress.New()
+	data := newTestData()
+	RunPlan(plan, &data, tracker, nil)
+
+	values, ok := data["sn"].(map[string]interface{})["loop_map_panic_looped"].(map[string]interface{})
+	if !ok || len(values) != 2 {
+		t.Fatalf("looped source = %#v", data["sn"].(map[string]interface{})["loop_map_panic_looped"])
+	}
+	if values["ok"] != "value" || values["ko"] != nil {
+		t.Fatalf("looped values = %#v", values)
+	}
+	if tracker.Snapshot().Errors != 1 {
+		t.Fatalf("snapshot = %+v", tracker.Snapshot())
+	}
+}
+
+// Une erreur HTTP sur une itération vaut nil pour celle-ci et un chargement
+// partiel pour la source ; sur une source simple, la source passe en erreur.
+func TestRunPlanReportsHTTPAndParsingErrors(t *testing.T) {
+	setupTestDatabase(t)
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/ok":
+			w.Write([]byte(`{"ok":true}`))
+		case "/broken":
+			w.Write([]byte(`{not json`))
+		default:
+			http.Error(w, "missing", http.StatusNotFound)
+		}
+	}))
+	defer server.Close()
+
+	baseID := createSource(t, "http_errors_base", `{"src":"text","type":"json","query":"[\"/ok\",\"/missing\",\"/broken\"]"}`)
+	loopedID := createSource(t, "http_errors_looped", fmt.Sprintf(`{"src":"url","type":"json","path":"%s{{ item }}","loop":"sn.http_errors_base"}`, server.URL))
+	database.SourceAddRequire(models.Source_require{Source: loopedID, Require: baseID})
+	singleID := createSource(t, "http_errors_single", fmt.Sprintf(`{"src":"url","type":"json","path":"%s/missing"}`, server.URL))
+	itemID := createItem(t, "http_errors_item", loopedID, singleID)
+
+	plan, err := PlanForItem(fmt.Sprint(itemID))
+	if err != nil {
+		t.Fatalf("plan item: %v", err)
+	}
+
+	tracker := progress.New()
+	data := newTestData()
+	RunPlan(plan, &data, tracker, nil)
+	sn := data["sn"].(map[string]interface{})
+
+	values, ok := sn["http_errors_looped"].([]interface{})
+	if !ok || len(values) != 3 {
+		t.Fatalf("looped source = %#v", sn["http_errors_looped"])
+	}
+	if values[0].(map[string]interface{})["ok"] != true || values[1] != nil || values[2] != nil {
+		t.Fatalf("looped values = %#v", values)
+	}
+	if sn["http_errors_single"] != nil {
+		t.Fatalf("single source = %#v", sn["http_errors_single"])
+	}
+
+	entries := make(map[string]progress.Entry)
+	for _, source := range tracker.Snapshot().Sources {
+		entries[source.Name] = source
+	}
+	looped := entries["http_errors_looped"]
+	if looped.Status != progress.StatusPartial || looped.LoopErrors != 2 || looped.Error == "" {
+		t.Fatalf("looped entry = %+v", looped)
+	}
+	single := entries["http_errors_single"]
+	if single.Status != progress.StatusError || !strings.Contains(single.Error, "404") {
+		t.Fatalf("single entry = %+v", single)
+	}
+	if snap := tracker.Snapshot(); snap.Errors != 2 || snap.Done != 2 {
+		t.Fatalf("snapshot = %+v", snap)
 	}
 }

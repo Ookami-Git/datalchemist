@@ -49,6 +49,7 @@ const statusIcon = (status) => {
     switch (status) {
         case 'done': return 'bi-check-circle-fill';
         case 'error': return 'bi-exclamation-triangle-fill';
+        case 'partial': return 'bi-exclamation-circle-fill';
         case 'running': return 'bi-arrow-repeat';
         default: return 'bi-clock';
     }
@@ -100,6 +101,9 @@ const toggle = () => {
                                     {{ source.percent }}% ({{ source.loopdone }}/{{ source.looptotal }})
                                 </span>
                                 <span v-else>{{ $t(`dataprogress.status.${source.status}`) }}</span>
+                                <span v-if="source.looperrors" class="dc-progress__loop-errors">
+                                    {{ $t('dataprogress.loopErrors', source.looperrors) }}
+                                </span>
                                 <span v-if="source.duration" class="dc-progress__duration">
                                     {{ formatDuration(source.duration) }}
                                 </span>
@@ -363,7 +367,8 @@ const toggle = () => {
     color: var(--progress-secondary);
 }
 
-.dc-progress__source.is-error .dc-progress__source-icon {
+.dc-progress__source.is-error .dc-progress__source-icon,
+.dc-progress__source.is-partial .dc-progress__source-icon {
     color: var(--progress-danger);
 }
 
@@ -414,9 +419,14 @@ const toggle = () => {
     font-variant-numeric: tabular-nums;
 }
 
-.dc-progress__duration::before {
+.dc-progress__duration::before,
+.dc-progress__loop-errors::before {
     content: '·';
     margin-right: 0.3rem;
+}
+
+.dc-progress__loop-errors {
+    color: var(--progress-danger);
 }
 
 .dc-progress__bar {

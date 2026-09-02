@@ -604,11 +604,13 @@
     "show": "Afficher le détail du chargement",
     "hide": "Masquer le détail du chargement",
     "loop": "Boucle",
+    "loopErrors": "aucune itération en erreur | {n} itération en erreur | {n} itérations en erreur",
     "status": {
       "pending": "En attente",
       "running": "Chargement...",
       "done": "Chargée",
-      "error": "Erreur"
+      "error": "Erreur",
+      "partial": "Chargée avec erreurs"
     }
   },
   "password": {

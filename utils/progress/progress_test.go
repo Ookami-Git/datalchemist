@@ -133,3 +133,51 @@ func TestTrackerConcurrentUpdates(t *testing.T) {
 		t.Fatalf("loop done = %d", done)
 	}
 }
+
+func TestTrackerLoopFailMarksSourcePartial(t *testing.T) {
+	tracker := New()
+	tracker.Expect("looped", 3)
+	tracker.Start("looped", 3)
+	tracker.SetLoop("looped", 3)
+	tracker.LoopStep("looped")
+	tracker.LoopFail("looped", "first boom")
+	tracker.LoopStep("looped")
+	tracker.LoopFail("looped", "second boom")
+	tracker.LoopStep("looped")
+	tracker.Done("looped")
+	tracker.Finish()
+
+	snap := tracker.Snapshot()
+	// Les données sont disponibles (Done) et une erreur a eu lieu (Errors).
+	if snap.Done != 1 || snap.Errors != 1 || snap.Percent != 100 {
+		t.Fatalf("snapshot = %+v", snap)
+	}
+	entry := snap.Sources[0]
+	if entry.Status != StatusPartial || entry.LoopErrors != 2 || entry.LoopDone != 3 {
+		t.Fatalf("entry = %+v", entry)
+	}
+	// Seul le premier message est conservé.
+	if entry.Error != "first boom" {
+		t.Fatalf("entry error = %q", entry.Error)
+	}
+
+	// Une source partielle ne doit pas repasser en "done".
+	tracker.Done("looped")
+	if status := tracker.Snapshot().Sources[0].Status; status != StatusPartial {
+		t.Fatalf("status = %s", status)
+	}
+}
+
+func TestTrackerDoneWithoutLoopErrorsStaysDone(t *testing.T) {
+	tracker := New()
+	tracker.Start("looped", 1)
+	tracker.SetLoop("looped", 2)
+	tracker.LoopStep("looped")
+	tracker.LoopStep("looped")
+	tracker.Done("looped")
+
+	snap := tracker.Snapshot()
+	if snap.Errors != 0 || snap.Sources[0].Status != StatusDone || snap.Sources[0].LoopErrors != 0 {
+		t.Fatalf("snapshot = %+v", snap)
+	}
+}

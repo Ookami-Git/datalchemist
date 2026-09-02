@@ -604,11 +604,13 @@
     "show": "Show loading details",
     "hide": "Hide loading details",
     "loop": "Loop",
+    "loopErrors": "no failed iteration | {n} failed iteration | {n} failed iterations",
     "status": {
       "pending": "Pending",
       "running": "Loading...",
       "done": "Loaded",
-      "error": "Error"
+      "error": "Error",
+      "partial": "Loaded with errors"
     }
   },
   "password": {

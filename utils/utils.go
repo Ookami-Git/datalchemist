@@ -106,25 +106,50 @@ func ViewToData(id string, data *map[string]interface{}, tracker *progress.Track
 	RunPlan(plan, data, tracker, nil)
 }
 
-func GetSourceContent(daSource map[string]interface{}) interface{} {
+// sourceField retourne un champ texte de la définition de source, ou une
+// erreur lisible s'il manque : mieux qu'une panique d'assertion de type.
+func sourceField(daSource map[string]interface{}, key string) (string, error) {
+	value, ok := daSource[key].(string)
+	if !ok {
+		return "", fmt.Errorf("source: missing field %q", key)
+	}
+	return value, nil
+}
+
+// GetSourceContent récupère puis décode le contenu d'une source. Toute erreur
+// de récupération (fichier, HTTP, commande, SQL) ou de décodage est renvoyée :
+// l'appelant décide de la signaler et remplace la valeur par nil.
+func GetSourceContent(daSource map[string]interface{}) (interface{}, error) {
 	var content string
 	var parameters map[string]interface{}
 
+	src, _ := daSource["src"].(string)
 	if para, ok := daSource["parameters"].(map[string]interface{}); ok {
-		if ok = para[daSource["src"].(string)] != nil; ok {
-			parameters = para[daSource["src"].(string)].(map[string]interface{})
-		}
+		parameters, _ = para[src].(map[string]interface{})
 	}
 
-	switch daSource["src"] {
-	case "file":
-		content = FileContent(daSource["path"].(string))
-	case "url":
-		content = UrlContent(daSource["path"].(string), parameters)
-	case "execute":
-		content = ExecuteContent(daSource["path"].(string))
-	case "text":
-		content = daSource["query"].(string)
+	if src == "file" || src == "url" || src == "execute" || src == "text" {
+		field := "path"
+		if src == "text" {
+			field = "query"
+		}
+		value, err := sourceField(daSource, field)
+		if err != nil {
+			return nil, err
+		}
+		switch src {
+		case "file":
+			content, err = FileContent(value)
+		case "url":
+			content, err = UrlContent(value, parameters)
+		case "execute":
+			content, err = ExecuteContent(value)
+		case "text":
+			content = value
+		}
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	switch daSource["type"] {
@@ -138,17 +163,25 @@ func GetSourceContent(daSource map[string]interface{}) interface{} {
 		return HclToObject(content)
 	case "csv":
 		return CsvToObject(content)
-	case "text": 
-		return content
-	case "sqlite":
-		return SQLToObject(daSource["path"].(string), daSource["query"].(string), "sqlite3")
-	case "postgres":
-		return SQLToObject(daSource["path"].(string), daSource["query"].(string), "postgres")
-	case "mysql":
-		return SQLToObject(daSource["path"].(string), daSource["query"].(string), "mysql")
+	case "text":
+		return content, nil
+	case "sqlite", "postgres", "mysql":
+		path, err := sourceField(daSource, "path")
+		if err != nil {
+			return nil, err
+		}
+		query, err := sourceField(daSource, "query")
+		if err != nil {
+			return nil, err
+		}
+		dbtype := daSource["type"].(string)
+		if dbtype == "sqlite" {
+			dbtype = "sqlite3"
+		}
+		return SQLToObject(path, query, dbtype)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func SearchInMap(daMap map[string]interface{}, path string) interface{} {
@@ -223,30 +256,18 @@ func RenderAllStrings(obj interface{}, data map[string]interface{}) interface{} 
     }
 }
 
-func FileContent(filePath string) string {
-	// Ouvrir le fichier
-	file, err := os.Open(filePath)
+func FileContent(filePath string) (string, error) {
+	content, err := os.ReadFile(filePath)
 	if err != nil {
-		fmt.Println("Error open file :", err)
-		return ""
+		return "", fmt.Errorf("file: %w", err)
 	}
-	defer file.Close()
-
-	// Lire le contenu du fichier
-	content, err := io.ReadAll(file)
-	if err != nil {
-		fmt.Println("Error read file :", err)
-		return ""
-	}
-
-	return string(content)
+	return string(content), nil
 }
 
-func UrlContent(urlget string, parameters map[string]interface{}) string {
+func UrlContent(urlget string, parameters map[string]interface{}) (string, error) {
 	req, err := http.NewRequest("GET", urlget, nil)
 	if err != nil {
-		fmt.Println("URL - Request error :", err)
-		return ""
+		return "", fmt.Errorf("url: %w", err)
 	}
 
 	aws_auth := false
@@ -261,10 +282,9 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 			if proxyUrl != "" {
 				proxy, err := url.Parse(proxyUrl)
 				if err != nil {
-					fmt.Println("URL - Proxy configuration error :", err)
-				} else {
-					tr.Proxy = http.ProxyURL(proxy)
+					return "", fmt.Errorf("url: proxy configuration: %w", err)
 				}
+				tr.Proxy = http.ProxyURL(proxy)
 			}
 		case "skipverify":
 			skipverify := value.(bool)
@@ -295,14 +315,12 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 			if ok && jsondata != "" {
 				var jsonObject map[string]interface{}
 				if err := json.Unmarshal([]byte(jsondata), &jsonObject); err != nil {
-					log.Printf("JSON format error: %v", err)
-					return ""
+					return "", fmt.Errorf("url: request body is not valid JSON: %w", err)
 				}
 
 				validJSON, err := json.Marshal(jsonObject)
 				if err != nil {
-					log.Printf("Error during JSON reconversion: %v", err)
-					return ""
+					return "", fmt.Errorf("url: request body: %w", err)
 				}
 
 				req.Body = io.NopCloser(strings.NewReader(string(validJSON)))
@@ -316,10 +334,8 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 
 	// Traiter aws_auth après avoir configuré le corps de la requête
 	if aws_auth {
-		err := signAWSRequest(req, awsSigV4)
-		if err != nil {
-			fmt.Println("URL - AWS SigV4 signing error :", err)
-			return ""
+		if err := signAWSRequest(req, awsSigV4); err != nil {
+			return "", fmt.Errorf("url: AWS SigV4 signing: %w", err)
 		}
 	}
 
@@ -327,19 +343,22 @@ func UrlContent(urlget string, parameters map[string]interface{}) string {
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Println("URL - Request error :", err)
-		return ""
+		return "", fmt.Errorf("url: %w", err)
 	}
 	defer response.Body.Close()
 
-	// Lire le contenu de la réponse
 	content, err := io.ReadAll(response.Body)
 	if err != nil {
-		fmt.Println("URL - Reading response error :", err)
-		return ""
+		return "", fmt.Errorf("url: reading response: %w", err)
 	}
 
-	return string(content)
+	// Une réponse d'erreur HTTP est une erreur de chargement : son corps n'est
+	// pas la donnée attendue.
+	if response.StatusCode >= 400 {
+		return "", fmt.Errorf("url: HTTP %s", response.Status)
+	}
+
+	return string(content), nil
 }
 
 func signAWSRequest(req *http.Request, awsSigV4 map[string]interface{}) error {
@@ -390,78 +409,49 @@ func payloadHash(body io.ReadSeeker) string {
 	return hex.EncodeToString(hasher.Sum(nil))
 }
 
-func ExecuteContent(commande string) string {
-	// run a command with output
-	err, content, _ := gosh.RunOutput(commande)
-
+func ExecuteContent(commande string) (string, error) {
+	err, content, stderr := gosh.RunOutput(commande)
 	if err != nil {
-		fmt.Println("Error during execution command :", err)
-		return ""
+		return "", fmt.Errorf("execute: %w: %s", err, strings.TrimSpace(stderr))
 	}
-
-	return content
+	return content, nil
 }
 
-func HclToObject(hclData string) interface{} {
-	// Déclarer une variable pour stocker l'objet
-	//var data interface{}
-
+func HclToObject(hclData string) (interface{}, error) {
 	// Conversion HCL → JSON → map[string]interface{}
 	dataJson, err := convert.Bytes([]byte(hclData), "", convert.Options{})
-	if checkErr(err) {
-		return nil
+	if err != nil {
+		return nil, fmt.Errorf("hcl: %w", err)
 	}
-
-	data := JsonToObject(string(dataJson))
-
-	return data
+	return JsonToObject(string(dataJson))
 }
 
-func JsonToObject(jsonData string) interface{} {
-	// Déclarer une variable pour stocker l'objet
+func JsonToObject(jsonData string) (interface{}, error) {
 	var data interface{}
-
-	// Utiliser json.Unmarshal pour transformer le JSON en objet
-	err := json.Unmarshal([]byte(jsonData), &data)
-	if checkErr(err) {
-		return nil
+	if err := json.Unmarshal([]byte(jsonData), &data); err != nil {
+		return nil, fmt.Errorf("json: %w", err)
 	}
-
-	//fmt.Printf("%+v", data)
-
-	return data
+	return data, nil
 }
 
-func YamlToObject(yamlData string) interface{} {
-	// Déclarer une variable pour stocker l'objet
+func YamlToObject(yamlData string) (interface{}, error) {
 	var data interface{}
-
-	// Utiliser yaml.Unmarshal pour transformer le YAML en objet
-	err := yaml.Unmarshal([]byte(yamlData), &data)
-	if checkErr(err) {
-		return nil
+	if err := yaml.Unmarshal([]byte(yamlData), &data); err != nil {
+		return nil, fmt.Errorf("yaml: %w", err)
 	}
-
-	//fmt.Printf("%+v", data)
-
-	dataFormated := dyno.ConvertMapI2MapS(data)
-
-	return dataFormated
+	return dyno.ConvertMapI2MapS(data), nil
 }
 
-func XmlToObject(xmlData string) interface{} {
+func XmlToObject(xmlData string) (interface{}, error) {
 	decoder := xml2map.NewDecoder(strings.NewReader(xmlData))
 	data, err := decoder.Decode()
-	if checkErr(err) {
-		return nil
+	if err != nil {
+		return nil, fmt.Errorf("xml: %w", err)
 	}
-
-	//fmt.Printf("%+v", data)
-
-	return data
+	return data, nil
 }
 
-func SQLToObject(connectionString string, query string, dbtype string) ([]map[string]interface{}) {
+func SQLToObject(connectionString string, query string, dbtype string) ([]map[string]interface{}, error) {
 	var db *gorm.DB
 	var err error
 
@@ -473,30 +463,28 @@ func SQLToObject(connectionString string, query string, dbtype string) ([]map[st
 	case "postgres":
 		db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{})
 	default:
-		return nil
+		return nil, fmt.Errorf("sql: unsupported database type %q", dbtype)
 	}
 
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("sql: connection: %w", err)
 	}
 
 	sqlDB, err := db.DB()
-
-	if err != nil {	
-		return nil
+	if err != nil {
+		return nil, fmt.Errorf("sql: connection: %w", err)
 	}
-
 	defer sqlDB.Close()
 
 	rows, err := db.Raw(query).Rows()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("sql: query: %w", err)
 	}
 	defer rows.Close()
 
 	columns, err := rows.Columns()
 	if err != nil {
-		return nil
+		return nil, fmt.Errorf("sql: %w", err)
 	}
 
 	var result []map[string]interface{}
@@ -509,7 +497,7 @@ func SQLToObject(connectionString string, query string, dbtype string) ([]map[st
 		}
 
 		if err := rows.Scan(pointers...); err != nil {
-			return nil
+			return nil, fmt.Errorf("sql: %w", err)
 		}
 
 		rowData := make(map[string]interface{})
@@ -525,8 +513,9 @@ func SQLToObject(connectionString string, query string, dbtype string) ([]map[st
 		result = append(result, rowData)
 	}
 
-	return result
+	return result, nil
 }
+
 func checkErr(err error) bool {
 	if err != nil {
 		log.Print("ERROR utils :", err)
@@ -687,27 +676,27 @@ func SecretsMigrate(oldSecretKey string, newSecretKey string) error {
 	return nil
 }
 
-func CsvToObject(csvData string) interface{} {
-    reader := csv.NewReader(strings.NewReader(csvData))
-    records, err := reader.ReadAll()
-    if checkErr(err) {
-        return nil
-    }
-    if len(records) < 1 {
-        return []map[string]interface{}{}
-    }
-    headers := records[0]
-    var result []map[string]interface{}
-    for _, row := range records[1:] {
-        obj := make(map[string]interface{})
-        for i, header := range headers {
-            if i < len(row) {
-                obj[header] = row[i]
-            }
-        }
-        result = append(result, obj)
-    }
-    return result
+func CsvToObject(csvData string) (interface{}, error) {
+	reader := csv.NewReader(strings.NewReader(csvData))
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("csv: %w", err)
+	}
+	if len(records) < 1 {
+		return []map[string]interface{}{}, nil
+	}
+	headers := records[0]
+	var result []map[string]interface{}
+	for _, row := range records[1:] {
+		obj := make(map[string]interface{})
+		for i, header := range headers {
+			if i < len(row) {
+				obj[header] = row[i]
+			}
+		}
+		result = append(result, obj)
+	}
+	return result, nil
 }
 
 // Custom filter for Gonja
