@@ -22,6 +22,7 @@ Datalchemist is an open-source data orchestration platform that makes it easy to
 - `models/` - domain models
 - `middlewares/`, `token/`, `utils/`, `secrets/` - helper modules
 - `web/` - Vue frontend static app
+- `.claude/skills/` - skills for AI coding assistants (see [AI assistant skill](#-ai-assistant-skill))
 
 ## 📦 Installation
 
@@ -308,6 +309,8 @@ secrets/<id>/secret.json  # encrypted value
 
 Files can be edited from GitLab or GitHub: JSON is normalized on the way in, and the canonical form is pushed back on the next cycle.
 
+An AI coding assistant working in a clone of that repository has a dedicated skill describing the layout, the canonical file formats and the identifier rules: see [AI assistant skill](#-ai-assistant-skill).
+
 ## 🧭 YAML Navigation Menu
 
 ```yaml
@@ -467,6 +470,14 @@ Available events: `vueflow:nodeClick`, `vueflow:nodeDoubleClick`,
 - Frontend: `cd web && pnpm dev`
 - Backend: `go build` and relaunch service
 - Database: `datalchsmist.sqlite` in app working directory
+
+## 🤖 AI Assistant Skill
+
+`.claude/skills/datalchemist-content/SKILL.md` is a skill for Claude Code (and a readable reference for anyone else) explaining how to author content — sources, items and views — by editing the Git mirror of an instance directly.
+
+It covers the repository layout and the canonical form of every file, how to pick identifiers and wire links (`requires`, `sources`, `itemid`), the synchronization cycle and its conflicts, the JSON schema of a source definition per `src` type, the templating contexts (Gonja server-side for sources, Nunjucks browser-side for items), the view layout formats, and the REST API as a fallback for writing and for previewing the result.
+
+Secrets are deliberately out of scope: the skill instructs the assistant never to write under `secrets/` nor to inline a sensitive value, and to have you create secrets by hand in **Settings › Secrets** and reference them by name with `{{ secret.name | secret }}`.
 
 ## 🤝 Contribution
 

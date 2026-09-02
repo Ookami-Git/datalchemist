@@ -39,6 +39,8 @@ tmp/
 
 # Local credentials for AI coding CLIs (normally stored in Docker volumes)
 .codex/
-.claude/
+.claude/*
+# ... sauf les skills, qui font partie du dépôt
+!.claude/skills/
 .claude.json
 .config/antigravity/
