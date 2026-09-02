@@ -6,7 +6,7 @@ require (
 	github.com/gin-contrib/static v1.1.6
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-ldap/ldap/v3 v3.4.13
-	github.com/go-sql-driver/mysql v1.10.0 // indirect
+	github.com/go-sql-driver/mysql v1.10.0
 	github.com/sbabiv/xml2map v1.2.1
 	github.com/spf13/pflag v1.0.10
 	github.com/spf13/viper v1.21.0
@@ -17,13 +17,14 @@ require (
 require (
 	github.com/abdfnx/gosh v0.4.0
 	github.com/aws/aws-sdk-go-v2 v1.42.0
+	github.com/gin-contrib/gzip v1.2.6
+	github.com/glebarez/go-sqlite v1.22.0
 	github.com/glebarez/sqlite v1.11.0
 	github.com/go-git/go-billy/v5 v5.9.0
 	github.com/go-git/go-git/v5 v5.19.2
+	github.com/jackc/pgx/v5 v5.10.0
 	github.com/nikolalohinski/gonja/v2 v2.8.0
 	github.com/tmccombs/hcl2json v0.6.9
-	gorm.io/driver/mysql v1.6.0
-	gorm.io/driver/postgres v1.6.0
 )
 
 require (
@@ -40,8 +41,6 @@ require (
 	github.com/cloudwego/base64x v0.1.7 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/gin-contrib/gzip v1.2.6 // indirect
-	github.com/glebarez/go-sqlite v1.22.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
@@ -49,7 +48,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.10.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect

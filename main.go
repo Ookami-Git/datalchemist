@@ -41,9 +41,9 @@ func main() {
 	viper.SetDefault("bootstrap_admin_password_file", "")
 	viper.SetDefault("reset_admin_username", "admin")
 	viper.SetDefault("reset_admin_password_file", "")
-	// Garde-fou contre un hôte distant qui cesse de répondre au milieu d'une
-	// source URL, voir utils.sourceHTTPTimeout. Zéro rétablit l'attente
-	// illimitée.
+	// Garde-fou contre un système distant qui cesse de répondre au milieu d'une
+	// source, URL comme base de données, voir utils.sourceTimeout. Zéro
+	// rétablit l'attente illimitée.
 	viper.SetDefault("source_timeout", 300)
 	//viper.SetDefault("output", "datalchemist.log")
 
@@ -59,7 +59,7 @@ func main() {
 	pflag.String("bootstrap-admin-password-file", viper.GetString("bootstrap_admin_password_file"), "Path to a file containing the first administrator password")
 	pflag.String("reset-admin-username", viper.GetString("reset_admin_username"), "Existing local administrator username to reset")
 	pflag.String("reset-admin-password-file", viper.GetString("reset_admin_password_file"), "Path to a file containing a replacement administrator password")
-	pflag.Int("source-timeout", viper.GetInt("source_timeout"), "Maximum duration in seconds of a URL source request, 0 to wait indefinitely")
+	pflag.Int("source-timeout", viper.GetInt("source_timeout"), "Maximum duration in seconds of a source request to a remote system (URL or database), 0 to wait indefinitely")
 	pflag.Parse()
 
 	// Lier les flags à viper
