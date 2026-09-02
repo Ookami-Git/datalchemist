@@ -41,6 +41,10 @@ func main() {
 	viper.SetDefault("bootstrap_admin_password_file", "")
 	viper.SetDefault("reset_admin_username", "admin")
 	viper.SetDefault("reset_admin_password_file", "")
+	// Garde-fou contre un système distant qui cesse de répondre au milieu d'une
+	// source, URL comme base de données, voir utils.sourceTimeout. Zéro
+	// rétablit l'attente illimitée.
+	viper.SetDefault("source_timeout", 300)
 	//viper.SetDefault("output", "datalchemist.log")
 
 	// Définir les flags
@@ -55,6 +59,7 @@ func main() {
 	pflag.String("bootstrap-admin-password-file", viper.GetString("bootstrap_admin_password_file"), "Path to a file containing the first administrator password")
 	pflag.String("reset-admin-username", viper.GetString("reset_admin_username"), "Existing local administrator username to reset")
 	pflag.String("reset-admin-password-file", viper.GetString("reset_admin_password_file"), "Path to a file containing a replacement administrator password")
+	pflag.Int("source-timeout", viper.GetInt("source_timeout"), "Maximum duration in seconds of a source request to a remote system (URL or database), 0 to wait indefinitely")
 	pflag.Parse()
 
 	// Lier les flags à viper
@@ -69,6 +74,7 @@ func main() {
 	viper.BindPFlag("bootstrap_admin_password_file", pflag.Lookup("bootstrap-admin-password-file"))
 	viper.BindPFlag("reset_admin_username", pflag.Lookup("reset-admin-username"))
 	viper.BindPFlag("reset_admin_password_file", pflag.Lookup("reset-admin-password-file"))
+	viper.BindPFlag("source_timeout", pflag.Lookup("source-timeout"))
 
 	viper.SetConfigName(".datalchemist") // name of config file (without extension)
 	viper.SetConfigType("yaml")          // REQUIRED if the config file does not have the extension in the name
@@ -174,6 +180,7 @@ func main() {
 	log.Printf("Build at \t\t %s", date)
 	log.Printf("Database location \t %s", database_path)
 	log.Printf("Session duration \t %d", session_duration)
+	log.Printf("Source timeout \t %d", viper.GetInt("source_timeout"))
 	log.Printf("Server port \t %s", listen)
 	if has_secretkey {
 		log.Printf("Enable secrets \t %t", has_secretkey)

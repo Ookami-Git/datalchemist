@@ -443,7 +443,78 @@ func TestRunPlanReportsHTTPAndParsingErrors(t *testing.T) {
 	if single.Status != progress.StatusError || !strings.Contains(single.Error, "404") {
 		t.Fatalf("single entry = %+v", single)
 	}
-	if snap := tracker.Snapshot(); snap.Errors != 2 || snap.Done != 2 {
+	// Les trois sources sont terminées, donc comptées dans Done, et deux
+	// d'entre elles ont échoué : le compteur atteint son total pendant que
+	// Errors signale les échecs.
+	if snap := tracker.Snapshot(); snap.Errors != 2 || snap.Done != 3 || snap.Done != snap.Total {
 		t.Fatalf("snapshot = %+v", snap)
+	}
+}
+
+// Un hôte qui accepte la connexion puis ne répond jamais ne doit pas retenir la
+// source indéfiniment : sans borne, l'itération bloque sa goroutine, wg.Wait ne
+// rend jamais la main, loadSource n'atteint pas son `defer tracker.Done`, et
+// l'indicateur de chargement reste figé sur un avancement partiel.
+func TestRunPlanLoopUnresponsiveHostDoesNotHang(t *testing.T) {
+	setupTestDatabase(t)
+
+	previous := viper.GetInt("source_timeout")
+	viper.Set("source_timeout", 1)
+	defer viper.Set("source_timeout", previous)
+
+	release := make(chan struct{})
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/hang" {
+			// Ne répond jamais de lui-même : seule l'expiration côté client, ou
+			// la fin du test, débloque cette requête.
+			select {
+			case <-release:
+			case <-r.Context().Done():
+			}
+			return
+		}
+		w.Write([]byte(`{"ok":true}`))
+	}))
+	defer server.Close()
+	defer close(release)
+
+	baseID := createSource(t, "hang_base", `{"src":"text","type":"json","query":"[\"/ok\",\"/hang\"]"}`)
+	loopedID := createSource(t, "hang_looped", fmt.Sprintf(`{"src":"url","type":"json","path":"%s{{ item }}","loop":"sn.hang_base"}`, server.URL))
+	database.SourceAddRequire(models.Source_require{Source: loopedID, Require: baseID})
+
+	plan, _, err := PlanForSource(fmt.Sprint(loopedID))
+	if err != nil {
+		t.Fatalf("plan source: %v", err)
+	}
+
+	tracker := progress.New()
+	data := newTestData()
+
+	// RunPlan doit rendre la main. Sans le garde-fou il boucle sans fin : on
+	// échoue explicitement plutôt que de bloquer toute la suite de tests.
+	finished := make(chan struct{})
+	go func() {
+		RunPlan(plan, &data, tracker, nil)
+		close(finished)
+	}()
+	select {
+	case <-finished:
+	case <-time.After(30 * time.Second):
+		t.Fatal("RunPlan n'a pas rendu la main : la source reste bloquée sur l'hôte muet")
+	}
+
+	var entry progress.Entry
+	for _, source := range tracker.Snapshot().Sources {
+		if source.Name == "hang_looped" {
+			entry = source
+		}
+	}
+	// La source est terminée, l'itération muette comptée en erreur, et
+	// l'avancement atteint son total : l'indicateur ne reste pas figé.
+	if entry.Status != progress.StatusPartial {
+		t.Fatalf("status = %q, attendu %q (entry = %+v)", entry.Status, progress.StatusPartial, entry)
+	}
+	if entry.LoopErrors != 1 || entry.LoopDone != entry.LoopTotal {
+		t.Fatalf("entry = %+v", entry)
 	}
 }

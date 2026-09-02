@@ -4,6 +4,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"crypto/tls"
 	"datalchemist/database"
 	"datalchemist/utils/progress"
@@ -34,10 +35,11 @@ import (
 	"github.com/nikolalohinski/gonja/v2/exec"
 	"github.com/tmccombs/hcl2json/convert"
 
-	"github.com/glebarez/sqlite"
-	"gorm.io/driver/mysql"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	// Pilotes SQL des sources base de données, enregistrés auprès de
+	// database/sql sous les noms "sqlite", "mysql" et "pgx".
+	_ "github.com/glebarez/go-sqlite"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/jackc/pgx/v5/stdlib"
 
 	"github.com/sbabiv/xml2map"
 	"github.com/tidwall/gjson"
@@ -339,7 +341,7 @@ func UrlContent(urlget string, parameters map[string]interface{}) (string, error
 		}
 	}
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: tr, Timeout: sourceTimeout()}
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -359,6 +361,26 @@ func UrlContent(urlget string, parameters map[string]interface{}) (string, error
 	}
 
 	return string(content), nil
+}
+
+// sourceTimeout borne la durée d'un appel de source vers un système distant :
+// requête URL (en-têtes et corps compris) comme connexion et requête d'une base
+// de données. Sans borne, un hôte qui accepte la connexion puis cesse de
+// répondre bloque la goroutine indéfiniment : dans une source qui boucle, les
+// itérations restantes saturent alors le sémaphore, loadSource n'atteint jamais
+// son `defer tracker.Done`, et l'indicateur de chargement reste figé sur un
+// avancement partiel — le chargement de la vue ne se termine plus.
+//
+// La valeur par défaut est large : elle n'est pas un budget de performance mais
+// un garde-fou contre une connexion morte. Un déploiement qui interroge des
+// endpoints ou des bases légitimement plus lents la relève par `source_timeout`
+// (secondes) ; zéro rétablit l'attente illimitée.
+func sourceTimeout() time.Duration {
+	seconds := viper.GetInt("source_timeout")
+	if seconds <= 0 {
+		return 0
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 func signAWSRequest(req *http.Request, awsSigV4 map[string]interface{}) error {
@@ -452,31 +474,39 @@ func XmlToObject(xmlData string) (interface{}, error) {
 }
 
 func SQLToObject(connectionString string, query string, dbtype string) ([]map[string]interface{}, error) {
-	var db *gorm.DB
-	var err error
-
+	// Le passage par database/sql plutôt que par gorm est ce qui rend l'appel
+	// interruptible : gorm.Open joint la base pour en interroger la version, et
+	// cette connexion échappe à tout contexte — un serveur qui accepte la
+	// connexion sans jamais répondre y retenait la source indéfiniment, même
+	// avec DisableAutomaticPing. sql.Open, lui, ne joint rien : la connexion est
+	// établie par QueryContext, sous le délai ci-dessous. gorm n'apportait rien
+	// d'autre ici, la requête étant exécutée telle quelle.
+	var driver string
 	switch dbtype {
 	case "sqlite3":
-		db, err = gorm.Open(sqlite.Open(connectionString), &gorm.Config{})
+		driver = "sqlite"
 	case "mysql":
-		db, err = gorm.Open(mysql.Open(connectionString), &gorm.Config{})
+		driver = "mysql"
 	case "postgres":
-		db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{})
+		driver = "pgx"
 	default:
 		return nil, fmt.Errorf("sql: unsupported database type %q", dbtype)
 	}
 
-	if err != nil {
-		return nil, fmt.Errorf("sql: connection: %w", err)
-	}
-
-	sqlDB, err := db.DB()
+	sqlDB, err := sql.Open(driver, connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("sql: connection: %w", err)
 	}
 	defer sqlDB.Close()
 
-	rows, err := db.Raw(query).Rows()
+	ctx := context.Background()
+	if timeout := sourceTimeout(); timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	rows, err := sqlDB.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("sql: query: %w", err)
 	}

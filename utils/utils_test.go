@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"database/sql"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -8,6 +10,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/spf13/viper"
 )
 
 func TestStructuredContentParsers(t *testing.T) {
@@ -126,5 +131,93 @@ func TestGetSourceContentReportsMissingFields(t *testing.T) {
 	value, err := GetSourceContent(map[string]interface{}{"src": "text", "type": "json", "query": `{"a":1}`})
 	if err != nil || value.(map[string]interface{})["a"] != float64(1) {
 		t.Fatalf("value = %#v, %v", value, err)
+	}
+}
+
+// Une base qui accepte la connexion sans jamais répondre ne doit pas retenir la
+// source : sans borne, la goroutine de chargement attend le handshake pour
+// toujours et l'indicateur de chargement reste figé.
+func TestSQLToObjectGivesUpOnSilentServer(t *testing.T) {
+	previous := viper.GetInt("source_timeout")
+	viper.Set("source_timeout", 1)
+	defer viper.Set("source_timeout", previous)
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer listener.Close()
+
+	// Accepte les connexions et se tait : le pilote attend un handshake qui
+	// n'arrivera jamais.
+	accepted := make(chan net.Conn, 4)
+	go func() {
+		for {
+			connection, err := listener.Accept()
+			if err != nil {
+				return
+			}
+			accepted <- connection
+		}
+	}()
+	defer func() {
+		close(accepted)
+		for connection := range accepted {
+			connection.Close()
+		}
+	}()
+
+	dsn := "user:password@tcp(" + listener.Addr().String() + ")/base"
+
+	finished := make(chan error, 1)
+	go func() {
+		_, err := SQLToObject(dsn, "SELECT 1", "mysql")
+		finished <- err
+	}()
+
+	select {
+	case err := <-finished:
+		if err == nil {
+			t.Fatal("un serveur muet devrait produire une erreur")
+		}
+	case <-time.After(30 * time.Second):
+		t.Fatal("SQLToObject n'a pas rendu la main : la source reste bloquée sur le serveur muet")
+	}
+}
+
+// La lecture d'une base doit rendre les mêmes lignes après le passage de gorm à
+// database/sql : une colonne par clé, les types natifs préservés.
+func TestSQLToObjectReadsRows(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "source.sqlite")
+
+	seed, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	if _, err := seed.Exec(`CREATE TABLE people (name TEXT, age INTEGER)`); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	if _, err := seed.Exec(`INSERT INTO people VALUES ('Ada', 36), ('Alan', 41)`); err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+	seed.Close()
+
+	rows, err := SQLToObject(path, "SELECT name, age FROM people ORDER BY name", "sqlite3")
+	if err != nil {
+		t.Fatalf("SQLToObject: %v", err)
+	}
+	if len(rows) != 2 {
+		t.Fatalf("rows = %#v", rows)
+	}
+	if rows[0]["name"] != "Ada" || rows[0]["age"] != int64(36) {
+		t.Fatalf("row 0 = %#v", rows[0])
+	}
+	if rows[1]["name"] != "Alan" || rows[1]["age"] != int64(41) {
+		t.Fatalf("row 1 = %#v", rows[1])
+	}
+
+	// Un type de base inconnu reste refusé sans joindre quoi que ce soit.
+	if _, err := SQLToObject(path, "SELECT 1", "oracle"); err == nil {
+		t.Fatal("un type de base inconnu devrait produire une erreur")
 	}
 }
