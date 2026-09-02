@@ -72,5 +72,5 @@ jobs:
             --package=semantic-release@25 \
             --package=@semantic-release/exec@7 \
             --package=@semantic-release/github@12 \
-            --package=conventional-changelog-conventionalcommits@10 \
+            --package=conventional-changelog-conventionalcommits@9 \
             semantic-release
