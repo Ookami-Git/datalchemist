@@ -222,6 +222,106 @@
       "public": "Public",
       "toggleprotection": "Toggle protection",
       "allowgroups": "Allow groups"
+    },
+    "connectors": {
+      "header": "Connectors",
+      "subtitle": "Link the instance to external services",
+      "unavailable": "The instance secret key (DA_SECRETKEY) is required to store connector credentials.",
+      "git": {
+        "title": "Git connector (GitLab / GitHub)",
+        "description": "The repository mirrors the server content: sources, items, views and secrets, identifiers preserved. Every local change is pushed automatically, every repository change is pulled. Anything changed on both sides becomes a conflict to settle here.",
+        "saved": "Configuration saved",
+        "copied": "Address copied",
+        "state": {
+          "disabled": "Inactive",
+          "enabled": "Synchronization active",
+          "running": "Synchronizing",
+          "error": "Error",
+          "conflicts": "{count} conflict(s)"
+        },
+        "form": {
+          "provider": "Provider",
+          "url": "Repository HTTPS address",
+          "urlPlaceholder": "https://gitlab.example.org/group/project.git",
+          "branch": "Branch",
+          "directory": "Folder in the repository",
+          "directoryHelp": "Empty for the repository root.",
+          "pollInterval": "Repository check (seconds)",
+          "username": "Username",
+          "usernameHelp": "Ignored with a personal token; defaults to “git”.",
+          "token": "Access token (write_repository / repo)",
+          "passphrase": "Secrets passphrase",
+          "passphraseHelp": "Encrypts secrets in the repository. Without a passphrase, secrets are not synchronized.",
+          "webhookSecret": "Webhook secret",
+          "webhookHelp": "Register this push webhook on GitLab or GitHub with this secret for immediate pulls:",
+          "author": "Commit author",
+          "authorName": "Name",
+          "authorEmail": "E-mail",
+          "unchanged": "Unchanged (leave empty to keep)",
+          "clear": "Clear",
+          "notSet": "Not set",
+          "set": "Set"
+        },
+        "actions": {
+          "test": "Test connection",
+          "save": "Save",
+          "enable": "Enable synchronization",
+          "disable": "Disable",
+          "sync": "Synchronize now",
+          "compare": "Compare",
+          "keepLocal": "Keep server",
+          "keepRemote": "Keep repository",
+          "cancel": "Cancel",
+          "close": "Close"
+        },
+        "test": {
+          "ok": "Repository reachable",
+          "empty": "the repository is empty, enabling will push all content.",
+          "branchFound": "branch “{branch}” found.",
+          "branchMissing": "Branch “{branch}” does not exist. Available branches: {branches}"
+        },
+        "status": {
+          "title": "Status",
+          "lastSync": "Last synchronization",
+          "lastCommit": "Last commit",
+          "lastError": "Last error",
+          "never": "Never",
+          "pushed": "pushed",
+          "pulled": "pulled",
+          "warnings": "Warnings",
+          "saveFirst": "Save the configuration before enabling."
+        },
+        "enableModal": {
+          "title": "Initial alignment",
+          "intro": "The repository already has content. How should differences with the server be settled?",
+          "merge": "Merge",
+          "mergeHelp": "Identical entries are kept; every difference becomes a conflict to settle.",
+          "local": "Server wins",
+          "localHelp": "The repository is rewritten to match the server. Anything only in the repository is removed from it.",
+          "remote": "Repository wins",
+          "remoteHelp": "The database is rewritten to match the repository. Anything only on the server is removed from it."
+        },
+        "disableModal": {
+          "title": "Disable synchronization",
+          "body": "The repository and the server stop being aligned. Nothing is deleted on either side; enabling again starts a fresh comparison."
+        },
+        "conflicts": {
+          "title": "Conflicts",
+          "empty": "No conflict.",
+          "help": "Changed on both sides since the last synchronization, these entries are frozen until you decide.",
+          "entity": "Entry",
+          "reason": "Reason",
+          "localVersion": "Server version",
+          "remoteVersion": "Repository version",
+          "deleted": "(deleted)"
+        },
+        "kinds": {
+          "source": "Source",
+          "item": "Item",
+          "view": "View",
+          "secret": "Secret"
+        }
+      }
     }
   },
   "edit": {
@@ -339,6 +439,10 @@
         "preview": "Unable to read this archive",
         "import": "Import failed"
       }
+    },
+    "sync": {
+      "conflict": "Conflicts with the Git repository: settle it in Settings › Connectors",
+      "conflicts": "{count} Git conflict(s)"
     }
   },
   "templateVariables": {

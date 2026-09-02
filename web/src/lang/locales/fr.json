@@ -222,6 +222,106 @@
       "public": "Publique",
       "toggleprotection": "Activer ou désactiver la protection",
       "allowgroups": "Autoriser des groupes"
+    },
+    "connectors": {
+      "header": "Connecteurs",
+      "subtitle": "Reliez l'instance à des services externes",
+      "unavailable": "La clé de secrets de l'instance (DA_SECRETKEY) est requise pour stocker les identifiants d'un connecteur.",
+      "git": {
+        "title": "Connecteur Git (GitLab / GitHub)",
+        "description": "Le dépôt est le miroir du contenu du serveur : sources, objets, vues et secrets, identifiants conservés. Chaque modification locale est poussée automatiquement, chaque modification du dépôt est récupérée. Ce qui change des deux côtés devient un conflit à arbitrer ici.",
+        "saved": "Configuration enregistrée",
+        "copied": "Adresse copiée",
+        "state": {
+          "disabled": "Inactif",
+          "enabled": "Synchronisation active",
+          "running": "Synchronisation en cours",
+          "error": "Erreur",
+          "conflicts": "{count} conflit(s)"
+        },
+        "form": {
+          "provider": "Fournisseur",
+          "url": "Adresse HTTPS du dépôt",
+          "urlPlaceholder": "https://gitlab.example.org/groupe/projet.git",
+          "branch": "Branche",
+          "directory": "Dossier dans le dépôt",
+          "directoryHelp": "Vide pour la racine du dépôt.",
+          "pollInterval": "Vérification du dépôt (secondes)",
+          "username": "Nom d'utilisateur",
+          "usernameHelp": "Indifférent avec un jeton personnel ; « git » par défaut.",
+          "token": "Jeton d'accès (write_repository / repo)",
+          "passphrase": "Passphrase des secrets",
+          "passphraseHelp": "Chiffre les secrets dans le dépôt. Sans passphrase, les secrets ne sont pas synchronisés.",
+          "webhookSecret": "Secret du webhook",
+          "webhookHelp": "Déclarez ce webhook (push) côté GitLab ou GitHub avec ce secret pour une récupération immédiate :",
+          "author": "Auteur des commits",
+          "authorName": "Nom",
+          "authorEmail": "E-mail",
+          "unchanged": "Inchangé (laisser vide pour conserver)",
+          "clear": "Effacer",
+          "notSet": "Non renseigné",
+          "set": "Renseigné"
+        },
+        "actions": {
+          "test": "Tester la connexion",
+          "save": "Enregistrer",
+          "enable": "Activer la synchronisation",
+          "disable": "Désactiver",
+          "sync": "Synchroniser maintenant",
+          "compare": "Comparer",
+          "keepLocal": "Garder le serveur",
+          "keepRemote": "Garder le dépôt",
+          "cancel": "Annuler",
+          "close": "Fermer"
+        },
+        "test": {
+          "ok": "Dépôt accessible",
+          "empty": "le dépôt est vide, l'activation y poussera tout le contenu.",
+          "branchFound": "branche « {branch} » trouvée.",
+          "branchMissing": "La branche « {branch} » n'existe pas. Branches disponibles : {branches}"
+        },
+        "status": {
+          "title": "État",
+          "lastSync": "Dernière synchronisation",
+          "lastCommit": "Dernier commit",
+          "lastError": "Dernière erreur",
+          "never": "Jamais",
+          "pushed": "poussé(s)",
+          "pulled": "récupéré(s)",
+          "warnings": "Avertissements",
+          "saveFirst": "Enregistrez la configuration avant d'activer."
+        },
+        "enableModal": {
+          "title": "Premier alignement",
+          "intro": "Le dépôt contient déjà du contenu. Comment départager les différences avec le serveur ?",
+          "merge": "Fusionner",
+          "mergeHelp": "Ce qui est identique est conservé ; chaque différence devient un conflit à arbitrer.",
+          "local": "Le serveur fait autorité",
+          "localHelp": "Le dépôt est réécrit à l'image du serveur. Ce qui n'existe que dans le dépôt en est supprimé.",
+          "remote": "Le dépôt fait autorité",
+          "remoteHelp": "La base est réécrite à l'image du dépôt. Ce qui n'existe que sur le serveur en est supprimé."
+        },
+        "disableModal": {
+          "title": "Désactiver la synchronisation",
+          "body": "Le dépôt et le serveur cessent d'être alignés. Rien n'est supprimé d'aucun côté ; une réactivation repartira d'une nouvelle comparaison."
+        },
+        "conflicts": {
+          "title": "Conflits",
+          "empty": "Aucun conflit.",
+          "help": "Modifiés des deux côtés depuis la dernière synchronisation, ces éléments sont gelés jusqu'à votre choix.",
+          "entity": "Élément",
+          "reason": "Raison",
+          "localVersion": "Version du serveur",
+          "remoteVersion": "Version du dépôt",
+          "deleted": "(supprimé)"
+        },
+        "kinds": {
+          "source": "Source",
+          "item": "Objet",
+          "view": "Vue",
+          "secret": "Secret"
+        }
+      }
     }
   },
   "edit": {
@@ -339,6 +439,10 @@
         "preview": "Impossible de lire cette archive",
         "import": "L'import a échoué"
       }
+    },
+    "sync": {
+      "conflict": "En conflit avec le dépôt Git : à arbitrer dans Paramètres › Connecteurs",
+      "conflicts": "{count} conflit(s) Git"
     }
   },
   "templateVariables": {

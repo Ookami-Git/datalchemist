@@ -45,3 +45,35 @@ func TestSetupRoutesProtectsBundleEndpoints(t *testing.T) {
 		}
 	}
 }
+
+// Les routes du connecteur Git sont réservées aux administrateurs ; le webhook
+// est public mais refuse tout appel non signé.
+func TestSetupRoutesProtectsConnectorEndpoints(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	r := gin.New()
+	SetupRoutes(r)
+
+	for _, route := range []struct{ method, path string }{
+		{http.MethodGet, "/api/connector/git"},
+		{http.MethodPut, "/api/connector/git"},
+		{http.MethodGet, "/api/connector/git/status"},
+		{http.MethodPost, "/api/connector/git/test"},
+		{http.MethodPost, "/api/connector/git/enable"},
+		{http.MethodPost, "/api/connector/git/disable"},
+		{http.MethodPost, "/api/connector/git/sync"},
+		{http.MethodGet, "/api/connector/git/conflict/source/1"},
+		{http.MethodPost, "/api/connector/git/conflict/source/1/resolve"},
+	} {
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, httptest.NewRequest(route.method, route.path, nil))
+		if w.Code != http.StatusUnauthorized {
+			t.Fatalf("%s %s answered %d to an anonymous call, want 401", route.method, route.path, w.Code)
+		}
+	}
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/api/webhook/git", nil))
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("unsigned webhook answered %d, want 401", w.Code)
+	}
+}

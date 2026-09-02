@@ -6,6 +6,7 @@ import acl from './acl.vue'
 import users from './users.vue'
 import groups from './groups.vue'
 import navbar from './navbar.vue'
+import connectors from './connectors.vue'
 
 const parameters = inject('parameters');
 const save = inject('save');
@@ -23,7 +24,8 @@ const tabs = {
     acl,
     users,
     groups,
-    navbar
+    navbar,
+    connectors
 }
 
 const navigationItems = [
@@ -32,6 +34,7 @@ const navigationItems = [
     { page: 'users', icon: 'bi bi-people-fill', labelKey: 'admin.users.header' },
     { page: 'groups', icon: 'bi bi-collection-fill', labelKey: 'admin.groups.header' },
     { page: 'acl', icon: 'bi bi-shield-lock-fill', labelKey: 'admin.acl.header' },
+    { page: 'connectors', icon: 'bi bi-plug-fill', labelKey: 'admin.connectors.header' },
 ];
 
 const activeTab = computed(() => tabs[route.params.page] || global);

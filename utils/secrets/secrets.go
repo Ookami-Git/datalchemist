@@ -3,8 +3,11 @@ package secrets
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -30,6 +33,9 @@ const (
 // import, migration de passphrase) dérive une fois et réutilise la même Key.
 type Key struct {
 	aead cipher.AEAD
+	// raw sert aux dérivations secondaires (nonce déterministe, vérificateur),
+	// jamais directement au chiffrement.
+	raw []byte
 }
 
 // NewKey dérive une clé à partir d'une passphrase et d'un salt explicites. Le
@@ -95,7 +101,32 @@ func newKey(raw []byte) (*Key, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Key{aead: aead}, nil
+	return &Key{aead: aead, raw: raw}, nil
+}
+
+// EncryptDeterministic chiffre comme Encrypt mais avec un nonce dérivé du
+// clair (HMAC-SHA256 de la clé) : un même secret donne toujours le même
+// chiffré. C'est ce qu'il faut pour un fichier suivi dans un dépôt Git, où un
+// chiffré différent à chaque écriture passerait pour une modification. Le
+// nonce ne se répète que pour un clair identique, ce que GCM tolère. Le
+// résultat se déchiffre avec Decrypt.
+func (k *Key) EncryptDeterministic(plaintext string) string {
+	mac := hmac.New(sha256.New, k.raw)
+	mac.Write([]byte("nonce\x00"))
+	mac.Write([]byte(plaintext))
+	nonce := mac.Sum(nil)[:k.aead.NonceSize()]
+	ciphertext := k.aead.Seal(nil, nonce, []byte(plaintext), nil)
+	return base64.StdEncoding.EncodeToString(append(nonce, ciphertext...))
+}
+
+// Verifier est une empreinte publique de la clé : elle permet de vérifier
+// qu'une passphrase est la bonne sans rien déchiffrer, et sans exposer un
+// simple hash de la passphrase (la dérivation scrypt reste à payer pour la
+// tester).
+func (k *Key) Verifier() string {
+	mac := hmac.New(sha256.New, k.raw)
+	mac.Write([]byte("verifier"))
+	return hex.EncodeToString(mac.Sum(nil))
 }
 
 // deriveKeyWith dérive une clé depuis une passphrase et un salt explicites.

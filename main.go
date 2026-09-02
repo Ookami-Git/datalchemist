@@ -6,6 +6,7 @@ import (
 	"datalchemist/database"
 	"datalchemist/routes"
 	"datalchemist/utils"
+	"datalchemist/utils/gitsync"
 	"embed"
 	"fmt"
 	"log"
@@ -137,6 +138,13 @@ func main() {
 		if err := utils.SecretInit(false); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	// CONNECTORS ----------------------------
+	// Le connecteur Git ne démarre qu'après les secrets : son jeton est chiffré
+	// avec la clé de l'instance.
+	if err := gitsync.Start(); err != nil {
+		log.Fatal(err)
 	}
 
 	// GO GIN (WEB) ----------------------------

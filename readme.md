@@ -282,6 +282,32 @@ chmod 600 secrets/datalchemist_secret_key
 
 - Secrets cannot be used directly in object definitions from the frontend.
 
+## 🔁 Git Connector (GitLab / GitHub)
+
+The **Settings › Connectors** tab keeps a Git repository as a live mirror of the server content: sources, items, views and their links, plus secrets. Identifiers are preserved (source `#1` is the folder `sources/1`), so the repository is a backup of the server state rather than an export.
+
+- **Automatic, both ways.** Every local change is committed and pushed a couple of seconds later. Repository changes are pulled on a configurable polling interval, or immediately when GitLab/GitHub calls the webhook `POST /api/webhook/git` (GitLab `X-Gitlab-Token` or GitHub `X-Hub-Signature-256`, checked against the webhook secret).
+- **Conflicts.** An entry changed on both sides since the last synchronization is frozen and flagged, both in the editor and in the connector tab, where you choose to keep the server or the repository version. Deletions propagate both ways, and a deletion facing an edit is a conflict too.
+- **Initial alignment.** Enabling on an empty repository pushes everything. On a non-empty repository you pick who wins (server, repository) or merge, with every difference turned into a conflict.
+- **Secrets** are stored in the repository encrypted with the connector passphrase (deterministic AES-GCM, key derived with scrypt; the salt and a verifier travel in `sync.json`). Without a passphrase, secrets are left out.
+- **Requirements.** HTTPS access with a personal access token (`write_repository` on GitLab, `repo` on GitHub) and the instance secret key (`--secretkey`), which encrypts the token and passphrase at rest. The clone lives in memory only.
+
+Repository layout (inside the configured folder):
+
+```
+sync.json                 # format version, secrets salt and verifier
+sources/<id>/source.json  # name, parameters, required sources
+sources/<id>/config.json  # source definition
+items/<id>/item.json      # name, parameters, used sources
+items/<id>/template.html
+items/<id>/script.js
+views/<id>/view.json      # name, protection
+views/<id>/layout.json    # layout
+secrets/<id>/secret.json  # encrypted value
+```
+
+Files can be edited from GitLab or GitHub: JSON is normalized on the way in, and the canonical form is pushed back on the next cycle.
+
 ## 🧭 YAML Navigation Menu
 
 ```yaml

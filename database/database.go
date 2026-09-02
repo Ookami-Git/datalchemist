@@ -24,7 +24,7 @@ func Init() error {
 	if err != nil {
 		panic("failed to connect database")
 	}
-	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{}, &models.Secrets{})
+	db.AutoMigrate(&models.Parameters{}, &models.Users{}, &models.Groups{}, &models.Sources{}, &models.Views{}, &models.Items{}, &models.Roles{}, &models.Acl{}, &models.Source_require{}, &models.Item_sources{}, &models.View_items{}, &models.Secrets{}, &models.Connectors{}, &models.Sync_states{})
 	// Ajouter les données si elles n'existent pas déjà
 	parameters := []*models.Parameters{
 		{Name: "name", Value: "datalchemist"},
@@ -1036,4 +1036,147 @@ func SourceDependents(sourceID uint) ([]string, []string, error) {
 		Scan(&sources).Error
 
 	return items, sources, err
+}
+
+// ---- Contenu complet, pour la synchronisation
+//
+// Les listes destinées à l'interface ne chargent que quelques colonnes ; la
+// synchronisation a besoin des entités entières et de leurs liens.
+
+func SourcesAll() ([]models.Sources, error) {
+	var sources []models.Sources
+	db, err := OpenGorm()
+	if err != nil {
+		return sources, err
+	}
+	err = db.Order("id").Find(&sources).Error
+	return sources, err
+}
+
+func ItemsAll() ([]models.Items, error) {
+	var items []models.Items
+	db, err := OpenGorm()
+	if err != nil {
+		return items, err
+	}
+	err = db.Order("id").Find(&items).Error
+	return items, err
+}
+
+func SourceRequiresAll() ([]models.Source_require, error) {
+	var links []models.Source_require
+	db, err := OpenGorm()
+	if err != nil {
+		return links, err
+	}
+	err = db.Order("id").Find(&links).Error
+	return links, err
+}
+
+func ItemSourcesAll() ([]models.Item_sources, error) {
+	var links []models.Item_sources
+	db, err := OpenGorm()
+	if err != nil {
+		return links, err
+	}
+	err = db.Order("id").Find(&links).Error
+	return links, err
+}
+
+// ---- Connecteurs
+
+// ConnectorGet retourne la configuration d'un connecteur, ou une ligne vide
+// (ID 0) s'il n'a jamais été configuré.
+func ConnectorGet(kind string) (models.Connectors, error) {
+	connector := models.Connectors{Type: kind}
+	db, err := OpenGorm()
+	if err != nil {
+		return connector, err
+	}
+	err = db.Where("type = ?", kind).Limit(1).Find(&connector).Error
+	connector.Type = kind
+	return connector, err
+}
+
+// ConnectorSave crée ou met à jour la ligne du connecteur, identifiée par son
+// type. Tous les champs sont écrits, y compris les booléens à false.
+func ConnectorSave(connector models.Connectors) (models.Connectors, error) {
+	db, err := OpenGorm()
+	if err != nil {
+		return connector, err
+	}
+	existing := models.Connectors{}
+	err = db.Where("type = ?", connector.Type).Limit(1).Find(&existing).Error
+	if err != nil {
+		return connector, err
+	}
+	connector.ID = existing.ID
+	if connector.ID == 0 {
+		err = db.Create(&connector).Error
+	} else {
+		err = db.Model(&models.Connectors{}).Where("id = ?", connector.ID).
+			Select("enabled", "config", "credentials", "key_hash").
+			Updates(map[string]interface{}{
+				"enabled":     connector.Enabled,
+				"config":      connector.Config,
+				"credentials": connector.Credentials,
+				"key_hash":    connector.KeyHash,
+			}).Error
+	}
+	return connector, err
+}
+
+// SyncStatesGet charge la base de comparaison d'un connecteur, indexée par
+// type puis identifiant d'entité.
+func SyncStatesGet(connector string) (map[string]map[uint]string, error) {
+	states := map[string]map[uint]string{}
+	db, err := OpenGorm()
+	if err != nil {
+		return states, err
+	}
+	var rows []models.Sync_states
+	if err := db.Where("connector = ?", connector).Find(&rows).Error; err != nil {
+		return states, err
+	}
+	for _, row := range rows {
+		if states[row.Kind] == nil {
+			states[row.Kind] = map[uint]string{}
+		}
+		states[row.Kind][row.EntityID] = row.Hash
+	}
+	return states, nil
+}
+
+// SyncStateSet écrit ou efface (hash vide) la base d'une entité dans la
+// transaction fournie, ou hors transaction si tx est nil.
+func SyncStateSet(tx *gorm.DB, connector, kind string, entityID uint, hash string) error {
+	if tx == nil {
+		var err error
+		tx, err = OpenGorm()
+		if err != nil {
+			return err
+		}
+	}
+	where := tx.Where("connector = ? AND kind = ? AND entity_id = ?", connector, kind, entityID)
+	if hash == "" {
+		return where.Delete(&models.Sync_states{}).Error
+	}
+	result := where.Model(&models.Sync_states{}).Update("hash", hash)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return tx.Create(&models.Sync_states{Connector: connector, Kind: kind, EntityID: entityID, Hash: hash}).Error
+	}
+	return nil
+}
+
+// SyncStatesClear oublie toute la base d'un connecteur : à la désactivation,
+// la prochaine activation repart d'une comparaison sans historique.
+func SyncStatesClear(connector string) error {
+	db, err := OpenGorm()
+	if err != nil {
+		return err
+	}
+	return db.Where("connector = ?", connector).Delete(&models.Sync_states{}).Error
 }

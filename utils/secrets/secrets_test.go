@@ -204,3 +204,39 @@ func TestNewSalt(t *testing.T) {
 		t.Fatal("two generated salts unexpectedly match")
 	}
 }
+
+// Le chiffrement déterministe doit être stable pour un même clair (c'est sa
+// raison d'être) et rester lisible par Decrypt.
+func TestEncryptDeterministicIsStableAndDecryptable(t *testing.T) {
+	salt, err := NewSalt()
+	if err != nil {
+		t.Fatal(err)
+	}
+	key, err := NewKey("passphrase", salt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := key.EncryptDeterministic("hello")
+	second := key.EncryptDeterministic("hello")
+	if first != second {
+		t.Fatalf("deterministic encryption differs: %s vs %s", first, second)
+	}
+	if other := key.EncryptDeterministic("hellO"); other == first {
+		t.Fatal("different plaintexts gave the same ciphertext")
+	}
+	plain, err := key.Decrypt(first)
+	if err != nil || plain != "hello" {
+		t.Fatalf("decrypt = %q, %v", plain, err)
+	}
+
+	otherKey, err := NewKey("other", salt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if otherKey.Verifier() == key.Verifier() {
+		t.Fatal("verifier does not depend on the passphrase")
+	}
+	if key.Verifier() == "" || len(key.Verifier()) != 64 {
+		t.Fatalf("verifier = %q", key.Verifier())
+	}
+}

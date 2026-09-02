@@ -460,6 +460,25 @@ const fetchViews = async () => {
     });
 };
 
+// État du connecteur Git : les entités en conflit portent un marqueur qui
+// renvoie vers l'onglet d'arbitrage. Une erreur (connecteur absent, réseau)
+// laisse simplement l'éditeur sans marqueur.
+const syncStatus = ref(null)
+const fetchSyncStatus = async () => {
+  try {
+    const response = await axios.get(`${apiUrl}/connector/git/status`)
+    syncStatus.value = response.data
+  } catch (error) {
+    syncStatus.value = null
+  }
+}
+const syncConflictKeys = computed(() =>
+  new Set((syncStatus.value?.conflicts || []).map((conflict) => `${conflict.kind}:${conflict.id}`))
+)
+const syncConflictCount = computed(() => syncConflictKeys.value.size)
+const isInSyncConflict = (kind, id) => syncConflictKeys.value.has(`${kind}:${id}`)
+const syncConflictsRoute = { name: 'admin', params: { page: 'connectors' } }
+
 const fetchSecrets = async () => {
   axios.get(`${apiUrl}/secrets`)
     .then(function (response) {
@@ -511,6 +530,7 @@ const refreshAfterImport = () => {
 
 fetchSources()
 fetchItems()
+fetchSyncStatus()
 fetchViews()
 fetchSecrets()
 </script>
@@ -557,6 +577,11 @@ fetchSecrets()
               <i :class="canManageSecrets ? 'bi bi-shield-check me-1' : 'bi bi-shield-slash me-1'"></i>
               {{ canManageSecrets ? $t('edit.secrets_state_enabled') : $t('edit.secrets_state_disabled') }}
             </div>
+            <RouterLink v-if="syncConflictCount > 0" :to="syncConflictsRoute" class="status-pill badge-warning text-decoration-none"
+              :title="$t('edit.sync.conflict')">
+              <i class="bi bi-git me-1"></i>
+              {{ $t('edit.sync.conflicts', { count: syncConflictCount }) }}
+            </RouterLink>
           </div>
 
           <!-- Export et import portent sur tout le contenu, pas sur l'onglet
@@ -730,6 +755,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('source', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- Source type & details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -813,6 +842,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('item', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- Item Template details -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -885,6 +918,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('view', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <!-- View Items count -->
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
@@ -953,6 +990,10 @@ fetchSecrets()
                         <span
                           class="badge rounded-pill bg-light text-dark border font-monospace py-0.5 px-1.5 small-id">#{{
                           row.id }}</span>
+                        <RouterLink v-if="isInSyncConflict('secret', row.id)" :to="syncConflictsRoute"
+                          class="badge rounded-pill sync-conflict-badge" :title="$t('edit.sync.conflict')">
+                          <i class="bi bi-exclamation-triangle-fill"></i>
+                        </RouterLink>
                       </div>
                       <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
                         <span class="text-muted small-text">••••••••</span>
@@ -1265,6 +1306,30 @@ fetchSecrets()
 </template>
 
 <style scoped lang="scss">
+.sync-conflict-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.45rem;
+  font-size: 0.72rem;
+  color: #7a4b00;
+  background: #ffe8b3;
+  border: 1px solid #f2c266;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sync-conflict-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0.25rem 0.6rem rgba(242, 194, 102, 0.45);
+  color: #5c3800;
+}
+
+[data-bs-theme='dark'] .sync-conflict-badge {
+  color: #ffd98a;
+  background: rgba(255, 193, 7, 0.16);
+  border-color: rgba(255, 193, 7, 0.45);
+}
+
 /* Colors & Variables */
 .modern-edit-page {
   --edit-color-source: #10b981;

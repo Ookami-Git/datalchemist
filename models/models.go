@@ -135,8 +135,33 @@ type Claims struct {
 }
 
 type Secrets struct {
-	ID         uint   `gorm:"primary_key" json:"id"`
-	Name       string `gorm:"unique;not null" json:"name"`
-	Secret     string `gorm:"not null" json:"secret"`
-	KeyHash    string `gorm:"not null" json:"keyhash"`
+	ID      uint   `gorm:"primary_key" json:"id"`
+	Name    string `gorm:"unique;not null" json:"name"`
+	Secret  string `gorm:"not null" json:"secret"`
+	KeyHash string `gorm:"not null" json:"keyhash"`
+}
+
+// Connectors est la configuration d'un connecteur externe, une ligne par type
+// (le connecteur Git est unique : une synchronisation automatique vers deux
+// dépôts n'aurait pas de sens). Config est un JSON public ; Credentials un JSON
+// chiffré avec la clé de l'instance (token, passphrase, secret de webhook), qui
+// ne quitte jamais le serveur.
+type Connectors struct {
+	ID          uint   `gorm:"primary_key" json:"id"`
+	Type        string `gorm:"unique;not null" json:"type"`
+	Enabled     bool   `gorm:"default:false" json:"enabled"`
+	Config      string `json:"config"`
+	Credentials string `json:"-"`
+	KeyHash     string `json:"-"`
+}
+
+// Sync_states mémorise, par entité, l'empreinte du contenu tel qu'il était à la
+// dernière synchronisation réussie : c'est la « base » de la comparaison à
+// trois (local, distant, base) qui distingue une modification d'un conflit.
+type Sync_states struct {
+	ID        uint   `gorm:"primary_key"`
+	Connector string `gorm:"index:idx_sync_state,unique;not null"`
+	Kind      string `gorm:"index:idx_sync_state,unique;not null"`
+	EntityID  uint   `gorm:"index:idx_sync_state,unique;not null"`
+	Hash      string `gorm:"not null"`
 }
