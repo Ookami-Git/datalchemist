@@ -339,7 +339,7 @@ func UrlContent(urlget string, parameters map[string]interface{}) (string, error
 		}
 	}
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: tr, Timeout: sourceHTTPTimeout()}
 
 	response, err := client.Do(req)
 	if err != nil {
@@ -359,6 +359,25 @@ func UrlContent(urlget string, parameters map[string]interface{}) (string, error
 	}
 
 	return string(content), nil
+}
+
+// sourceHTTPTimeout borne la durée d'un appel de source URL, en-têtes et corps
+// compris. Sans borne, un hôte qui accepte la connexion puis cesse de répondre
+// bloque la goroutine indéfiniment : dans une source qui boucle, les itérations
+// restantes saturent alors le sémaphore, loadSource n'atteint jamais son
+// `defer tracker.Done`, et l'indicateur de chargement reste figé sur un
+// avancement partiel — le chargement de la vue ne se termine plus.
+//
+// La valeur par défaut est large : elle n'est pas un budget de performance mais
+// un garde-fou contre une connexion morte. Un déploiement qui interroge des
+// endpoints légitimement plus lents la relève par `source_timeout` (secondes) ;
+// zéro rétablit l'attente illimitée.
+func sourceHTTPTimeout() time.Duration {
+	seconds := viper.GetInt("source_timeout")
+	if seconds <= 0 {
+		return 0
+	}
+	return time.Duration(seconds) * time.Second
 }
 
 func signAWSRequest(req *http.Request, awsSigV4 map[string]interface{}) error {
